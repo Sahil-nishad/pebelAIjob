@@ -1,5 +1,19 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Resend Email Setup
+
+PebelAI uses [Resend](https://resend.com) for reminder, application, and test emails.
+
+Add these environment variables to your `.env.local`:
+
+```env
+RESEND_API_KEY=your_resend_api_key
+RESEND_FROM_EMAIL=onboarding@resend.dev
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+If you want to use your own sender address, verify that domain in Resend and set `RESEND_FROM_EMAIL` to that verified address.
+
 ## Getting Started
 
 First, run the development server:
