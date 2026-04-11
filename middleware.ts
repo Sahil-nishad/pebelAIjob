@@ -1,28 +1,10 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { withAuth } from 'next-auth/middleware'
 
-export function middleware(request: NextRequest) {
-  // Check for auth cookie on protected routes
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/dashboard') ||
-    request.nextUrl.pathname.startsWith('/applications') ||
-    request.nextUrl.pathname.startsWith('/coach') ||
-    request.nextUrl.pathname.startsWith('/reminders') ||
-    request.nextUrl.pathname.startsWith('/resume') ||
-    request.nextUrl.pathname.startsWith('/settings')
-
-/*
-  if (isAuthRoute) {
-    const supabaseAuth = request.cookies.get('sb-access-token')?.value ||
-      request.cookies.get('sb-refresh-token')?.value
-
-    if (!supabaseAuth) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-  }
-*/
-
-  return NextResponse.next()
-}
+export default withAuth({
+  pages: {
+    signIn: '/login',
+  },
+})
 
 export const config = {
   matcher: [

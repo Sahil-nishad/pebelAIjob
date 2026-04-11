@@ -5,7 +5,7 @@ import { getCoachSession, updateCoachSession } from '@/lib/coach-session-store'
 import { isMissingTableError } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth(req)
+  const auth = await requireAuth()
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 

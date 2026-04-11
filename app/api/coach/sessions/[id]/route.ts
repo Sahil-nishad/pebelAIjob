@@ -4,7 +4,7 @@ import { deleteCoachSession, getCoachSession } from '@/lib/coach-session-store'
 import { isMissingTableError } from '@/lib/supabase'
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAuth(_req)
+  const auth = await requireAuth()
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 
@@ -28,7 +28,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAuth(req)
+  const auth = await requireAuth()
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 

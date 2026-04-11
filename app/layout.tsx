@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Sora, Nunito_Sans } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+import { SessionProvider } from "@/components/session-provider";
 import "./globals.css";
 
 const sora = Sora({
@@ -34,7 +35,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${sora.variable} ${nunito.variable} h-full`}>
       <body className="min-h-full flex flex-col antialiased bg-[var(--bg-primary)] text-[var(--text-primary)]">
-        {children}
+        <SessionProvider>
+          {children}
+        </SessionProvider>
         <Toaster
           position="bottom-right"
           toastOptions={{

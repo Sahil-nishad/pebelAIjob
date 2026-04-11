@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, unauthorized } from '@/lib/auth'
 
 export async function PATCH(req: NextRequest) {
-  const auth = await requireAuth(req)
+  const auth = await requireAuth()
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 

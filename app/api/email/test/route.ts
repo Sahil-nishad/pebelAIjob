@@ -8,7 +8,7 @@ import { sendReminderEmail } from '@/lib/email'
 import type { Reminder } from '@/types'
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth(req)
+  const auth = await requireAuth()
   if (!auth) return unauthorized()
   const { user } = auth
   if (!user.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

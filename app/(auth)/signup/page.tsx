@@ -1,14 +1,13 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Mail, Lock, User, CheckCircle2, LayoutDashboard, MessageSquare, Bell, FileSearch } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { auth } from '@/lib/firebase'
-import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
+import { signIn } from 'next-auth/react'
 
 const features = [
   { icon: LayoutDashboard, text: 'Track all your applications' },
@@ -31,42 +30,38 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
 
-    try {
-      const { user } = await createUserWithEmailAndPassword(auth, email, password)
-      await updateProfile(user, { displayName: name })
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, job_type: jobType, experience_level: experience }),
+    })
 
-      // Create user profile in Supabase
-      const token = await user.getIdToken()
-      await fetch('/api/settings/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ name, job_type: jobType, experience_level: experience }),
-      })
+    const data = await res.json()
 
-      router.push('/dashboard')
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Signup failed'
-      setError(msg.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim())
+    if (!res.ok) {
+      setError(data.error || 'Signup failed.')
       setLoading(false)
+      return
+    }
+
+    const result = await signIn('credentials', { email, password, redirect: false })
+    if (result?.error) {
+      setError('Account created but sign-in failed. Please log in.')
+      router.push('/login')
+    } else {
+      router.push('/dashboard')
     }
   }
 
   async function handleGoogleSignIn() {
     setError('')
     setGoogleLoading(true)
-    try {
-      await signInWithPopup(auth, new GoogleAuthProvider())
-      router.push('/dashboard')
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Google sign-in failed'
-      setError(msg.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim())
-      setGoogleLoading(false)
-    }
+    await signIn('google', { callbackUrl: '/dashboard' })
   }
 
   return (
@@ -142,7 +137,7 @@ export default function SignupPage() {
               <Mail className="absolute right-3 top-[38px] w-4 h-4 text-slate-400 pointer-events-none" />
             </div>
             <div className="relative">
-              <Input id="password" label="Password" type="password" placeholder="Min 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" />
+              <Input id="password" label="Password" type="password" placeholder="Min 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" />
               <Lock className="absolute right-3 top-[38px] w-4 h-4 text-slate-400 pointer-events-none" />
             </div>
 

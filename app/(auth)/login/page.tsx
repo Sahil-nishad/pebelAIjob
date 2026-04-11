@@ -1,41 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Mail, Lock, CheckCircle2, LayoutDashboard, Search, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { auth } from '@/lib/firebase'
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult, type AuthError } from 'firebase/auth'
-
-function getAuthErrorMessage(err: unknown): string {
-  const code = (err as AuthError)?.code
-  switch (code) {
-    case 'auth/invalid-credential':
-    case 'auth/user-not-found':
-    case 'auth/wrong-password':
-      return 'Incorrect email or password.'
-    case 'auth/invalid-email':
-      return 'Invalid email address.'
-    case 'auth/user-disabled':
-      return 'This account has been disabled.'
-    case 'auth/too-many-requests':
-      return 'Too many failed attempts. Please try again later.'
-    case 'auth/network-request-failed':
-      return 'Network error. Please check your connection.'
-    case 'auth/popup-closed-by-user':
-      return 'Sign-in popup was closed before completing.'
-    case 'auth/cancelled-popup-request':
-      return ''
-    case 'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
-    case 'auth/invalid-api-key':
-      return 'Authentication is misconfigured. Please contact support.'
-    default:
-      return code ? `Sign-in failed (${code}).` : 'Sign-in failed. Please try again.'
-  }
-}
+import { signIn } from 'next-auth/react'
 
 const features = [
   { icon: LayoutDashboard, text: 'Visual Kanban board to track every application' },
@@ -51,45 +23,29 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
-  useEffect(() => {
-    setGoogleLoading(true)
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) {
-          router.push('/dashboard')
-        } else {
-          setGoogleLoading(false)
-        }
-      })
-      .catch((err) => {
-        setError(getAuthErrorMessage(err))
-        setGoogleLoading(false)
-      })
-  }, [router])
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
 
-    try {
-      await signInWithEmailAndPassword(auth, email, password)
-      router.push('/dashboard')
-    } catch (err) {
-      setError(getAuthErrorMessage(err))
+    const result = await signIn('credentials', {
+      email,
+      password,
+      redirect: false,
+    })
+
+    if (result?.error) {
+      setError('Incorrect email or password.')
       setLoading(false)
+    } else {
+      router.push('/dashboard')
     }
   }
 
   async function handleGoogleSignIn() {
     setError('')
     setGoogleLoading(true)
-    try {
-      await signInWithRedirect(auth, new GoogleAuthProvider())
-    } catch (err) {
-      setError(getAuthErrorMessage(err))
-      setGoogleLoading(false)
-    }
+    await signIn('google', { callbackUrl: '/dashboard' })
   }
 
   return (

@@ -1,29 +1,23 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { auth } from '@/lib/firebase'
-import { onAuthStateChanged } from 'firebase/auth'
-import { AuthProvider } from '@/contexts/auth-context'
+import { useSession } from 'next-auth/react'
 import { Sidebar } from '@/components/layout/sidebar'
 import { TopNav } from '@/components/layout/topnav'
 import { MobileNav } from '@/components/layout/mobile-nav'
 
 function DashboardGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const [checked, setChecked] = useState(false)
+  const { status } = useSession()
 
   useEffect(() => {
-    return onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        router.replace('/login')
-      } else {
-        setChecked(true)
-      }
-    })
-  }, [router])
+    if (status === 'unauthenticated') {
+      router.replace('/login')
+    }
+  }, [status, router])
 
-  if (!checked) {
+  if (status === 'loading' || status === 'unauthenticated') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)]">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500/35 border-t-emerald-600" />
@@ -44,9 +38,5 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthProvider>
-      <DashboardGuard>{children}</DashboardGuard>
-    </AuthProvider>
-  )
+  return <DashboardGuard>{children}</DashboardGuard>
 }

@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { requireAuth, unauthorized } from '@/lib/auth'
 
 export async function PATCH(req: NextRequest) {
-  const auth = await requireAuth(req)
+  const auth = await requireAuth()
   if (!auth) return unauthorized()
 
   const { user, supabase } = auth
@@ -11,16 +11,14 @@ export async function PATCH(req: NextRequest) {
 
   const { error } = await supabase
     .from('users')
-    .upsert({
-      id: user.id,
-      firebase_uid: user.firebaseUid,
-      email: user.email,
+    .update({
       name: name || null,
       phone: phone || null,
       title: title || null,
       linkedin: linkedin || null,
       location: location || null,
     })
+    .eq('id', user.id)
 
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400 })
   return new Response(JSON.stringify({ ok: true }), { status: 200 })

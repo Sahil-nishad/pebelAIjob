@@ -3,7 +3,7 @@ import { requireAuth, unauthorized } from '@/lib/auth'
 import { groq, MODEL } from '@/lib/groq'
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth(req)
+  const auth = await requireAuth()
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 

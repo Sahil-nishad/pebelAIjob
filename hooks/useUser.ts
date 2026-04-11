@@ -1,39 +1,34 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { auth } from '@/lib/firebase'
-import { signOut as firebaseSignOut, onAuthStateChanged, type User } from 'firebase/auth'
+import { useSession, signOut as nextAuthSignOut } from 'next-auth/react'
 import { authFetch } from '@/lib/api'
 import type { UserProfile } from '@/types'
 
 export function useUser() {
-  const [user, setUser] = useState<User | null>(null)
+  const { data: session, status } = useSession()
   const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    return onAuthStateChanged(auth, async (u) => {
-      setUser(u)
-      if (u) {
-        try {
-          const res = await authFetch('/api/settings/profile')
-          if (res.ok) {
-            const data = await res.json()
-            setProfile(data)
-          }
-        } catch { /* ignore */ }
-      } else {
-        setProfile(null)
-      }
-      setLoading(false)
-    })
-  }, [])
+    if (status === 'authenticated') {
+      authFetch('/api/settings/profile')
+        .then((res) => res.ok ? res.json() : null)
+        .then((data) => setProfile(data))
+        .catch(() => {})
+    } else if (status === 'unauthenticated') {
+      setProfile(null)
+    }
+  }, [status])
 
   const signOut = async () => {
-    await firebaseSignOut(auth)
-    setUser(null)
     setProfile(null)
+    await nextAuthSignOut({ callbackUrl: '/login' })
   }
 
-  return { user, profile, loading, signOut }
+  return {
+    user: session?.user ?? null,
+    profile,
+    loading: status === 'loading',
+    signOut,
+  }
 }
