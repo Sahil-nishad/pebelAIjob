@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -8,7 +8,7 @@ import { Mail, Lock, CheckCircle2, LayoutDashboard, Search, BarChart3 } from 'lu
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { auth } from '@/lib/firebase'
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, type AuthError } from 'firebase/auth'
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult, type AuthError } from 'firebase/auth'
 
 function getAuthErrorMessage(err: unknown): string {
   const code = (err as AuthError)?.code
@@ -51,7 +51,23 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
-  async function handleSubmit(e: FormEvent) {
+  useEffect(() => {
+    setGoogleLoading(true)
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          router.push('/dashboard')
+        } else {
+          setGoogleLoading(false)
+        }
+      })
+      .catch((err) => {
+        setError(getAuthErrorMessage(err))
+        setGoogleLoading(false)
+      })
+  }, [router])
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
@@ -69,8 +85,7 @@ export default function LoginPage() {
     setError('')
     setGoogleLoading(true)
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider())
-      router.push('/dashboard')
+      await signInWithRedirect(auth, new GoogleAuthProvider())
     } catch (err) {
       setError(getAuthErrorMessage(err))
       setGoogleLoading(false)
