@@ -14,11 +14,9 @@ export function middleware(request: NextRequest) {
     const supabaseAuth = request.cookies.get('sb-access-token')?.value ||
       request.cookies.get('sb-refresh-token')?.value
 
-    // In development, allow access for easier testing
-    // In production, uncomment the redirect:
-    // if (!supabaseAuth) {
-    //   return NextResponse.redirect(new URL('/login', request.url))
-    // }
+    if (!supabaseAuth) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
   }
 
   return NextResponse.next()

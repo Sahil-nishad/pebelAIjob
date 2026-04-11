@@ -32,24 +32,24 @@ export function Modal({ open, onClose, children, title, className, size = 'md', 
   if (!open || typeof document === 'undefined') return null
 
   return createPortal(
-    <div className={cn(
-      'fixed inset-0 z-50 flex justify-center p-4 sm:p-6 overflow-y-auto',
+      <div className={cn(
+      'fixed inset-0 z-50 flex justify-center overflow-y-auto p-4 sm:p-6',
       centered ? 'items-center' : 'items-start'
     )}>
-      <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-950/12 backdrop-blur-[8px]" onClick={onClose} />
       <div
         className={cn(
-          'relative z-10 w-full bg-white shadow-[0_24px_48px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.04)] max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3rem)]',
+          'relative z-10 w-full bg-white text-slate-900 shadow-[0_24px_48px_rgba(15,23,42,0.12),0_0_0_1px_rgba(15,23,42,0.06)] max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3rem)]',
           size === 'drawer' ? 'fixed right-0 top-0 h-full animate-slide-in rounded-l-2xl' : centered ? 'animate-fade-up rounded-2xl' : 'animate-fade-up rounded-2xl',
           sizeStyles[size],
           className
         )}
       >
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-            <h2 className="text-[15px] font-semibold text-slate-900 font-[family-name:var(--font-heading)]">{title}</h2>
-            <button onClick={onClose} className="p-1.5 -mr-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
-              <X className="w-4 h-4 text-slate-400" />
+          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+            <h2 className="font-[family-name:var(--font-heading)] text-[15px] font-semibold text-slate-900">{title}</h2>
+            <button onClick={onClose} className="cursor-pointer rounded-lg p-1.5 -mr-1.5 transition-colors hover:bg-slate-100">
+              <X className="w-4 h-4 text-slate-500" />
             </button>
           </div>
         )}

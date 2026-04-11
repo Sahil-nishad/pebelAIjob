@@ -33,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${sora.variable} ${nunito.variable} h-full`}>
-      <body className="min-h-full flex flex-col antialiased">
+      <body className="min-h-full flex flex-col antialiased bg-[var(--bg-primary)] text-[var(--text-primary)]">
         {children}
         <Toaster
           position="bottom-right"
@@ -41,9 +41,10 @@ export default function RootLayout({
             duration: 3000,
             style: {
               borderRadius: "12px",
-              background: "#fff",
-              color: "#0F172A",
-              boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+              background: "#FFFFFF",
+              color: "#13211B",
+              border: "1px solid rgba(19,33,27,0.08)",
+              boxShadow: "0 18px 44px rgba(15,23,42,0.08)",
             },
           }}
         />

@@ -23,16 +23,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           className={cn(
             'w-full h-10 px-3.5 rounded-[10px] border border-slate-200 bg-white text-[13px] text-slate-900',
             'placeholder:text-slate-400',
-            'focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-400',
+            'focus:outline-none focus:ring-2 focus:ring-emerald-500/15 focus:border-emerald-300',
             'transition-all duration-150',
-            'shadow-[0_1px_2px_rgba(0,0,0,0.04)]',
+            'shadow-[0_1px_2px_rgba(15,23,42,0.04)]',
             error && 'border-red-300 focus:ring-red-500/15 focus:border-red-400',
-            props.disabled && 'bg-slate-50 text-slate-400',
+            props.disabled && 'bg-slate-50 text-slate-500',
             className
           )}
           {...props}
         />
-        {error && <p className="text-[12px] text-red-500 mt-0.5">{error}</p>}
+        {error && <p className="mt-0.5 text-[12px] text-red-400">{error}</p>}
       </div>
     )
   }

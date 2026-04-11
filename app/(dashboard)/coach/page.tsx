@@ -1,9 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useRef, useState, type ElementType } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Bot,
   Send,
   Plus,
   Brain,
@@ -18,6 +18,7 @@ import {
   SkipForward,
   HelpCircle,
   Clock,
+  Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -149,6 +150,21 @@ export default function CoachPage() {
     setElapsedSeconds(0)
   }
 
+  const deleteSession = async (id: string) => {
+    if (!confirm('Delete this coaching session?')) return
+    try {
+      const res = await authFetch(`/api/coach/sessions/${id}`, { method: 'DELETE' })
+      const data = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(data?.error || 'Failed to delete session')
+
+      setSessions((prev) => prev.filter((session) => session.id !== id))
+      if (sessionId === id) resetComposer()
+      toast.success('Session deleted')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete session')
+    }
+  }
+
   const startSession = async () => {
     if (!company || !selectedType) return
     setIsTyping(true)
@@ -217,35 +233,43 @@ export default function CoachPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-4 animate-fade-up">
+    <div className="mx-auto w-full max-w-[1600px] space-y-3 animate-fade-up">
       <div className="flex items-center justify-end">
         <Button onClick={resetComposer} className="shadow-sm">
           <Plus className="w-4 h-4" /> New Session
         </Button>
       </div>
 
-      <div className="grid min-h-[calc(100vh-12rem)] gap-6 xl:grid-cols-[18rem_minmax(0,1fr)] 2xl:grid-cols-[18rem_minmax(0,1fr)_18rem] items-start">
-        <aside className="hidden xl:flex flex-col gap-4 rounded-3xl border border-slate-100 bg-white/80 p-4 shadow-sm sticky top-24 max-h-[calc(100vh-16rem)]">
+      <div className="grid min-h-[calc(100vh-11rem)] items-start gap-6 xl:grid-cols-[18rem_minmax(0,1fr)] 2xl:grid-cols-[18rem_minmax(0,1fr)_18rem]">
+        <aside className="sticky top-20 hidden max-h-[calc(100vh-14rem)] flex-col gap-4 overflow-hidden rounded-3xl border border-slate-100 bg-white/80 p-4 shadow-sm xl:flex">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-900">Sessions</h3>
             <span className="text-[10px] uppercase tracking-[0.24em] text-slate-400">{sessions.length}</span>
           </div>
 
           <div className="flex-1 space-y-2 overflow-y-auto pr-1">
-            {sessions.length === 0 && (
-              <p className="py-4 text-center text-xs text-slate-400">No sessions yet</p>
-            )}
+            {sessions.length === 0 && <p className="py-4 text-center text-xs text-slate-400">No sessions yet</p>}
             {sessions.map((session) => (
               <div
                 key={session.id}
-                onClick={() => loadSession(session)}
-                className={`cursor-pointer rounded-xl border p-3 transition-colors hover:bg-slate-50 ${
+                className={`group rounded-xl border p-3 transition-colors hover:bg-slate-50 ${
                   sessionId === session.id ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-100'
                 }`}
               >
-                <p className="text-sm font-medium text-slate-900">{session.company}</p>
-                <p className="text-xs text-slate-500">{session.role}</p>
-                <div className="mt-2 flex items-center justify-between">
+                <div className="flex items-start justify-between gap-2">
+                  <button onClick={() => loadSession(session)} className="min-w-0 flex-1 text-left">
+                    <p className="text-sm font-medium text-slate-900">{session.company}</p>
+                    <p className="truncate text-xs text-slate-500">{session.role}</p>
+                  </button>
+                  <button
+                    onClick={() => deleteSession(session.id)}
+                    className="rounded-lg p-1.5 text-slate-400 opacity-0 transition-all hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                    title="Delete session"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-2">
                   <Badge variant="default" className="capitalize">
                     {session.session_type}
                   </Badge>
@@ -260,19 +284,25 @@ export default function CoachPage() {
 
         <main className="min-w-0 flex flex-col">
           {!hasSession ? (
-            <section className="flex-1 flex items-center justify-center px-2 py-4 sm:px-6">
-              <div className="w-full max-w-3xl space-y-6">
-                <div className="mx-auto max-w-xl text-center">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 shadow-sm">
-                    <Bot className="h-8 w-8 text-emerald-600" />
+            <section className="flex-1 px-2 pb-4 pt-0 sm:px-6">
+              <div className="w-full max-w-4xl rounded-[1.75rem] border border-slate-100 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+                <div className="border-b border-slate-100 px-6 py-5 sm:px-8">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 ring-1 ring-emerald-100">
+                      <Image src="/pebelai-mark.svg" alt="PebelAI" width={22} height={22} />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold font-[family-name:var(--font-heading)] text-slate-900">
+                        AI Interview Coach
+                      </h2>
+                      <p className="text-sm text-slate-500">
+                        Practice with AI tailored to your role and company
+                      </p>
+                    </div>
                   </div>
-                  <h2 className="mb-2 text-3xl font-bold font-[family-name:var(--font-heading)] text-slate-900">
-                    AI Interview Coach
-                  </h2>
-                  <p className="text-sm text-slate-500">Practice with AI tailored to your role and company</p>
                 </div>
 
-                <div className="space-y-5 rounded-3xl border border-slate-100 bg-white p-6 shadow-[0_12px_40px_rgba(15,23,42,0.06)] sm:p-8">
+                <div className="space-y-5 px-6 py-6 sm:px-8">
                   <Input
                     id="company"
                     label="Which company?"
@@ -296,7 +326,7 @@ export default function CoachPage() {
                           key={st.type}
                           type="button"
                           onClick={() => setSelectedType(st.type)}
-                          className={`flex cursor-pointer items-center gap-2 rounded-xl border p-3 text-sm font-medium transition-all ${
+                          className={`flex items-center gap-2 rounded-xl border p-3 text-sm font-medium transition-all cursor-pointer ${
                             selectedType === st.type
                               ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                               : 'border-slate-200 text-slate-600 hover:border-slate-300'
@@ -317,7 +347,7 @@ export default function CoachPage() {
               </div>
             </section>
           ) : (
-            <section className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+            <section className="flex min-h-0 flex-col overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white shadow-sm">
               <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-xs font-bold text-emerald-700">
@@ -331,12 +361,18 @@ export default function CoachPage() {
                     {selectedType}
                   </Badge>
                 </div>
-                <Button variant="ghost" size="sm" onClick={resetComposer}>
-                  End Session
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => deleteSession(sessionId || '')} disabled={!sessionId}>
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={resetComposer}>
+                    End Session
+                  </Button>
+                </div>
               </div>
 
-              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-[linear-gradient(180deg,#ffffff,rgba(248,250,252,0.7))] p-4 space-y-4">
+              <div className="flex min-h-0 flex-1 flex-col space-y-4 overflow-y-auto bg-[linear-gradient(180deg,#ffffff,rgba(248,250,252,0.7))] p-4">
                 {messages.map((msg, i) => (
                   <motion.div
                     key={i}
@@ -345,8 +381,8 @@ export default function CoachPage() {
                     className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     {msg.role === 'assistant' && (
-                      <div className="mr-2 mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100">
-                        <Bot className="h-4 w-4 text-emerald-600" />
+                      <div className="mr-2 mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-50 ring-1 ring-emerald-100">
+                        <Image src="/pebelai-mark.svg" alt="PebelAI" width={18} height={18} />
                       </div>
                     )}
                     <div
@@ -366,8 +402,8 @@ export default function CoachPage() {
 
                 {isTyping && (
                   <div className="flex items-center gap-2 px-4 py-3">
-                    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100">
-                      <Bot className="h-4 w-4 text-emerald-600" />
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-50 ring-1 ring-emerald-100">
+                      <Image src="/pebelai-mark.svg" alt="PebelAI" width={18} height={18} />
                     </div>
                     <div className="flex gap-1">
                       <div className="h-2 w-2 animate-bounce rounded-full bg-slate-300" style={{ animationDelay: '0ms' }} />
@@ -422,7 +458,7 @@ export default function CoachPage() {
         </main>
 
         {hasSession && (
-          <aside className="hidden 2xl:flex flex-col gap-4 sticky top-24 max-h-[calc(100vh-16rem)] overflow-y-auto">
+          <aside className="sticky top-20 hidden max-h-[calc(100vh-14rem)] flex-col gap-4 overflow-y-auto 2xl:flex">
             <Card>
               <h3 className="mb-3 text-sm font-semibold text-slate-900">Session Stats</h3>
               <div className="space-y-2 text-sm">

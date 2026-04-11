@@ -33,18 +33,18 @@ export function Sidebar() {
   const initial = displayName.charAt(0).toUpperCase()
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-[244px] bg-white border-r border-slate-200/60 z-40 hidden md:flex flex-col">
+    <aside className="fixed left-0 top-0 bottom-0 z-40 hidden w-[244px] flex-col border-r border-slate-200/80 bg-white/82 backdrop-blur-2xl shadow-[12px_0_40px_rgba(15,23,42,0.04)] md:flex">
       {/* Logo */}
-      <div className="px-5 h-16 flex items-center gap-2.5 shrink-0">
+      <div className="flex h-16 shrink-0 items-center gap-2.5 px-5">
         <Image src="/pebelai-mark.svg" alt="PebelAI" width={28} height={28} className="w-7 h-7" />
-        <span className="text-[15px] font-bold font-[family-name:var(--font-heading)] text-slate-900 tracking-tight">
+        <span className="font-[family-name:var(--font-heading)] text-[15px] font-bold tracking-tight text-slate-900">
           PebelAI
         </span>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
-        <p className="px-3 py-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Menu</p>
+        <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Menu</p>
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
           return (
@@ -52,32 +52,32 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150',
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150',
                 isActive
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/70'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               )}
             >
-              <item.icon className={cn('w-[18px] h-[18px]', isActive ? 'text-emerald-600' : 'text-slate-400')} />
+              <item.icon className={cn('h-[18px] w-[18px]', isActive ? 'text-emerald-600' : 'text-slate-400')} />
               {item.label}
-              {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+              {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-500" />}
             </Link>
           )
         })}
       </nav>
 
       {/* User */}
-      <div className="p-3 border-t border-slate-100 shrink-0">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-slate-50 transition-colors">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-[12px] font-bold text-white shadow-sm">
+      <div className="shrink-0 border-t border-slate-200 p-3">
+        <div className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-50">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-lime-500 text-[12px] font-bold text-white shadow-sm">
             {initial}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-medium text-slate-900 truncate">{displayName}</p>
-            <p className="text-[11px] text-slate-400 truncate">{displayEmail}</p>
+            <p className="truncate text-[13px] font-medium text-slate-900">{displayName}</p>
+            <p className="truncate text-[11px] text-slate-500">{displayEmail}</p>
           </div>
           <button onClick={signOut} className="cursor-pointer" title="Sign out">
-            <LogOut className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors shrink-0" />
+            <LogOut className="h-4 w-4 shrink-0 text-slate-400 transition-colors hover:text-slate-700" />
           </button>
         </div>
       </div>

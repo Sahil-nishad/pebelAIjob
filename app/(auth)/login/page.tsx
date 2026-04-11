@@ -55,45 +55,45 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left Panel */}
-      <div className="hidden lg:flex lg:w-[40%] flex-col justify-between bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500 p-10 text-white relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[40%] flex-col justify-between bg-gradient-to-br from-[#EEF8F1] via-[#E6F4EC] to-[#D8EDE0] p-10 text-slate-900 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 -left-10 w-64 h-64 rounded-full bg-white/20 blur-3xl" />
-          <div className="absolute bottom-40 right-0 w-80 h-80 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute top-20 -left-10 w-64 h-64 rounded-full bg-emerald-200/35 blur-3xl" />
+          <div className="absolute bottom-40 right-0 w-80 h-80 rounded-full bg-sky-200/25 blur-3xl" />
         </div>
 
         <div className="relative z-10">
           <div className="flex items-center gap-2.5 mb-12">
-            <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-8 w-auto brightness-0 invert" />
+            <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-8 w-auto" />
           </div>
 
           <h1 className="text-3xl font-bold font-[family-name:var(--font-heading)] leading-tight mb-4">
             Land your dream job,{' '}
-            <span className="text-emerald-100">organized.</span>
+            <span className="text-emerald-700">organized.</span>
           </h1>
-          <p className="text-emerald-100 text-base mb-10 max-w-sm">
+          <p className="text-slate-600 text-base mb-10 max-w-sm">
             The AI-powered job tracker that turns your search into a streamlined workflow.
           </p>
 
           <ul className="space-y-4">
             {features.map((feature) => (
               <li key={feature.text} className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 mt-0.5 text-emerald-200 shrink-0" />
-                <span className="text-sm text-emerald-50">{feature.text}</span>
+                <CheckCircle2 className="w-5 h-5 mt-0.5 text-emerald-600 shrink-0" />
+                <span className="text-sm text-slate-700">{feature.text}</span>
               </li>
             ))}
           </ul>
         </div>
 
         <div className="relative z-10 mt-auto pt-10">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+          <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-slate-200 shadow-sm">
             <div className="flex gap-3">
               {['Applied', 'Interview', 'Offer'].map((col) => (
                 <div key={col} className="flex-1">
-                  <div className="text-xs font-medium text-emerald-200 mb-2">{col}</div>
+                  <div className="text-xs font-medium text-emerald-700 mb-2">{col}</div>
                   <div className="space-y-2">
-                    <div className="bg-white/15 rounded-lg h-8" />
-                    <div className="bg-white/10 rounded-lg h-8" />
-                    {col === 'Applied' && <div className="bg-white/10 rounded-lg h-8" />}
+                    <div className="bg-white rounded-lg h-8 border border-slate-200" />
+                    <div className="bg-slate-50 rounded-lg h-8 border border-slate-200" />
+                    {col === 'Applied' && <div className="bg-slate-50 rounded-lg h-8 border border-slate-200" />}
                   </div>
                 </div>
               ))}

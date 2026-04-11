@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   }
 
   const systemMessage = {
-    role: 'system',
+    role: 'system' as const,
     content: `You are an expert interview coach. The user is preparing for:
 - Company: ${company}
 - Role: ${role}

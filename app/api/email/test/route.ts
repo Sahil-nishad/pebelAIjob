@@ -30,10 +30,12 @@ export async function POST(req: NextRequest) {
       to: user.email,
       reminder: fakeReminder,
     })
-    if (!result) {
-      return NextResponse.json({ error: 'Resend API key not configured. Add a valid RESEND_API_KEY to .env.local' }, { status: 400 })
-    }
-    return NextResponse.json({ ok: true, sent_to: user.email, provider: 'resend' })
+    return NextResponse.json({
+      ok: true,
+      sent_to: user.email,
+      provider: 'smtp',
+      message_id: result.id,
+    })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[email/test]', msg)

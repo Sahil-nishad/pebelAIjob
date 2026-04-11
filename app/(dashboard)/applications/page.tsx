@@ -32,10 +32,10 @@ function AppCard({ app, onDelete }: { app: Application; onDelete: (id: string) =
   const isOverdue = app.next_action_date && new Date(app.next_action_date) < new Date()
 
   return (
-    <div className="group rounded-xl border border-slate-100 bg-white p-3.5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+    <div className="group rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_18px_38px_rgba(15,23,42,0.08)]">
       <div className="mb-2 flex items-start justify-between">
         <Link href={`/applications/${app.id}`} className="flex min-w-0 flex-1 items-center gap-2">
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-600">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-50 to-slate-50 text-xs font-bold text-slate-600 ring-1 ring-slate-200">
             {app.company_name.charAt(0)}
           </div>
           <div className="min-w-0">
@@ -48,7 +48,7 @@ function AppCard({ app, onDelete }: { app: Application; onDelete: (id: string) =
             e.preventDefault()
             onDelete(app.id)
           }}
-          className="ml-1 rounded p-1 opacity-0 transition-all hover:bg-red-50 group-hover:opacity-100 cursor-pointer"
+          className="ml-1 cursor-pointer rounded p-1 opacity-0 transition-all hover:bg-red-50 group-hover:opacity-100"
         >
           <MoreVertical className="h-3.5 w-3.5 text-slate-400" />
         </button>
@@ -76,7 +76,7 @@ function AppCard({ app, onDelete }: { app: Application; onDelete: (id: string) =
       {app.next_action_date && (
         <div className={`mt-2 flex items-center gap-1 text-[11px] ${isOverdue ? 'text-red-500' : 'text-amber-500'}`}>
           <Calendar className="h-3 w-3" />
-          {app.next_action || 'Follow up'} · {app.next_action_date}
+          {app.next_action || 'Follow up'} - {app.next_action_date}
         </div>
       )}
 
@@ -219,13 +219,21 @@ export default function ApplicationsPage() {
         )}
 
         {view === 'kanban' && applications.length > 0 && (
-          <div className="grid grid-cols-1 gap-4 pb-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 items-start">
+          <div className="grid grid-cols-1 items-start gap-4 overflow-x-hidden pb-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
             {stages.map((stage) => {
               const config = statusConfig[stage]
               const stageApps = getAppsByStatus(stage)
+              const isGhosted = stage === 'ghosted'
 
               return (
-                <section key={stage} className="min-w-0 rounded-2xl border border-slate-100 bg-slate-50/60 p-3 shadow-sm">
+                <section
+                  key={stage}
+                  className={`min-w-0 rounded-2xl border p-3 shadow-sm ${
+                    isGhosted
+                      ? 'border-slate-200 bg-gradient-to-b from-slate-50 to-white ring-1 ring-slate-100'
+                      : 'border-slate-200 bg-white/75'
+                  }`}
+                >
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className={`text-sm font-semibold ${config.text}`}>{config.label}</span>
@@ -234,7 +242,7 @@ export default function ApplicationsPage() {
                       </span>
                     </div>
                     <button
-                      className="cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-white"
+                      className="cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-slate-100"
                       onClick={() => setShowAddModal(true)}
                       title={`Add application to ${config.label}`}
                     >
@@ -255,7 +263,11 @@ export default function ApplicationsPage() {
                     ))}
 
                     {stageApps.length === 0 && (
-                      <div className="rounded-xl border-2 border-dashed border-slate-200 bg-white/60 p-6 text-center">
+                      <div
+                        className={`rounded-xl border-2 border-dashed p-6 text-center ${
+                          isGhosted ? 'border-slate-300 bg-white' : 'border-slate-200 bg-white/70'
+                        }`}
+                      >
                         <p className="text-xs text-slate-400">No applications in {config.label.toLowerCase()}</p>
                       </div>
                     )}
@@ -272,7 +284,7 @@ export default function ApplicationsPage() {
               {applications.map((app) => {
                 const config = statusConfig[app.status]
                 return (
-                  <div key={app.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                  <div key={app.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <Link href={`/applications/${app.id}`} className="flex min-w-0 flex-1 items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold text-slate-600">
@@ -353,7 +365,7 @@ export default function ApplicationsPage() {
                           <Badge variant={badgeVariant(app.status)}>{config.label}</Badge>
                         </td>
                         <td className="hidden px-4 py-3 text-sm text-slate-500 sm:table-cell">{app.applied_date}</td>
-                        <td className="hidden px-4 py-3 text-sm text-slate-500 md:table-cell">{app.next_action || '—'}</td>
+                        <td className="hidden px-4 py-3 text-sm text-slate-500 md:table-cell">{app.next_action || '�'}</td>
                         <td className="hidden px-4 py-3 lg:table-cell">
                           <div className="flex gap-0.5">
                             {[1, 2, 3, 4, 5].map((n) => (
@@ -395,3 +407,4 @@ export default function ApplicationsPage() {
     </>
   )
 }
+

@@ -25,14 +25,14 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
 
   if (!checked) {
     return (
-      <div className="min-h-screen bg-[#F8F9FC] flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)]">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500/35 border-t-emerald-600" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FC]">
+    <div className="min-h-screen bg-[var(--bg-primary)]">
       <Sidebar />
       <TopNav />
       <main className="md:ml-[244px] mt-0 md:mt-16 pb-24 md:pb-8 p-4 md:p-6 lg:p-8">

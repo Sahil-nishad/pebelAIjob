@@ -1,49 +1,59 @@
-import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
 import type { Reminder, Application } from '@/types'
 import { generateGoogleCalendarUrl, generateICSContent } from './calendar'
 
-const RESEND_KEY = process.env.RESEND_API_KEY
-const isResendConfigured = RESEND_KEY && RESEND_KEY !== 'your_resend_api_key'
-const resend = isResendConfigured ? new Resend(RESEND_KEY) : null
-const DEFAULT_FROM = 'PebelAI <onboarding@resend.dev>'
-const FREE_EMAIL_DOMAINS = new Set([
-  'gmail.com',
-  'googlemail.com',
-  'yahoo.com',
-  'outlook.com',
-  'hotmail.com',
-  'live.com',
-  'icloud.com',
-  'me.com',
-  'aol.com',
-])
+const SMTP_HOST = process.env.SMTP_HOST?.trim() || 'smtp.gmail.com'
+const SMTP_PORT = Number(process.env.SMTP_PORT || '587')
+const SMTP_USER = process.env.SMTP_USER?.trim() || 'pebel439@gmail.com'
+const SMTP_PASS = process.env.SMTP_PASS?.trim()
+const DEFAULT_FROM = `PebelAI <${SMTP_USER}>`
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-function ensureResend() {
-  if (!resend) {
-    console.warn('[email] Resend not configured - skipping email send')
+function ensureTransport() {
+  if (!SMTP_PASS) {
+    console.warn('[email] SMTP not configured - skipping email send')
     return null
   }
-  return resend
+
+  return nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_PORT === 465,
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASS,
+    },
+  })
 }
 
-function getResendFromAddress() {
-  const configured = process.env.RESEND_FROM_EMAIL?.trim()
-  if (!configured) return DEFAULT_FROM
+function getSmtpFromAddress() {
+  return process.env.SMTP_FROM_EMAIL?.trim() || DEFAULT_FROM
+}
 
-  const match = configured.match(/<([^>]+)>/)
-  const address = (match ? match[1] : configured).trim().toLowerCase()
-  const domain = address.split('@')[1]
-
-  if (domain && FREE_EMAIL_DOMAINS.has(domain)) {
-    console.warn(`[email] RESEND_FROM_EMAIL uses a consumer mailbox (${domain}); falling back to ${DEFAULT_FROM}`)
-    return DEFAULT_FROM
+async function sendWithResend(params: {
+  from: string
+  to: string | string[]
+  subject: string
+  html: string
+}) {
+  const transport = ensureTransport()
+  if (!transport) {
+    throw new Error('SMTP is not configured. Add SMTP_HOST, SMTP_PORT, SMTP_USER and SMTP_PASS to .env.local')
   }
 
-  return configured
-}
+  const info = await transport.sendMail({
+    from: params.from,
+    to: params.to,
+    subject: params.subject,
+    html: params.html,
+  })
 
-// ─── Shared HTML Helpers ───────────────────────────────────────────────────
+  if (!info.messageId) {
+    throw new Error('SMTP did not return a message id')
+  }
+
+  return { id: info.messageId }
+}// ─── Shared HTML Helpers ──────────────────────────────────────────────────
 
 function baseLayout(title: string, body: string) {
   return `<!DOCTYPE html>
@@ -137,7 +147,7 @@ function statusBadge(status: string) {
   return `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;color:#fff;background:${color};">${labels[status] || status}</span>`
 }
 
-// ─── Email: Reminder Due ───────────────────────────────────────────────────
+// ─── Email: Reminder Due ──────────────────────────────────────────────────
 
 export async function sendReminderEmail({
   to,
@@ -219,17 +229,15 @@ export async function sendReminderEmail({
     ` : ''}
   `
 
-  const r = ensureResend()
-  if (!r) return null
-  return r.emails.send({
-    from: getResendFromAddress(),
+  return sendWithResend({
+    from: getSmtpFromAddress(),
     to,
     subject: `${emoji} Reminder: ${reminder.title}${application ? ` — ${application.company_name}` : ''}`,
     html: baseLayout(`Reminder: ${reminder.title}`, body),
   })
 }
 
-// ─── Email: Interview Scheduled ────────────────────────────────────────────
+// ─── Email: Interview Scheduled ──────────────────────────────────────────────────
 
 export async function sendInterviewScheduledEmail({
   to,
@@ -346,10 +354,8 @@ export async function sendInterviewScheduledEmail({
     </p>
   `
 
-  const r = ensureResend()
-  if (!r) return null
-  return r.emails.send({
-    from: getResendFromAddress(),
+  return sendWithResend({
+    from: getSmtpFromAddress(),
     to,
     subject: `🎯 Interview scheduled — ${application.company_name} (${dateStr})`,
     html: baseLayout('Interview Scheduled', body),
@@ -401,17 +407,15 @@ export async function sendApplicationConfirmationEmail({
     </p>
   `
 
-  const r = ensureResend()
-  if (!r) return null
-  return r.emails.send({
-    from: getResendFromAddress(),
+  return sendWithResend({
+    from: getSmtpFromAddress(),
     to,
     subject: `✅ Application tracked — ${application.company_name} (${application.role_title})`,
     html: baseLayout('Application Tracked', body),
   })
 }
 
-// ─── Email: Daily Digest ───────────────────────────────────────────────────
+// ─── Email: Daily Digest ──────────────────────────────────────────────────
 
 export async function sendDailyDigestEmail({
   to,
@@ -468,10 +472,8 @@ export async function sendDailyDigestEmail({
     </a>
   `
 
-  const r = ensureResend()
-  if (!r) return null
-  return r.emails.send({
-    from: getResendFromAddress(),
+  return sendWithResend({
+    from: getSmtpFromAddress(),
     to,
     subject: `📋 PebelAI Digest — ${reminders.length} reminder${reminders.length > 1 ? 's' : ''} for ${today}`,
     html: baseLayout('Daily Digest', body),

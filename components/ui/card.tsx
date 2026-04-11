@@ -19,10 +19,10 @@ export function Card({ children, className, hover, glass, padding = 'md' }: Card
   return (
     <div
       className={cn(
-        'rounded-2xl border border-slate-200/60 bg-white',
-        'shadow-[0_1px_3px_rgba(0,0,0,0.04)]',
+        'rounded-2xl border border-slate-200 bg-white/90 text-slate-900',
+        'shadow-[0_16px_34px_rgba(15,23,42,0.06)]',
         paddingStyles[padding],
-        hover && 'transition-all duration-200 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] hover:border-slate-200',
+        hover && 'transition-all duration-200 hover:-translate-y-px hover:shadow-[0_20px_42px_rgba(15,23,42,0.08)] hover:border-emerald-200',
         glass && 'glass',
         className
       )}

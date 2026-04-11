@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { requireAuth, unauthorized } from '@/lib/auth'
 
 export async function PATCH(req: NextRequest) {

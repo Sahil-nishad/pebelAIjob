@@ -66,3 +66,10 @@ export function deleteCoachSessions(userId: string) {
     }
   }
 }
+
+export function deleteCoachSession(id: string, userId?: string) {
+  const session = store.get(id)
+  if (!session) return false
+  if (userId && session.user_id !== userId) return false
+  return store.delete(id)
+}

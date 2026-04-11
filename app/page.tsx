@@ -13,12 +13,9 @@ import {
   Sparkles,
   Zap,
   Shield,
-  Globe,
-  ChevronRight,
   Play,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 
 /* ─── Navbar ─── */
 function Navbar() {
@@ -316,7 +313,7 @@ export default function LandingPage() {
                 transition={{ delay: i * 0.12 }}
                 className="relative"
               >
-                <span className="text-[64px] font-bold font-[family-name:var(--font-heading)] text-slate-100 leading-none select-none">{item.step}</span>
+                <span className="text-[64px] font-bold font-[family-name:var(--font-heading)] text-slate-200 leading-none select-none">{item.step}</span>
                 <h3 className="text-[16px] font-semibold font-[family-name:var(--font-heading)] text-slate-900 mt-1 mb-2">{item.title}</h3>
                 <p className="text-[13px] text-slate-500 leading-relaxed">{item.desc}</p>
               </motion.div>

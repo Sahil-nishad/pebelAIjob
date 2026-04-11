@@ -14,15 +14,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    'bg-emerald-500 text-white hover:bg-emerald-600 active:bg-emerald-700 shadow-[0_1px_2px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.15)]',
+    'bg-gradient-to-r from-emerald-500 to-emerald-400 text-white hover:from-emerald-400 hover:to-emerald-300 active:from-emerald-600 active:to-emerald-500 shadow-[0_12px_28px_rgba(47,133,90,0.18)]',
   secondary:
-    'bg-slate-900 text-white hover:bg-slate-800 active:bg-slate-700 shadow-[0_1px_2px_rgba(0,0,0,0.1)]',
+    'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50 active:bg-slate-100 shadow-[0_10px_24px_rgba(15,23,42,0.06)]',
   ghost:
-    'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 active:bg-slate-200/60',
+    'text-slate-600 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200/70',
   danger:
     'bg-red-500 text-white hover:bg-red-600 active:bg-red-700 shadow-[0_1px_2px_rgba(0,0,0,0.05)]',
   outline:
-    'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100 shadow-[0_1px_2px_rgba(0,0,0,0.04)]',
+    'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100 shadow-[0_10px_24px_rgba(15,23,42,0.05)]',
 }
 
 const sizeStyles: Record<Size, string> = {
@@ -37,7 +37,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          'relative inline-flex items-center justify-center font-medium rounded-[10px] transition-all duration-150 cursor-pointer select-none',
+          'relative inline-flex items-center justify-center font-medium rounded-[10px] transition-all duration-150 cursor-pointer select-none backdrop-blur-sm',
           'disabled:opacity-45 disabled:cursor-not-allowed disabled:pointer-events-none',
           variantStyles[variant],
           sizeStyles[size],
