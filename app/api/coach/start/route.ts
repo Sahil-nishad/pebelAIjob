@@ -97,7 +97,7 @@ Start by briefly introducing yourself, then ask the first question in a friendly
       company,
       role,
       session_type: sessionType,
-      messages: [systemMessage, { role: 'assistant', content: assistantMessage }],
+      messages: [systemMessage, { role: 'assistant' as const, content: assistantMessage }],
       question_count: 0,
       avg_score: null,
     })
@@ -107,7 +107,7 @@ Start by briefly introducing yourself, then ask the first question in a friendly
   await supabase
     .from('coach_sessions')
     .update({
-      messages: [systemMessage, { role: 'assistant', content: assistantMessage }],
+      messages: [systemMessage, { role: 'assistant' as const, content: assistantMessage }],
     })
     .eq('id', session.id)
 
