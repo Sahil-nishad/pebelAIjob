@@ -8,7 +8,34 @@ import { Mail, Lock, CheckCircle2, LayoutDashboard, Search, BarChart3 } from 'lu
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { auth } from '@/lib/firebase'
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, type AuthError } from 'firebase/auth'
+
+function getAuthErrorMessage(err: unknown): string {
+  const code = (err as AuthError)?.code
+  switch (code) {
+    case 'auth/invalid-credential':
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+      return 'Incorrect email or password.'
+    case 'auth/invalid-email':
+      return 'Invalid email address.'
+    case 'auth/user-disabled':
+      return 'This account has been disabled.'
+    case 'auth/too-many-requests':
+      return 'Too many failed attempts. Please try again later.'
+    case 'auth/network-request-failed':
+      return 'Network error. Please check your connection.'
+    case 'auth/popup-closed-by-user':
+      return 'Sign-in popup was closed before completing.'
+    case 'auth/cancelled-popup-request':
+      return ''
+    case 'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
+    case 'auth/invalid-api-key':
+      return 'Authentication is misconfigured. Please contact support.'
+    default:
+      return code ? `Sign-in failed (${code}).` : 'Sign-in failed. Please try again.'
+  }
+}
 
 const features = [
   { icon: LayoutDashboard, text: 'Visual Kanban board to track every application' },
@@ -33,8 +60,7 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password)
       router.push('/dashboard')
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Login failed'
-      setError(msg.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim())
+      setError(getAuthErrorMessage(err))
       setLoading(false)
     }
   }
@@ -46,8 +72,7 @@ export default function LoginPage() {
       await signInWithPopup(auth, new GoogleAuthProvider())
       router.push('/dashboard')
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Google sign-in failed'
-      setError(msg.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim())
+      setError(getAuthErrorMessage(err))
       setGoogleLoading(false)
     }
   }
