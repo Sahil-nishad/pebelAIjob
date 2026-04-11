@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Mail, Lock, User, CheckCircle2, LayoutDashboard, MessageSquare, Bell, FileSearch } from 'lucide-react'
@@ -19,8 +19,9 @@ const features = [
 const jobTypes = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Any']
 const experienceLevels = ['Entry', 'Mid', 'Senior', 'Executive']
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -29,6 +30,11 @@ export default function SignupPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+
+  useEffect(() => {
+    const errorCode = searchParams.get('error')
+    if (errorCode) setError('Google sign-in failed. Please try again.')
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -200,5 +206,13 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   )
 }
