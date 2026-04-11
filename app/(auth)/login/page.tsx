@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Mail, Lock, CheckCircle2, LayoutDashboard, Search, BarChart3 } from 'lucide-react'
@@ -15,13 +15,30 @@ const features = [
   { icon: BarChart3, text: 'Analytics and insights on your job search' },
 ]
 
-export default function LoginPage() {
+function getOAuthErrorMessage(code: string | null): string {
+  switch (code) {
+    case 'OAuthCallback':
+    case 'OAuthCallbackError': return 'Google sign-in failed. Please try again.'
+    case 'OAuthAccountNotLinked': return 'This email is already registered. Sign in with your password instead.'
+    case 'Callback': return 'Sign-in callback error. Please try again.'
+    case 'AccessDenied': return 'Access denied. Please try again.'
+    default: return code ? 'Sign-in failed. Please try again.' : ''
+  }
+}
+
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+
+  useEffect(() => {
+    const errorCode = searchParams.get('error')
+    if (errorCode) setError(getOAuthErrorMessage(errorCode))
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -202,5 +219,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }
