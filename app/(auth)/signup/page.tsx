@@ -81,7 +81,7 @@ function SignupForm() {
 
         <div className="relative z-10">
           <div className="flex items-center gap-2.5 mb-12">
-            <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-8 w-auto" />
+            <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-10 w-auto max-w-[180px]" />
           </div>
 
           <h1 className="text-3xl font-bold font-[family-name:var(--font-heading)] leading-tight mb-4">
@@ -123,7 +123,7 @@ function SignupForm() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-white">
         <div className="w-full max-w-md">
           <div className="flex items-center gap-2.5 mb-8 lg:hidden">
-            <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-8 w-auto" />
+            <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-10 w-auto max-w-[180px]" />
           </div>
 
           <h2 className="text-2xl font-bold font-[family-name:var(--font-heading)] text-slate-900 mb-1">Start your job hunt</h2>
