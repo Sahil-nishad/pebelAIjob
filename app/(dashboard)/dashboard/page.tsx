@@ -152,11 +152,11 @@ export default function DashboardPage() {
                 <Loader2 className="w-5 h-5 text-slate-300 animate-spin" />
               </div>
             ) : (
-              <div className="flex gap-4 overflow-x-auto pb-4 -mx-1 px-1 snap-x snap-mandatory scrollbar-hide scroll-smooth">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 {Object.entries(pipeline).map(([status, apps]) => {
                   const config = statusConfig[status]
                   return (
-                    <div key={status} className="min-w-[150px] sm:min-w-[130px] flex-shrink-0 snap-start">
+                    <div key={status} className="min-w-0">
                       <div className="flex items-center gap-1.5 mb-2">
                         <span className="text-[11px] font-semibold text-slate-500">{config.label}</span>
                         <span className="text-[10px] text-slate-400 ml-auto">{apps.length}</span>
