@@ -29,7 +29,7 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-[var(--bg-primary)]">
       <Sidebar />
       <TopNav />
-      <main className="md:ml-[244px] mt-0 md:mt-24 pb-24 md:pb-8 p-4 md:p-6 lg:p-12">
+      <main className="md:ml-[244px] mt-16 md:mt-24 pb-24 md:pb-8 p-4 md:p-6 lg:p-12">
         {children}
       </main>
       <MobileNav />
