@@ -27,11 +27,11 @@ const columnLabel: Record<ApplicationStatus, string> = {
   ghosted:      'Ghosted',
 }
 
-// ── Kanban card ──────────────────────────────────────────────────────────────
+// ── Desktop kanban card ───────────────────────────────────────────────────────
 function AppCard({ app, onDelete }: { app: Application; onDelete: (id: string) => void }) {
-  const isOffer    = app.status === 'offer'
-  const isOverdue  = app.next_action_date && new Date(app.next_action_date) < new Date()
-  const hasSalary  = app.salary_min || app.salary_max
+  const isOffer   = app.status === 'offer'
+  const isOverdue = app.next_action_date && new Date(app.next_action_date) < new Date()
+  const hasSalary = app.salary_min || app.salary_max
 
   return (
     <div className={cn(
@@ -39,8 +39,6 @@ function AppCard({ app, onDelete }: { app: Application; onDelete: (id: string) =
       'shadow-[0px_4px_20px_rgba(0,83,68,0.05)] hover:shadow-[0px_8px_28px_rgba(0,83,68,0.10)]',
       isOffer && 'border-2 border-[#0A6A47] ring-4 ring-emerald-50',
     )}>
-
-      {/* Offer winner ribbon */}
       {isOffer && (
         <div className="absolute top-0 right-0 overflow-hidden w-12 h-12 rounded-xl">
           <div className="bg-[#0A6A47] text-white text-[8px] font-black uppercase tracking-tight px-2 py-1 transform rotate-45 translate-x-3 -translate-y-1 w-14 text-center">
@@ -48,8 +46,6 @@ function AppCard({ app, onDelete }: { app: Application; onDelete: (id: string) =
           </div>
         </div>
       )}
-
-      {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <Link href={`/applications/${app.id}`} className="flex items-center gap-2 min-w-0 flex-1">
           <div className="w-9 h-9 rounded-lg bg-[#F1F5F2] flex items-center justify-center text-sm font-bold text-[#0A6A47] flex-shrink-0">
@@ -60,20 +56,14 @@ function AppCard({ app, onDelete }: { app: Application; onDelete: (id: string) =
             <p className="text-[11px] text-slate-400 truncate">{app.company_name}</p>
           </div>
         </Link>
-        <span className="text-[10px] font-semibold text-slate-400 flex-shrink-0 ml-1">
-          {app.applied_date}
-        </span>
+        <span className="text-[10px] font-semibold text-slate-400 flex-shrink-0 ml-1">{app.applied_date}</span>
       </div>
-
-      {/* Next action */}
       {app.next_action_date && (
         <div className={cn('flex items-center gap-1 text-[10px] mb-2', isOverdue ? 'text-red-500' : 'text-amber-500')}>
           <Calendar className="w-3 h-3 flex-shrink-0" />
           {app.next_action || 'Follow up'} · {app.next_action_date}
         </div>
       )}
-
-      {/* Salary (offer) */}
       {isOffer && hasSalary && (
         <div className="mt-2 pt-3 border-t border-stone-100">
           <span className="text-[#0A6A47] font-bold text-[11px]">
@@ -83,8 +73,6 @@ function AppCard({ app, onDelete }: { app: Application; onDelete: (id: string) =
           </span>
         </div>
       )}
-
-      {/* Stars + delete */}
       <div className="flex items-center justify-between mt-3">
         <div className="flex items-center gap-0.5">
           {[1, 2, 3, 4, 5].map(n => (
@@ -102,7 +90,43 @@ function AppCard({ app, onDelete }: { app: Application; onDelete: (id: string) =
   )
 }
 
-// ── Badge helper (list view) ──────────────────────────────────────────────────
+// ── Mobile list card ──────────────────────────────────────────────────────────
+const mobileBadgeColor: Record<string, string> = {
+  applied:      'text-blue-600 bg-blue-50',
+  phone_screen: 'text-blue-600 bg-blue-50',
+  interviewing: 'text-amber-600 bg-amber-50',
+  offer:        'text-emerald-600 bg-emerald-50',
+  rejected:     'text-red-500 bg-red-50',
+  ghosted:      'text-slate-400 bg-slate-100',
+}
+
+function MobileAppCard({ app, onDelete }: { app: Application; onDelete: (id: string) => void }) {
+  const config = statusConfig[app.status]
+  return (
+    <div className="flex items-center gap-3 bg-white rounded-2xl p-4 shadow-[0px_2px_12px_rgba(0,0,0,0.06)]">
+      <Link href={`/applications/${app.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="w-11 h-11 rounded-xl bg-[#13211B] flex items-center justify-center text-white text-[15px] font-bold flex-shrink-0">
+          {app.company_name.charAt(0).toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[14px] font-bold text-slate-900 truncate">{app.role_title}</p>
+          <p className="text-[12px] font-semibold text-[#0A6A47] truncate">{app.company_name}</p>
+          <span className={cn('inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-1', mobileBadgeColor[app.status] || 'text-slate-500 bg-slate-100')}>
+            ● {config.label.toUpperCase()}
+          </span>
+        </div>
+      </Link>
+      <div className="flex flex-col items-end gap-2 flex-shrink-0">
+        <span className="text-[11px] text-slate-400">{app.applied_date}</span>
+        <button onClick={() => onDelete(app.id)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors">
+          <Trash2 className="w-3.5 h-3.5 text-slate-300 hover:text-red-400" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Badge helper (desktop list view) ─────────────────────────────────────────
 const badgeVariant = (status: string): 'info' | 'warning' | 'success' | 'danger' | 'ghost' | 'default' => {
   const map: Record<string, 'info' | 'warning' | 'success' | 'danger' | 'ghost'> = {
     applied: 'info', phone_screen: 'info', interviewing: 'warning',
@@ -115,6 +139,7 @@ const badgeVariant = (status: string): 'info' | 'warning' | 'success' | 'danger'
 export default function ApplicationsPage() {
   const [view, setView]           = useState<'kanban' | 'list'>('kanban')
   const [showAddModal, setShow]   = useState(false)
+  const [activeTab, setActiveTab] = useState<ApplicationStatus>('applied')
   const { applications, loading, fetchApplications, deleteApplication, setApplications } = useApplications()
 
   const getByStatus = useCallback(
@@ -175,11 +200,102 @@ export default function ApplicationsPage() {
     )
   }
 
+  const tabApps = getByStatus(activeTab)
+
   return (
     <>
-      <div className="animate-fade-up">
+      {/* ════════════════════════════════════════
+          MOBILE VIEW — tab-based list
+      ════════════════════════════════════════ */}
+      <div className="md:hidden animate-fade-up">
 
-        {/* ── Hero header ── */}
+        {/* Header */}
+        <div className="mb-5">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-1">Career Management</p>
+          <h1 className="text-[1.75rem] font-bold leading-none tracking-tight text-slate-900">Applications Board</h1>
+        </div>
+
+        {/* Status tab strip */}
+        <div className="flex gap-2 overflow-x-auto pb-3 -mx-4 px-4 scrollbar-hide mb-5">
+          {stages.map(stage => {
+            const count    = getByStatus(stage).length
+            const isActive = activeTab === stage
+            return (
+              <button
+                key={stage}
+                onClick={() => setActiveTab(stage)}
+                className={cn(
+                  'flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-bold transition-all',
+                  isActive
+                    ? 'bg-[#0A6A47] text-white shadow-sm'
+                    : 'bg-white text-slate-500 shadow-[0px_2px_8px_rgba(0,0,0,0.06)]'
+                )}
+              >
+                {columnLabel[stage]}
+                <span className={cn(
+                  'text-[10px] font-black px-1.5 py-0.5 rounded-full',
+                  isActive ? 'bg-white/20 text-white' : 'bg-stone-100 text-slate-500'
+                )}>
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Cards for active tab */}
+        <div className="space-y-3">
+          {tabApps.length === 0 ? (
+            <div className="rounded-2xl border-2 border-dashed border-slate-100 p-10 text-center">
+              <p className="text-[13px] text-slate-400 mb-3">No applications in this stage.</p>
+              <button
+                onClick={() => setShow(true)}
+                className="text-[#0A6A47] text-[13px] font-bold underline underline-offset-2"
+              >
+                Add one now
+              </button>
+            </div>
+          ) : (
+            tabApps.map((app, i) => (
+              <motion.div
+                key={app.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+              >
+                <MobileAppCard app={app} onDelete={handleDelete} />
+              </motion.div>
+            ))
+          )}
+        </div>
+
+        {/* Add link at bottom of list */}
+        {tabApps.length > 0 && (
+          <button
+            onClick={() => setShow(true)}
+            className="mt-4 w-full py-4 rounded-2xl border-2 border-dashed border-slate-100 text-[13px] text-slate-400 font-semibold hover:border-emerald-200 hover:text-[#0A6A47] transition-colors"
+          >
+            + Add new application
+          </button>
+        )}
+
+        {/* Floating action button */}
+        <button
+          onClick={() => setShow(true)}
+          className="fixed bottom-24 right-5 z-50 flex items-center justify-center bg-[#0A6A47] text-white rounded-full shadow-lg hover:bg-[#005344] active:scale-95 transition-all"
+          style={{ width: 52, height: 52 }}
+          aria-label="Add application"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* ════════════════════════════════════════
+          DESKTOP VIEW — kanban / list
+      ════════════════════════════════════════ */}
+      <div className="hidden md:block animate-fade-up">
+
+        {/* Hero header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
             <h1 className="text-[2.5rem] md:text-[3rem] font-bold leading-none tracking-tight text-slate-900">
@@ -225,7 +341,7 @@ export default function ApplicationsPage() {
           </div>
         </div>
 
-        {/* ── Empty state ── */}
+        {/* Empty state */}
         {applications.length === 0 && (
           <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-12 text-center">
             <p className="text-sm text-slate-400 mb-4">No applications yet.</p>
@@ -238,17 +354,15 @@ export default function ApplicationsPage() {
           </div>
         )}
 
-        {/* ── Kanban board ── */}
+        {/* Kanban board */}
         {view === 'kanban' && applications.length > 0 && (
-          <div className="overflow-x-auto pb-4 -mx-4 md:-mx-6 lg:-mx-12 px-4 md:px-6 lg:px-12">
+          <div className="overflow-x-auto pb-4 -mx-6 lg:-mx-12 px-6 lg:px-12">
             <div className="grid grid-cols-6 gap-4 min-w-[900px]">
               {stages.map(stage => {
-                const stageApps    = getByStatus(stage)
-                const isFaded      = stage === 'rejected' || stage === 'ghosted'
+                const stageApps      = getByStatus(stage)
+                const isFaded        = stage === 'rejected' || stage === 'ghosted'
                 const isInterviewing = stage === 'interviewing'
-                const nextInterview  = isInterviewing
-                  ? stageApps.find(a => a.next_action_date)
-                  : null
+                const nextInterview  = isInterviewing ? stageApps.find(a => a.next_action_date) : null
 
                 return (
                   <div
@@ -267,7 +381,6 @@ export default function ApplicationsPage() {
                         <button
                           onClick={() => setShow(true)}
                           className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-stone-200 transition-colors"
-                          title={`Add to ${columnLabel[stage]}`}
                         >
                           <Plus className="w-3 h-3 text-slate-400" />
                         </button>
@@ -316,110 +429,67 @@ export default function ApplicationsPage() {
           </div>
         )}
 
-        {/* ── List view ── */}
+        {/* List view */}
         {view === 'list' && applications.length > 0 && (
-          <div className="space-y-4">
-            {/* Mobile cards */}
-            <div className="grid gap-3 lg:hidden">
-              {applications.map(app => {
-                const config = statusConfig[app.status]
-                return (
-                  <div key={app.id} className="bg-white rounded-xl p-4 shadow-[0px_4px_20px_rgba(0,83,68,0.05)]">
-                    <div className="flex items-start justify-between gap-3">
-                      <Link href={`/applications/${app.id}`} className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="w-10 h-10 rounded-xl bg-[#F1F5F2] flex items-center justify-center text-sm font-bold text-[#0A6A47] flex-shrink-0">
-                          {app.company_name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[13px] font-bold text-slate-900 truncate">{app.company_name}</p>
-                          <p className="text-[11px] text-slate-400 truncate">{app.role_title}</p>
-                        </div>
-                      </Link>
-                      <Badge variant={badgeVariant(app.status)}>{config.label}</Badge>
-                    </div>
-                    <div className="mt-3 flex items-center justify-between">
-                      <div className="flex gap-0.5">
-                        {[1, 2, 3, 4, 5].map(n => (
-                          <Star key={n} className={cn('w-3 h-3', n <= app.excitement_level ? 'fill-amber-400 text-amber-400' : 'text-slate-200')} />
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Link href={`/applications/${app.id}`}>
-                          <button className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
-                            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-                          </button>
+          <Card className="overflow-hidden p-0 shadow-sm border-none">
+            <table className="w-full min-w-[860px]">
+              <thead>
+                <tr className="bg-stone-50">
+                  <th className="px-5 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Company</th>
+                  <th className="px-5 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Role</th>
+                  <th className="px-5 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+                  <th className="px-5 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applied</th>
+                  <th className="px-5 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Next Action</th>
+                  <th className="px-5 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Rating</th>
+                  <th className="px-5 py-3.5 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-stone-50">
+                {applications.map(app => {
+                  const config = statusConfig[app.status]
+                  return (
+                    <tr key={app.id} className="hover:bg-stone-50/50 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <Link href={`/applications/${app.id}`} className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-[#F1F5F2] flex items-center justify-center text-[12px] font-bold text-[#0A6A47]">
+                            {app.company_name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-[13px] font-semibold text-slate-900 hover:text-[#0A6A47] transition-colors">
+                            {app.company_name}
+                          </span>
                         </Link>
-                        <button onClick={() => handleDelete(app.id)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors">
-                          <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-400" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* Desktop table */}
-            <Card className="hidden overflow-hidden p-0 shadow-sm border-none lg:block">
-              <table className="w-full min-w-[860px]">
-                <thead>
-                  <tr className="bg-stone-50">
-                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Company</th>
-                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Role</th>
-                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Applied</th>
-                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Next Action</th>
-                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">Rating</th>
-                    <th className="px-5 py-3.5 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-50">
-                  {applications.map(app => {
-                    const config = statusConfig[app.status]
-                    return (
-                      <tr key={app.id} className="hover:bg-stone-50/50 transition-colors">
-                        <td className="px-5 py-3.5">
-                          <Link href={`/applications/${app.id}`} className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-[#F1F5F2] flex items-center justify-center text-[12px] font-bold text-[#0A6A47]">
-                              {app.company_name.charAt(0).toUpperCase()}
-                            </div>
-                            <span className="text-[13px] font-semibold text-slate-900 hover:text-[#0A6A47] transition-colors">
-                              {app.company_name}
-                            </span>
-                          </Link>
-                        </td>
-                        <td className="px-5 py-3.5 text-[13px] text-slate-500">{app.role_title}</td>
-                        <td className="px-5 py-3.5">
-                          <Badge variant={badgeVariant(app.status)}>{config.label}</Badge>
-                        </td>
-                        <td className="px-5 py-3.5 text-[12px] text-slate-400">{app.applied_date}</td>
-                        <td className="px-5 py-3.5 text-[12px] text-slate-400">{app.next_action || '—'}</td>
-                        <td className="px-5 py-3.5">
-                          <div className="flex gap-0.5">
-                            {[1, 2, 3, 4, 5].map(n => (
-                              <Star key={n} className={cn('w-3 h-3', n <= app.excitement_level ? 'fill-amber-400 text-amber-400' : 'text-slate-200')} />
-                            ))}
-                          </div>
-                        </td>
-                        <td className="px-5 py-3.5 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Link href={`/applications/${app.id}`}>
-                              <button className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
-                                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-                              </button>
-                            </Link>
-                            <button onClick={() => handleDelete(app.id)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors">
-                              <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-400" />
+                      </td>
+                      <td className="px-5 py-3.5 text-[13px] text-slate-500">{app.role_title}</td>
+                      <td className="px-5 py-3.5">
+                        <Badge variant={badgeVariant(app.status)}>{config.label}</Badge>
+                      </td>
+                      <td className="px-5 py-3.5 text-[12px] text-slate-400">{app.applied_date}</td>
+                      <td className="px-5 py-3.5 text-[12px] text-slate-400">{app.next_action || '—'}</td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map(n => (
+                            <Star key={n} className={cn('w-3 h-3', n <= app.excitement_level ? 'fill-amber-400 text-amber-400' : 'text-slate-200')} />
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Link href={`/applications/${app.id}`}>
+                            <button className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                              <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
                             </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </Card>
-          </div>
+                          </Link>
+                          <button onClick={() => handleDelete(app.id)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors">
+                            <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-red-400" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </Card>
         )}
       </div>
 
