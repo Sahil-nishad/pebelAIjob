@@ -66,25 +66,34 @@ export async function POST(req: NextRequest) {
 
   const supabase = getSupabaseServer()
 
-  const { data: user } = await supabase
+  const { data: user, error: userError } = await supabase
     .from('users')
     .select('id, email, name')
     .eq('email', email.toLowerCase().trim())
     .maybeSingle()
 
+  if (userError) {
+    console.error('[forgot-password] DB lookup error:', userError)
+  }
+
   // Always return success to prevent email enumeration
   if (!user) {
+    console.log('[forgot-password] No user found for email:', email.toLowerCase().trim())
     return NextResponse.json({ ok: true })
   }
 
   const token = crypto.randomBytes(32).toString('hex')
   const expires_at = new Date(Date.now() + 1000 * 60 * 60).toISOString()
 
-  await supabase.from('password_reset_tokens').insert({
+  const { error: tokenError } = await supabase.from('password_reset_tokens').insert({
     user_id: user.id,
     token,
     expires_at,
   })
+
+  if (tokenError) {
+    console.error('[forgot-password] Token insert error:', tokenError)
+  }
 
   const resetUrl = `${APP_URL}/reset-password?token=${token}`
   const firstName = user.name?.split(' ')[0] || 'there'
