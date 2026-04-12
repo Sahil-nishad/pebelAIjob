@@ -98,24 +98,33 @@ export async function POST(req: NextRequest) {
   const resetUrl = `${APP_URL}/reset-password?token=${token}`
   const firstName = user.name?.split(' ')[0] || 'there'
 
+  const smtpUser = process.env.SMTP_USER?.trim()
+  const smtpPass = process.env.SMTP_PASS?.trim()
+
+  if (!smtpUser || !smtpPass) {
+    console.error('[forgot-password] SMTP not configured — SMTP_USER or SMTP_PASS is missing from env vars')
+    return NextResponse.json({ error: 'Email service not configured.' }, { status: 500 })
+  }
+
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    host: process.env.SMTP_HOST?.trim() || 'smtp.gmail.com',
     port: Number(process.env.SMTP_PORT) || 587,
     secure: false,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: smtpUser,
+      pass: smtpPass,
     },
   })
 
   try {
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM_EMAIL || `"PebelAI" <${process.env.SMTP_USER}>`,
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM_EMAIL?.trim() || `"PebelAI" <${smtpUser}>`,
       to: user.email,
       subject: 'Reset your PebelAI password',
       text: `Hi ${firstName},\n\nReset your password here (expires in 1 hour):\n\n${resetUrl}\n\nIf you didn't request this, ignore this email.\n\n— PebelAI`,
       html: buildHtml(firstName, resetUrl),
     })
+    console.log('[forgot-password] Email sent to:', user.email, '| messageId:', info.messageId)
   } catch (err) {
     console.error('[forgot-password] Failed to send email:', err)
     return NextResponse.json({ error: 'Failed to send reset email. Please try again.' }, { status: 500 })
