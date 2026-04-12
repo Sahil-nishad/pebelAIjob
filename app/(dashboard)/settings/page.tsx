@@ -11,11 +11,13 @@ import {
   Send,
   CheckCircle2,
   Loader2,
+  LogOut,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { authFetch } from '@/lib/api'
+import { useUser } from '@/hooks/useUser'
 import toast from 'react-hot-toast'
 
 const tabs = [
@@ -27,6 +29,11 @@ const tabs = [
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile')
+  const { user, profile, signOut } = useUser()
+
+  const displayName = profile?.name || user?.email?.split('@')[0] || 'User'
+  const displayEmail = user?.email || ''
+  const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
 
   // Profile
   const [name, setName] = useState('User')
@@ -193,6 +200,31 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fade-up">
+
+      {/* Mobile user card — only visible on mobile */}
+      <div className="md:hidden">
+        <Card padding="md">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-[18px] font-bold text-white shadow-sm shrink-0">
+              {initials}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[15px] font-bold text-slate-900 truncate">{displayName}</p>
+              <p className="text-[12px] text-slate-400 truncate">{displayEmail}</p>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-100">
+            <button
+              onClick={signOut}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-50 border border-red-100 text-[13px] font-semibold text-red-600 hover:bg-red-100 transition-colors cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign out
+            </button>
+          </div>
+        </Card>
+      </div>
+
       {/* Tabs */}
       <div className="flex gap-1 overflow-x-auto pb-0 border-b border-slate-200/60">
         {tabs.map((tab) => (
