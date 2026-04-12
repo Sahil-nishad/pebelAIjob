@@ -7,6 +7,7 @@ import {
   Briefcase, Calendar, TrendingUp, BarChart3,
   Plus, Clock, AlertCircle, CheckCircle2,
   ArrowRight, ChevronRight, Loader2, Zap,
+  Users, Target, Send, Upload, FileText, MousePointer2, BriefcaseIcon,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,28 +18,18 @@ import { authFetch } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 
 interface Stats { total: number; interviews: number; offerRate: number; responseRate: number }
-interface ActivityEntry { id: string; event_type: string; event_data: Record<string, string>; created_at: string }
 
 const statConfig = [
-  { key: 'total', label: 'Applied', sub: 'total tracked', icon: Briefcase, accent: 'bg-blue-500', soft: 'bg-blue-50', text: 'text-blue-600', border: 'border-t-blue-400' },
-  { key: 'interviews', label: 'Interviews', sub: 'in progress', icon: Calendar, accent: 'bg-violet-500', soft: 'bg-violet-50', text: 'text-violet-600', border: 'border-t-violet-400' },
-  { key: 'offerRate', label: 'Offer Rate', sub: 'of all apps', icon: TrendingUp, accent: 'bg-emerald-500', soft: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-t-emerald-400', pct: true },
-  { key: 'responseRate', label: 'Response', sub: 'response rate', icon: BarChart3, accent: 'bg-amber-500', soft: 'bg-amber-50', text: 'text-amber-600', border: 'border-t-amber-400', pct: true },
+  { key: 'total', label: 'APPLIED', value: '42', change: '+12%', color: '#0A6A47', icon: Send, progress: 65 },
+  { key: 'interviews', label: 'INTERVIEWS', value: '8', change: 'Active', color: '#0A6A47', icon: Users, progress: 40, status: 'Active' },
+  { key: 'offerRate', label: 'OFFER RATE', value: '2.4%', change: 'Goal 5%', color: '#0A6A47', icon: Target, progress: 48 },
+  { key: 'responseRate', label: 'RESPONSE RATE', value: '18%', change: '+4%', color: '#0A6A47', icon: BarChart3, progress: 20 },
 ]
-
-const activityIcons: Record<string, { icon: string; color: string }> = {
-  applied: { icon: '📋', color: 'bg-blue-50 text-blue-500' },
-  stage_change: { icon: '🔄', color: 'bg-violet-50 text-violet-500' },
-  note_added: { icon: '📝', color: 'bg-amber-50 text-amber-500' },
-  interview_scheduled: { icon: '📅', color: 'bg-emerald-50 text-emerald-500' },
-}
 
 export default function DashboardPage() {
   const { applications, loading: appsLoading } = useApplications()
   const { user, profile } = useUser()
   const [stats, setStats] = useState<Stats | null>(null)
-  const [activity, setActivity] = useState<ActivityEntry[]>([])
-  const [now] = useState(() => Date.now())
 
   const greeting = () => {
     const h = new Date().getHours()
@@ -47,8 +38,7 @@ export default function DashboardPage() {
     return 'Good evening'
   }
 
-  const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-  const userName = profile?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
+  const userName = profile?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Alex'
 
   useEffect(() => {
     authFetch('/api/applications/stats')
@@ -57,327 +47,199 @@ export default function DashboardPage() {
       .catch(() => {})
   }, [])
 
-  useEffect(() => {
-    const fetchActivity = async () => {
-      const { data: { user: u } } = await supabase.auth.getUser()
-      if (!u) return
-      const { data } = await supabase
-        .from('activity_log')
-        .select('*')
-        .eq('user_id', u.id)
-        .order('created_at', { ascending: false })
-        .limit(8)
-      if (data) setActivity(data)
-    }
-    fetchActivity()
-  }, [])
-
-  const pipeline = {
-    applied: applications.filter((a) => a.status === 'applied'),
-    phone_screen: applications.filter((a) => a.status === 'phone_screen'),
-    interviewing: applications.filter((a) => a.status === 'interviewing'),
-    offer: applications.filter((a) => a.status === 'offer'),
-    rejected: applications.filter((a) => a.status === 'rejected'),
-    ghosted: applications.filter((a) => a.status === 'ghosted'),
-  }
-
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const overdue = applications.filter((a) => a.next_action_date && new Date(a.next_action_date) < today)
-  const upcoming = applications.filter((a) => {
-    if (!a.next_action_date) return false
-    const d = new Date(a.next_action_date)
-    return d >= today && d <= new Date(today.getTime() + 3 * 86400000)
-  })
-
-  const formatActivity = (entry: ActivityEntry) => {
-    const d = entry.event_data
-    if (entry.event_type === 'applied') return `Applied to ${d.company} — ${d.role}`
-    if (entry.event_type === 'stage_change') return `${d.company || 'Application'} moved to ${d.new_status?.replace(/_/g, ' ')}`
-    return entry.event_type.replace(/_/g, ' ')
-  }
-
-  const timeAgo = (dateStr: string) => {
-    const diff = now - new Date(dateStr).getTime()
-    const mins = Math.floor(diff / 60000)
-    if (mins < 60) return `${mins}m ago`
-    const hrs = Math.floor(mins / 60)
-    if (hrs < 24) return `${hrs}h ago`
-    return `${Math.floor(hrs / 24)}d ago`
-  }
-
-  const statValue = (cfg: typeof statConfig[number]) => {
-    if (!stats) return applications.length.toString()
-    const raw = stats[cfg.key as keyof Stats] ?? 0
-    return cfg.pct ? `${raw}%` : String(raw)
-  }
-
   return (
-    <div className="space-y-6 animate-fade-up">
-
-      {/* ─── Welcome ─── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-0.5">
-            <h2 className="text-[22px] font-bold font-[family-name:var(--font-heading)] text-slate-900 tracking-tight">
-              {greeting()}, {userName} 👋
-            </h2>
-          </div>
-          <p className="text-slate-400 text-[13px]">
-            {todayLabel}
-            {overdue.length > 0 && (
-              <span className="ml-2 inline-flex items-center gap-1 text-red-500 font-medium">
-                · <AlertCircle className="w-3 h-3" /> {overdue.length} overdue
-              </span>
-            )}
-          </p>
-        </div>
-        <Link href="/applications">
-          <Button size="sm" className="shadow-[0_2px_8px_rgba(47,133,90,0.20)]">
-            <Plus className="w-3.5 h-3.5" /> New application
-          </Button>
-        </Link>
-      </div>
-
-      {/* ─── Stats ─── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {statConfig.map((cfg, i) => (
-          <motion.div
-            key={cfg.label}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <Card
-              hover
-              padding="md"
-              className={`border-t-2 ${cfg.border} transition-all duration-200`}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className={`w-9 h-9 rounded-xl ${cfg.soft} flex items-center justify-center`}>
-                  <cfg.icon className={`w-[17px] h-[17px] ${cfg.text}`} />
-                </div>
-              </div>
-              <p className="text-[26px] font-bold font-[family-name:var(--font-heading)] text-slate-900 tracking-tight leading-none mb-1.5">
-                {appsLoading ? <Loader2 className="w-5 h-5 animate-spin text-slate-300 inline" /> : statValue(cfg)}
+    <div className="max-w-[1400px] mx-auto animate-fade-up">
+      <div className="flex flex-col lg:flex-row gap-8">
+        
+        {/* Main Content Area */}
+        <div className="flex-1 space-y-8">
+          
+          {/* Header Section */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-[42px] font-bold text-[#13211B] tracking-tight leading-tight">
+                {greeting()}, {userName}.
+              </h1>
+              <p className="text-slate-400 text-[16px] mt-2">
+                Here is what's happening with your career curator today.
               </p>
-              <p className="text-[12px] text-slate-400">
-                <span className="font-medium text-slate-500">{cfg.label}</span>
-                <span className="text-slate-300 mx-1">·</span>
-                {cfg.sub}
-              </p>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* ─── Main Grid ─── */}
-      <div className="grid lg:grid-cols-5 gap-5">
-
-        {/* Pipeline */}
-        <div className="lg:col-span-3">
-          <Card padding="md">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-[14px] font-semibold font-[family-name:var(--font-heading)] text-slate-900">Pipeline</h3>
-                {!appsLoading && (
-                  <p className="text-[12px] text-slate-400 mt-0.5">{applications.length} total applications</p>
-                )}
-              </div>
-              <Link href="/applications" className="text-[12px] text-slate-400 hover:text-emerald-600 flex items-center gap-0.5 transition-colors">
-                View all <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
             </div>
-
-            {appsLoading ? (
-              <div className="flex items-center justify-center h-24">
-                <Loader2 className="w-5 h-5 text-slate-300 animate-spin" />
-              </div>
-            ) : (
-              <>
-                {/* Distribution bar */}
-                {applications.length > 0 && (
-                  <div className="flex rounded-full overflow-hidden h-1.5 mb-5 gap-px">
-                    {Object.entries(pipeline).map(([status, apps]) => {
-                      if (apps.length === 0) return null
-                      const pct = (apps.length / applications.length) * 100
-                      const cfg = statusConfig[status]
-                      return (
-                        <div
-                          key={status}
-                          style={{ width: `${pct}%` }}
-                          className={`h-full ${cfg?.barColor || 'bg-slate-200'} transition-all`}
-                          title={`${cfg?.label}: ${apps.length}`}
-                        />
-                      )
-                    })}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                  {Object.entries(pipeline).map(([status, apps]) => {
-                    const config = statusConfig[status]
-                    return (
-                      <div key={status} className="min-w-0">
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <span className="text-[11px] font-semibold text-slate-500 truncate">{config.label}</span>
-                          <span className="text-[10px] text-slate-400 ml-auto shrink-0 font-medium">{apps.length}</span>
-                        </div>
-                        <div className="space-y-1.5">
-                          {apps.slice(0, 3).map((app) => (
-                            <Link key={app.id} href={`/applications/${app.id}`}>
-                              <div className="px-2.5 py-2 rounded-lg bg-slate-50/80 border border-slate-100/80 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all duration-150 cursor-pointer group">
-                                <p className="text-[11px] font-semibold text-slate-800 truncate group-hover:text-emerald-700 transition-colors">{app.company_name}</p>
-                                <p className="text-[10px] text-slate-400 truncate">{app.role_title}</p>
-                              </div>
-                            </Link>
-                          ))}
-                          {apps.length === 0 && (
-                            <div className="px-2.5 py-3 rounded-lg border border-dashed border-slate-200 text-center">
-                              <p className="text-[10px] text-slate-300">Empty</p>
-                            </div>
-                          )}
-                          {apps.length > 3 && (
-                            <Link href="/applications">
-                              <p className="text-[10px] text-slate-400 hover:text-emerald-600 text-center py-1 transition-colors">
-                                +{apps.length - 3} more
-                              </p>
-                            </Link>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-          </Card>
-        </div>
-
-        {/* Right Column */}
-        <div className="lg:col-span-2 space-y-4">
-
-          {/* Today / Action items */}
-          <Card padding="md">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[14px] font-semibold font-[family-name:var(--font-heading)] text-slate-900">Today</h3>
-              {(overdue.length > 0 || upcoming.length > 0) && (
-                <span className="text-[11px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                  {overdue.length + upcoming.length} items
-                </span>
-              )}
-            </div>
-
-            {overdue.length === 0 && upcoming.length === 0 ? (
-              <div className="py-4 text-center">
-                <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                </div>
-                <p className="text-[13px] font-medium text-slate-700">All caught up!</p>
-                <p className="text-[12px] text-slate-400 mt-0.5">No urgent items today.</p>
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                {overdue.slice(0, 3).map((a) => (
-                  <Link key={a.id} href={`/applications/${a.id}`}>
-                    <div className="flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-100 transition-all cursor-pointer group">
-                      <div className="w-6 h-6 rounded-lg bg-red-50 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-red-100 transition-colors">
-                        <AlertCircle className="w-3.5 h-3.5 text-red-500" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[12px] font-semibold text-slate-700 truncate">{a.company_name}</p>
-                        <p className="text-[11px] text-red-400">{a.next_action || 'Follow up'} · overdue</p>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-                {upcoming.slice(0, 3).map((a) => (
-                  <Link key={a.id} href={`/applications/${a.id}`}>
-                    <div className="flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-amber-50 border border-transparent hover:border-amber-100 transition-all cursor-pointer group">
-                      <div className="w-6 h-6 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-amber-100 transition-colors">
-                        <Clock className="w-3.5 h-3.5 text-amber-500" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[12px] font-semibold text-slate-700 truncate">{a.company_name}</p>
-                        <p className="text-[11px] text-slate-400">{a.next_action || 'Follow up'} · {a.next_action_date}</p>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            <Link href="/reminders">
-              <button className="mt-3 w-full flex items-center justify-center gap-1.5 text-[12px] text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 py-2 rounded-lg transition-colors font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5" /> View all reminders <ArrowRight className="w-3 h-3" />
-              </button>
+            <Link href="/applications">
+              <Button className="bg-[#0A6A47] hover:bg-[#085438] text-white px-6 py-6 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-900/10">
+                <Plus className="w-5 h-5" />
+                New Application
+              </Button>
             </Link>
-          </Card>
+          </div>
 
-          {/* Quick actions */}
-          <Card padding="sm">
-            <h3 className="text-[13px] font-semibold text-slate-700 px-1 mb-2">Quick actions</h3>
-            <div className="space-y-0.5">
-              {[
-                { href: '/applications', label: 'Add new application', icon: Plus, color: 'text-emerald-600' },
-                { href: '/coach', label: 'Practice interview', icon: Zap, color: 'text-violet-600' },
-                { href: '/resume', label: 'Analyze resume', icon: BarChart3, color: 'text-blue-600' },
-              ].map((action) => (
-                <Link key={action.href} href={action.href}>
-                  <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer group">
-                    <action.icon className={`w-4 h-4 ${action.color} shrink-0`} />
-                    <span className="text-[13px] text-slate-600 group-hover:text-slate-900 transition-colors">{action.label}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-300 ml-auto group-hover:text-slate-400 transition-colors" />
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {statConfig.map((stat, i) => (
+              <Card key={stat.label} className="p-6 border-none shadow-sm relative overflow-hidden group hover:shadow-md transition-all h-[180px]">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#F1F5F2] flex items-center justify-center">
+                    <stat.icon className="w-6 h-6 text-[#0A6A47]" />
                   </div>
-                </Link>
+                  {stat.change && (
+                    <span className={cn(
+                      "text-[12px] font-bold px-3 py-1 rounded-full",
+                      stat.status === 'Active' ? "bg-emerald-50 text-[#0A6A47]" : "text-[#0A6A47] bg-transparent"
+                    )}>
+                      {stat.change}
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[12px] font-bold text-slate-400 tracking-wider uppercase">{stat.label}</p>
+                  <p className="text-[32px] font-bold text-[#13211B]">{stat.value}</p>
+                </div>
+                <div className="absolute bottom-6 left-6 right-6 h-1 bg-slate-100 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${stat.progress}%` }}
+                    transition={{ duration: 1, delay: i * 0.1 }}
+                    className="h-full bg-[#0A6A47]"
+                  />
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Pipeline Card */}
+          <Card className="p-8 border-none shadow-sm">
+            <div className="flex items-center justify-between mb-10">
+              <h3 className="text-[20px] font-bold text-[#13211B]">Application Pipeline</h3>
+              <div className="flex items-center gap-4">
+                <select className="bg-[#F1F5F2] border-none text-[12px] font-bold px-4 py-2 rounded-lg text-[#13211B]">
+                  <option>This Month</option>
+                </select>
+                <div className="flex gap-1">
+                  <div className="w-1 h-1 rounded-full bg-slate-400" />
+                  <div className="w-1 h-1 rounded-full bg-slate-400" />
+                  <div className="w-1 h-1 rounded-full bg-slate-400" />
+                </div>
+              </div>
+            </div>
+
+            <div className="relative mt-20 mb-12">
+              <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-slate-100 -translate-y-1/2" />
+              <div className="absolute top-1/2 left-0 w-[60%] h-[2px] bg-[#0A6A47] -translate-y-1/2" />
+              
+              <div className="relative flex justify-between items-center px-4">
+                {[
+                  { label: 'APPLIED', count: '14 roles', icon: FileText, active: true },
+                  { label: 'INTERVIEW', count: '8 roles', icon: Zap, active: true },
+                  { label: 'ASSESSMENT', count: '3 roles', icon: CheckCircle2, active: true },
+                  { label: 'OFFER', count: '0 roles', icon: Send, active: false },
+                ].map((step, idx) => (
+                  <div key={step.label} className="relative flex flex-col items-center">
+                    <div className={cn(
+                      "w-10 h-10 rounded-lg flex items-center justify-center z-10",
+                      step.active ? "bg-[#0A6A47] text-white" : "bg-slate-200 text-slate-400"
+                    )}>
+                      <step.icon className="w-5 h-5" />
+                    </div>
+                    <div className="absolute top-14 text-center w-32">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{step.label}</p>
+                      <p className="text-[12px] font-bold text-[#13211B] mt-1">{step.count}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Application List */}
+            <div className="mt-24 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { company: 'Senior Frontend Engineer', sub: 'Linear • Interviewing', icon: '/linear.svg' },
+                { company: 'Product Designer', sub: 'Framer • Next: Portfolio Review', icon: '/framer.svg' },
+              ].map((app, i) => (
+                <div key={i} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-xl hover:shadow-md transition-all cursor-pointer group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center p-3 overflow-hidden">
+                      <div className="w-full h-full bg-slate-900 rounded-sm" /> {/* Placeholder icon */}
+                    </div>
+                    <div>
+                      <p className="text-[14px] font-bold text-[#13211B]">{app.company}</p>
+                      <p className="text-[12px] text-slate-400 mt-0.5">{app.sub}</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-[#0A6A47] transition-colors" />
+                </div>
               ))}
             </div>
           </Card>
 
+          {/* AI Curator Insight */}
+          <Card className="p-8 border-none bg-[#0A6A47] relative overflow-hidden text-white min-h-[240px] flex flex-col justify-center">
+            <div className="relative z-10 max-w-lg">
+              <div className="flex items-center gap-2 mb-6">
+                <Sparkles className="w-5 h-5 text-[#4ade80]" />
+                <span className="text-[12px] font-bold uppercase tracking-widest text-emerald-100">AI Curator Insight</span>
+              </div>
+              <h3 className="text-[28px] font-bold leading-tight mb-4">
+                Your resume matches 89% of the 'Staff Engineer' role at Stripe.
+              </h3>
+              <p className="text-emerald-100/80 text-[15px] leading-relaxed mb-8">
+                Consider emphasizing your experience with distributed systems in the technical screen to increase your conversion odds by an estimated 14%.
+              </p>
+              <Button className="bg-white text-[#0A6A47] hover:bg-emerald-50 px-8 py-6 rounded-xl font-bold">
+                Review Suggestion
+              </Button>
+            </div>
+            {/* Background pattern */}
+            <div className="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none">
+              <div className="absolute inset-0 bg-gradient-to-l from-white to-transparent" />
+            </div>
+          </Card>
+
+        </div>
+
+        {/* Right Sidebar Section */}
+        <div className="w-full lg:w-[320px] space-y-8">
+          
+          {/* Today's Focus */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Calendar className="w-5 h-5 text-slate-400" />
+              <h3 className="text-[18px] font-bold text-[#13211B]">Today's Focus</h3>
+            </div>
+            
+            <div className="space-y-4">
+              {[
+                { type: 'INTERVIEW • 14:00', title: 'Tech Screen: Vercel', desc: 'Prep technical architecture notes for serverless discussion.', color: '#0A6A47' },
+                { type: 'TASK • ANYTIME', title: 'Update LinkedIn Work History', desc: 'Align recent projects with current application strategy.', color: '#94a3b8' },
+                { type: 'FOLLOW UP • 16:30', title: 'Email Recruiter at Airbnb', desc: 'Checking in on the feedback from last Friday\'s onsite.', color: '#94a3b8' },
+              ].map((focus, i) => (
+                <div key={i} className="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-transparent hover:border-emerald-500 transition-all cursor-pointer group" style={{ borderLeftColor: i === 0 ? focus.color : 'transparent' }}>
+                  <p className="text-[10px] font-bold text-emerald-600 tracking-widest mb-1 capitalize" style={{ color: focus.color }}>{focus.type}</p>
+                  <h4 className="text-[14px] font-bold text-[#13211B] mb-1 group-hover:text-[#0A6A47] transition-colors">{focus.title}</h4>
+                  <p className="text-[12px] text-slate-400 leading-relaxed">{focus.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Tools */}
+          <div className="space-y-6 pt-4">
+            <h3 className="text-[16px] font-bold text-[#13211B]">Quick Tools</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'UPLOAD CV', icon: Upload },
+                { label: 'TEMPLATES', icon: FileText },
+                { label: 'PRACTICE', icon: MousePointer2 },
+                { label: 'PORTFOLIOS', icon: BriefcaseIcon },
+              ].map((tool, i) => (
+                <button key={i} className="flex flex-col items-center justify-center p-6 bg-[#F8F9F8] rounded-2xl hover:bg-[#F1F5F2] transition-all group">
+                  <tool.icon className="w-6 h-6 text-slate-400 group-hover:text-[#0A6A47] transition-colors mb-3" />
+                  <span className="text-[9px] font-bold text-slate-400 tracking-wider group-hover:text-[#0A6A47] transition-colors">{tool.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
         </div>
       </div>
-
-      {/* ─── Activity ─── */}
-      <Card padding="md">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[14px] font-semibold font-[family-name:var(--font-heading)] text-slate-900">Recent activity</h3>
-          {activity.length > 0 && (
-            <span className="text-[11px] text-slate-400">{activity.length} events</span>
-          )}
-        </div>
-
-        {activity.length === 0 ? (
-          <div className="py-6 text-center">
-            <p className="text-[13px] text-slate-400">No activity yet.</p>
-            <Link href="/applications">
-              <p className="text-[12px] text-emerald-600 hover:underline mt-1">Add your first application →</p>
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-0">
-            {activity.map((item, i) => {
-              const iconCfg = activityIcons[item.event_type] || { icon: '📌', color: 'bg-slate-50 text-slate-500' }
-              return (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.04 }}
-                  className="flex items-center justify-between py-2.5 border-b border-slate-50 last:border-0 group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[13px] shrink-0 ${iconCfg.color}`}>
-                      {iconCfg.icon}
-                    </div>
-                    <p className="text-[13px] text-slate-600">{formatActivity(item)}</p>
-                  </div>
-                  <span className="text-[11px] text-slate-300 whitespace-nowrap ml-4 tabular-nums">{timeAgo(item.created_at)}</span>
-                </motion.div>
-              )
-            })}
-          </div>
-        )}
-      </Card>
     </div>
   )
 }
