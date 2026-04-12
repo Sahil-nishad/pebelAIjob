@@ -89,7 +89,7 @@ export default function DashboardPage() {
         <div className="flex-1 min-w-0 space-y-6">
 
           {/* Header */}
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
                 {greeting()}, {userName}.
@@ -98,9 +98,9 @@ export default function DashboardPage() {
                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
               </p>
             </div>
-            <Link href="/applications">
-              <button className="flex items-center gap-2 bg-[#0A6A47] hover:bg-[#085438] text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm shadow-emerald-900/10">
-                <Plus className="w-4 h-4" />
+            <Link href="/applications" className="shrink-0">
+              <button className="flex items-center gap-1.5 bg-[#0A6A47] hover:bg-[#085438] text-white text-[13px] font-semibold px-3.5 py-2 rounded-xl transition-colors shadow-sm shadow-emerald-900/10">
+                <Plus className="w-3.5 h-3.5" />
                 New Application
               </button>
             </Link>
