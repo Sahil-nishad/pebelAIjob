@@ -1,11 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
-  User,
-  Briefcase,
-  Bell,
-  AlertTriangle,
   Download,
   Trash2,
   Send,
@@ -21,10 +17,10 @@ import { useUser } from '@/hooks/useUser'
 import toast from 'react-hot-toast'
 
 const tabs = [
-  { key: 'profile', label: 'Profile', icon: User },
-  { key: 'preferences', label: 'Job Preferences', icon: Briefcase },
-  { key: 'notifications', label: 'Notifications', icon: Bell },
-  { key: 'danger', label: 'Danger Zone', icon: AlertTriangle },
+  { key: 'profile', label: 'Profile' },
+  { key: 'preferences', label: 'Preferences' },
+  { key: 'notifications', label: 'Notifications' },
+  { key: 'danger', label: 'Danger' },
 ]
 
 export default function SettingsPage() {
@@ -36,7 +32,7 @@ export default function SettingsPage() {
   const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
 
   // Profile
-  const [name, setName] = useState('User')
+  const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [title, setTitle] = useState('')
   const [linkedin, setLinkedin] = useState('')
@@ -65,6 +61,10 @@ export default function SettingsPage() {
   const [deletingApps, setDeletingApps] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [exporting, setExporting] = useState(false)
+
+  useEffect(() => {
+    if (profile?.name) setName(profile.name)
+  }, [profile])
 
   async function saveProfile() {
     setSavingProfile(true)
@@ -226,21 +226,22 @@ export default function SettingsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 overflow-x-auto pb-0 border-b border-slate-200/60">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-[13px] font-medium transition-colors whitespace-nowrap cursor-pointer ${
-              activeTab === tab.key
-                ? 'text-emerald-600 border-b-2 border-emerald-500'
-                : 'text-slate-400 hover:text-slate-600'
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
-        ))}
+      <div className="border-b border-slate-100 pb-3">
+        <div className="flex gap-2 flex-wrap">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-1.5 text-[13px] font-medium transition-all whitespace-nowrap cursor-pointer rounded-full ${
+                activeTab === tab.key
+                  ? 'bg-emerald-500 text-white'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Profile */}
@@ -249,7 +250,7 @@ export default function SettingsPage() {
           <h3 className="text-[15px] font-semibold font-[family-name:var(--font-heading)] text-slate-900 mb-6">Profile</h3>
           <div className="flex items-center gap-4 mb-6">
             <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-lg font-bold text-white shadow-sm">
-              {name.charAt(0).toUpperCase()}
+              {initials}
             </div>
             <div>
               <p className="text-sm font-medium text-slate-900">{name}</p>
@@ -258,7 +259,7 @@ export default function SettingsPage() {
           </div>
           <div className="grid md:grid-cols-2 gap-4">
             <Input id="fullName" label="Full Name" value={name} onChange={(e) => setName(e.target.value)} />
-            <Input id="email" label="Email" value="user@example.com" disabled />
+            <Input id="email" label="Email" value={displayEmail} disabled />
             <Input id="phone" label="Phone" placeholder="+1 (555) 000-0000" value={phone} onChange={(e) => setPhone(e.target.value)} />
             <Input id="title" label="Title" placeholder="Senior Product Manager" value={title} onChange={(e) => setTitle(e.target.value)} />
             <Input id="linkedin" label="LinkedIn" placeholder="linkedin.com/in/you" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />

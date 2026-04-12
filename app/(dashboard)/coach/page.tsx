@@ -29,6 +29,49 @@ import toast from 'react-hot-toast'
 
 type SessionType = 'behavioral' | 'technical' | 'case' | 'salary' | 'general'
 
+const sessionTypeColors: Record<SessionType, { border: string; bg: string; iconBg: string; iconText: string; selectedBorder: string; selectedBg: string }> = {
+  behavioral: {
+    border: 'border-slate-100',
+    bg: 'bg-slate-50/50',
+    iconBg: 'bg-violet-100',
+    iconText: 'text-violet-600',
+    selectedBorder: 'border-violet-400',
+    selectedBg: 'bg-violet-50',
+  },
+  technical: {
+    border: 'border-slate-100',
+    bg: 'bg-slate-50/50',
+    iconBg: 'bg-blue-100',
+    iconText: 'text-blue-600',
+    selectedBorder: 'border-blue-400',
+    selectedBg: 'bg-blue-50',
+  },
+  case: {
+    border: 'border-slate-100',
+    bg: 'bg-slate-50/50',
+    iconBg: 'bg-amber-100',
+    iconText: 'text-amber-600',
+    selectedBorder: 'border-amber-400',
+    selectedBg: 'bg-amber-50',
+  },
+  salary: {
+    border: 'border-slate-100',
+    bg: 'bg-slate-50/50',
+    iconBg: 'bg-emerald-100',
+    iconText: 'text-emerald-600',
+    selectedBorder: 'border-emerald-400',
+    selectedBg: 'bg-emerald-50',
+  },
+  general: {
+    border: 'border-slate-100',
+    bg: 'bg-slate-50/50',
+    iconBg: 'bg-slate-100',
+    iconText: 'text-slate-600',
+    selectedBorder: 'border-slate-400',
+    selectedBg: 'bg-slate-100',
+  },
+}
+
 interface Message {
   role: 'user' | 'assistant'
   content: string
@@ -286,7 +329,7 @@ export default function CoachPage() {
           {!hasSession ? (
             <section className="flex-1 px-2 pb-4 pt-0 sm:px-6">
               <div className="w-full max-w-4xl rounded-[1.75rem] border border-slate-100 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-                <div className="border-b border-slate-100 px-6 py-5 sm:px-8">
+                <div className="rounded-t-[1.75rem] bg-gradient-to-br from-emerald-50/60 to-white border-b border-emerald-100/60 px-6 py-5 sm:px-8">
                   <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 ring-1 ring-emerald-100">
                       <Image src="/pebelai-mark.svg" alt="PebelAI" width={22} height={22} />
@@ -321,28 +364,42 @@ export default function CoachPage() {
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-slate-700">Interview type</label>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      {sessionTypes.map((st) => (
-                        <button
-                          key={st.type}
-                          type="button"
-                          onClick={() => setSelectedType(st.type)}
-                          className={`flex items-center gap-2 rounded-xl border p-3 text-sm font-medium transition-all cursor-pointer ${
-                            selectedType === st.type
-                              ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                              : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                          }`}
-                        >
-                          <st.icon className="h-4 w-4" />
-                          {st.label}
-                        </button>
-                      ))}
+                      {sessionTypes.map((st) => {
+                        const colors = sessionTypeColors[st.type]
+                        const isSelected = selectedType === st.type
+                        return (
+                          <button
+                            key={st.type}
+                            type="button"
+                            onClick={() => setSelectedType(st.type)}
+                            className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-sm font-semibold transition-all cursor-pointer ${
+                              isSelected
+                                ? `${colors.selectedBorder} ${colors.selectedBg} text-slate-900`
+                                : `border-slate-100 bg-slate-50/50 text-slate-600 hover:border-slate-200`
+                            }`}
+                          >
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${colors.iconBg}`}>
+                              <st.icon className={`h-4 w-4 ${colors.iconText}`} />
+                            </div>
+                            {st.label}
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
 
-                  <Button size="lg" className="w-full" onClick={startSession} disabled={!company || !selectedType || isTyping}>
+                  <button
+                    onClick={startSession}
+                    disabled={!company || !selectedType || isTyping}
+                    className={`w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+                      !company || !selectedType || isTyping
+                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md hover:shadow-lg hover:from-emerald-600 hover:to-teal-600'
+                    }`}
+                  >
                     {isTyping ? 'Starting session...' : 'Start Coaching Session'}
                     {!isTyping && <ChevronRight className="h-4 w-4" />}
-                  </Button>
+                  </button>
                 </div>
               </div>
             </section>

@@ -171,18 +171,18 @@ export default function RemindersPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: 'Overdue',   value: overdue,   color: 'text-red-500',     bg: 'bg-red-50',     icon: AlertCircle },
-          { label: 'Due Today', value: todayCnt,  color: 'text-amber-500',   bg: 'bg-amber-50',   icon: Clock },
-          { label: 'Upcoming',  value: upcoming,  color: 'text-emerald-500', bg: 'bg-emerald-50', icon: Calendar },
-          { label: 'Done',      value: done,      color: 'text-slate-500',   bg: 'bg-slate-50',   icon: Check },
+          { label: 'Overdue',   value: overdue,   color: 'text-red-500',     bg: 'bg-red-50',     icon: AlertCircle, topBorder: 'border-t-2 border-t-red-400' },
+          { label: 'Due Today', value: todayCnt,  color: 'text-amber-500',   bg: 'bg-amber-50',   icon: Clock,       topBorder: 'border-t-2 border-t-amber-400' },
+          { label: 'Upcoming',  value: upcoming,  color: 'text-emerald-500', bg: 'bg-emerald-50', icon: Calendar,    topBorder: 'border-t-2 border-t-emerald-400' },
+          { label: 'Done',      value: done,      color: 'text-slate-500',   bg: 'bg-slate-100',  icon: Check,       topBorder: 'border-t-2 border-t-slate-300' },
         ].map((stat) => (
-          <Card key={stat.label} className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center`}>
-              <stat.icon className={`w-5 h-5 ${stat.color}`} />
+          <Card key={stat.label} className={`relative ${stat.topBorder}`}>
+            <div className={`absolute top-3 right-3 w-8 h-8 rounded-lg ${stat.bg} flex items-center justify-center`}>
+              <stat.icon className={`w-4 h-4 ${stat.color}`} />
             </div>
-            <div>
-              <p className="text-2xl font-bold font-[family-name:var(--font-heading)] text-slate-900">{stat.value}</p>
-              <p className="text-xs text-slate-500">{stat.label}</p>
+            <div className="pt-1 pr-10">
+              <p className="text-3xl font-bold text-slate-900 leading-none">{stat.value}</p>
+              <p className="text-xs text-slate-500 mt-1">{stat.label}</p>
             </div>
           </Card>
         ))}
@@ -227,7 +227,9 @@ export default function RemindersPage() {
         if (!items || items.length === 0) return null
         return (
           <div key={group}>
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">{group}</h3>
+            <h3 className={`text-[11px] font-bold uppercase tracking-widest mb-2 ${
+              group === 'Overdue' ? 'text-red-500' : 'text-slate-400'
+            }`}>{group}</h3>
             <div className="space-y-2">
               {items.map((reminder, i) => {
                 const typeConfig = reminderTypeConfig[reminder.reminder_type]
@@ -239,7 +241,7 @@ export default function RemindersPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.04 }}
                   >
-                    <Card className={`border-l-4 ${getBorderColor(group)} ${reminder.is_done ? 'opacity-60' : ''}`}>
+                    <Card className={`border-l-4 ${getBorderColor(group)} ${reminder.is_done ? 'opacity-60' : ''} px-5 py-4`}>
                       <div className="flex items-start gap-3">
                         <button onClick={() => toggleDone(reminder.id, reminder.is_done)} className="mt-0.5 cursor-pointer flex-shrink-0">
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
@@ -252,7 +254,7 @@ export default function RemindersPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <TypeIcon className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                            <p className={`text-sm font-medium ${reminder.is_done ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+                            <p className={`text-[15px] font-semibold ${reminder.is_done ? 'line-through text-slate-400' : 'text-slate-900'}`}>
                               {reminder.title}
                             </p>
                           </div>
@@ -265,11 +267,11 @@ export default function RemindersPage() {
                           {reminder.description && (
                             <p className="text-xs text-slate-400 mt-0.5">{reminder.description}</p>
                           )}
-                          <div className="flex items-center gap-1 mt-1.5 text-xs text-slate-400">
-                            <Calendar className="w-3 h-3" />
+                          <div className="flex items-center gap-1 mt-2 text-[12px] font-medium text-slate-500">
+                            <Calendar className="w-3.5 h-3.5" />
                             {new Date(reminder.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                           </div>
-                          <div className="mt-1">
+                          <div className="mt-1.5">
                             <Badge variant="default">{typeConfig?.label || reminder.reminder_type}</Badge>
                           </div>
                         </div>
