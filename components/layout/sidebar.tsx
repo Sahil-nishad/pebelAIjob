@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
@@ -9,13 +8,9 @@ import {
   Bot,
   Bell,
   Settings,
-  LogOut,
   Sparkles,
-  ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useUser } from '@/hooks/useUser'
-import { Button } from '@/components/ui/button'
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
@@ -26,10 +21,6 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { user, profile } = useUser()
-
-  const displayName = profile?.name || user?.email?.split('@')[0] || 'User'
-
   return (
     <aside className="fixed left-0 top-0 bottom-0 z-40 hidden w-[244px] flex-col border-r border-slate-200/60 bg-[#FBFBFB] md:flex">
 
@@ -85,20 +76,6 @@ export function Sidebar() {
         </Link>
       </nav>
 
-      {/* Upgrade to Pro */}
-      <div className="px-4 mb-6">
-        <div className="rounded-2xl bg-[#EEF4EF] p-5 relative overflow-hidden group">
-          <div className="relative z-10">
-            <h4 className="text-[13px] font-bold text-[#13211B] mb-2">Upgrade to Pro</h4>
-            <p className="text-[11px] text-[#5C6B66] leading-relaxed mb-4">
-              Get unlimited AI coaching and priority application tracking.
-            </p>
-            <Button className="w-full bg-[#0A6A47] hover:bg-[#085438] text-white text-[12px] font-bold h-10 rounded-lg shadow-md shadow-emerald-900/10">
-              Get Started
-            </Button>
-          </div>
-        </div>
-      </div>
     </aside>
   )
 }
