@@ -170,103 +170,92 @@ export default function CoachPage() {
       <main className="flex-1 flex flex-col bg-[#f8f9fa] overflow-hidden min-w-0">
         {!hasSession ? (
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-2xl mx-auto px-4 sm:px-8 py-10 sm:py-14">
+            <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
 
               {/* Hero */}
-              <div className="text-center mb-10">
-                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 mb-5 bg-emerald-50 text-emerald-800 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-emerald-100">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-3 bg-emerald-50 text-emerald-800 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-emerald-100">
                   <Sparkles className="w-3 h-3" /> Curated AI Coaching
                 </div>
-                <h2 className="text-4xl sm:text-5xl font-bold font-[family-name:var(--font-heading)] tracking-tight text-slate-900 mb-3 leading-[1.1]">
+                <h2 className="text-2xl sm:text-3xl font-bold font-[family-name:var(--font-heading)] tracking-tight text-slate-900 mb-1.5 leading-tight">
                   Sharpen Your Story.
                 </h2>
-                <p className="text-slate-400 text-base max-w-lg mx-auto leading-relaxed">
-                  The Curator analyzes your target role and simulates a high-fidelity interview experience tailored to you.
+                <p className="text-slate-400 text-sm max-w-md mx-auto leading-relaxed">
+                  Simulates a high-fidelity interview experience tailored to your target role.
                 </p>
               </div>
 
               {/* Form Card */}
-              <div className="bg-white p-7 sm:p-9 rounded-[2rem] shadow-sm ring-1 ring-black/5">
+              <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm ring-1 ring-black/5">
 
                 {/* Inputs */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-9">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
                   {[
                     { label: 'Company', value: company, setter: setCompany, placeholder: 'e.g. Stripe' },
                     { label: 'Role Title', value: role, setter: setRole, placeholder: 'e.g. Senior Designer' },
                   ].map(({ label, value, setter, placeholder }) => (
                     <div key={label}>
-                      <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3">{label}</label>
+                      <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">{label}</label>
                       <input
                         value={value}
                         onChange={e => setter(e.target.value)}
                         placeholder={placeholder}
-                        className="w-full border-b-2 border-stone-100 focus:border-emerald-700 bg-transparent pb-3 text-xl font-bold text-slate-900 placeholder:text-stone-200 transition-colors focus:outline-none"
+                        className="w-full border-b-2 border-stone-100 focus:border-emerald-700 bg-transparent pb-2 text-[17px] font-bold text-slate-900 placeholder:text-stone-200 transition-colors focus:outline-none"
                       />
                     </div>
                   ))}
                 </div>
 
                 {/* Session Type */}
-                <div className="mb-9">
-                  <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-5">Select Focus Area</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="mb-5">
+                  <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3">Select Focus Area</label>
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                     {sessionTypes.map(st => (
                       <button
                         key={st.type}
                         type="button"
                         onClick={() => setSelectedType(st.type)}
-                        className={`p-5 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer ${
+                        className={`p-3 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer ${
                           selectedType === st.type
-                            ? 'border-emerald-700 bg-white shadow-md'
+                            ? 'border-emerald-700 bg-white shadow-sm'
                             : 'border-transparent bg-[#f3f4f5] hover:bg-stone-200/70'
                         }`}
                       >
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3.5 ${typeColor[st.type]}`}>
-                          <st.icon className="w-[18px] h-[18px]" />
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center mb-2 ${typeColor[st.type]}`}>
+                          <st.icon className="w-3.5 h-3.5" />
                         </div>
-                        <div className="font-bold text-sm text-stone-800">{st.label}</div>
-                        <div className="text-[10px] text-stone-400 mt-1 leading-tight">{st.desc}</div>
+                        <div className="font-bold text-[11px] text-stone-800 leading-tight">{st.label}</div>
+                        <div className="text-[9px] text-stone-400 mt-0.5 leading-tight hidden sm:block">{st.desc}</div>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Curator Insight */}
-                <div className="flex items-start gap-3.5 p-5 bg-emerald-50/80 rounded-2xl border border-emerald-100 mb-8">
-                  <Sparkles className="w-4 h-4 text-emerald-700 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <div className="font-bold text-emerald-900 text-sm mb-1">Curator Insight</div>
-                    <p className="text-xs text-emerald-800/70 leading-relaxed">
+                {/* Curator Insight — compact */}
+                {(company || selectedType) && (
+                  <div className="flex items-center gap-2.5 p-3 bg-emerald-50/80 rounded-xl border border-emerald-100 mb-4">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-700 flex-shrink-0" />
+                    <p className="text-[11px] text-emerald-800/80 leading-relaxed">
                       {company && selectedType
-                        ? `We'll tailor your ${sessionTypes.find(s => s.type === selectedType)?.label ?? selectedType} session for ${role ? `a ${role} role ` : ''}at ${company} — questions will reflect company culture and hiring patterns.`
-                        : 'Enter a company and select a focus area to receive AI-curated insights for your target position.'}
+                        ? `${sessionTypes.find(s => s.type === selectedType)?.label} session${role ? ` for ${role}` : ''} at ${company} — tailored to company culture & hiring patterns.`
+                        : 'Enter a company and select a focus area for AI-curated insights.'}
                     </p>
                   </div>
-                </div>
+                )}
 
                 {/* CTA */}
                 <button
                   onClick={startSession}
                   disabled={!company || !selectedType || isTyping}
-                  className={`w-full py-5 rounded-xl font-bold tracking-widest text-sm uppercase flex items-center justify-center gap-3 transition-all duration-200 ${
+                  className={`w-full py-3.5 rounded-xl font-bold tracking-widest text-sm uppercase flex items-center justify-center gap-3 transition-all duration-200 ${
                     company && selectedType && !isTyping
-                      ? 'bg-gradient-to-r from-[#005344] to-[#006d5b] text-white shadow-lg hover:shadow-emerald-900/20 hover:scale-[0.995] active:scale-[0.99] cursor-pointer'
+                      ? 'bg-gradient-to-r from-[#005344] to-[#006d5b] text-white shadow-sm hover:opacity-90 active:scale-[0.99] cursor-pointer'
                       : 'bg-stone-100 text-stone-300 cursor-not-allowed'
                   }`}
                 >
                   {isTyping ? 'Initializing...' : 'Initialize Session'}
                   {!isTyping && <ArrowRight className="w-4 h-4" />}
                 </button>
-              </div>
-
-              {/* Stats */}
-              <div className="mt-12 grid grid-cols-3 gap-6 opacity-35">
-                {[{ value: '1.2k+', label: 'Question Bank' }, { value: '450', label: 'Company Profiles' }, { value: 'Instant', label: 'AI Feedback' }].map(s => (
-                  <div key={s.label} className="text-center">
-                    <div className="text-xl font-black text-stone-800">{s.value}</div>
-                    <div className="text-[10px] font-bold uppercase text-stone-400 mt-1">{s.label}</div>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
