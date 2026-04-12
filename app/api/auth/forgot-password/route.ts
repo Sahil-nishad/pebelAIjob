@@ -35,10 +35,6 @@ function buildHtml(firstName: string, resetUrl: string) {
                 </a>
               </div>
               <div style="border-top:1px solid #f1f5f9;margin:0 0 24px;"></div>
-              <p style="margin:0 0 8px;font-size:12px;color:#94a3b8;text-align:center;">Or copy this link into your browser:</p>
-              <p style="margin:0 0 24px;font-size:11px;color:#94a3b8;text-align:center;word-break:break-all;">
-                <a href="${resetUrl}" style="color:#10b981;text-decoration:none;">${resetUrl}</a>
-              </p>
               <p style="margin:0;font-size:13px;color:#94a3b8;text-align:center;">
                 Didn't request this? You can safely ignore this email.
               </p>
