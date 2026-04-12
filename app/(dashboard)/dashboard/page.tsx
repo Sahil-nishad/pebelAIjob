@@ -7,11 +7,11 @@ import {
   Briefcase, Calendar, TrendingUp, BarChart3,
   Plus, Clock, AlertCircle, CheckCircle2,
   ArrowRight, ChevronRight, Loader2, Zap,
-  Users, Target, Send, Upload, FileText, MousePointer2, BriefcaseIcon,
+  Users, Target, Send, Upload, FileText, MousePointer2, BriefcaseIcon, Sparkles,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { statusConfig } from '@/lib/utils'
+import { statusConfig, cn } from '@/lib/utils'
 import { useApplications } from '@/hooks/useApplications'
 import { useUser } from '@/hooks/useUser'
 import { authFetch } from '@/lib/api'

@@ -7,7 +7,7 @@ export function TopNav() {
   const { user, profile } = useUser()
 
   const displayName = profile?.name || user?.email?.split('@')[0] || 'User'
-  const displayRole = profile?.role || 'Software Engineer' // Mock role for design consistency
+  const displayRole = profile?.job_type || 'Job Seeker'
 
   return (
     <header className="fixed top-0 right-0 left-[244px] z-30 hidden h-24 items-center justify-between bg-[#FBFBFB] px-8 md:flex">
@@ -37,14 +37,8 @@ export function TopNav() {
             <p className="text-[14px] font-bold text-[#13211B] leading-none">{displayName}</p>
             <p className="text-[11px] text-slate-400 mt-1">{displayRole}</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-slate-200 overflow-hidden border border-slate-100">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt={displayName} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-[#E8F0EB] flex items-center justify-center text-[#0A6A47] font-bold text-[13px]">
-                {displayName[0]}
-              </div>
-            )}
+          <div className="w-10 h-10 rounded-xl bg-[#E8F0EB] flex items-center justify-center text-[#0A6A47] font-bold text-[13px]">
+            {displayName[0]?.toUpperCase()}
           </div>
         </div>
       </div>
