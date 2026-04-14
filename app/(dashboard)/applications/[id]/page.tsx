@@ -235,7 +235,7 @@ export default function ApplicationDetailPage() {
           <Button variant="ghost" size="sm" onClick={handleDelete}>
             <Trash2 className="w-4 h-4 text-red-400" />
           </Button>
-          <Link href={`/coach?company=${encodeURIComponent(app.company_name)}&role=${encodeURIComponent(app.role_title)}`}>
+          <Link href={`/coach?appId=${id}&company=${encodeURIComponent(app.company_name)}&role=${encodeURIComponent(app.role_title)}&autostart=1`}>
             <Button size="sm"><Bot className="w-4 h-4" /> AI Prep</Button>
           </Link>
         </div>
@@ -389,7 +389,7 @@ export default function ApplicationDetailPage() {
                   )}
                   <Badge variant="default">{round.format}</Badge>
                 </div>
-                <Link href="/coach">
+                <Link href={`/coach?appId=${id}&company=${encodeURIComponent(app.company_name)}&role=${encodeURIComponent(app.role_title)}&autostart=1`}>
                   <Button variant="ghost" size="sm"><Bot className="w-4 h-4" /> Prep for next</Button>
                 </Link>
               </div>
@@ -473,7 +473,7 @@ export default function ApplicationDetailPage() {
             <p className="text-sm text-slate-600 max-w-md mx-auto">
               Practice interview questions tailored for the {app.role_title} role at {app.company_name}.
             </p>
-            <Link href={`/coach?company=${encodeURIComponent(app.company_name)}&role=${encodeURIComponent(app.role_title)}`}>
+            <Link href={`/coach?appId=${id}&company=${encodeURIComponent(app.company_name)}&role=${encodeURIComponent(app.role_title)}&autostart=1`}>
               <Button size="lg">
                 <Bot className="w-5 h-5" /> Start Coaching Session
               </Button>

@@ -2,10 +2,11 @@
 
 import Image from 'next/image'
 import { useEffect, useRef, useState, type ElementType } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   Send, Plus, Brain, Code, BarChart3, DollarSign, Target,
-  SkipForward, HelpCircle, Clock, Trash2, Sparkles, ArrowRight,
+  HelpCircle, Clock, Trash2, Sparkles, ArrowRight, Briefcase,
 } from 'lucide-react'
 import { authFetch } from '@/lib/api'
 import toast from 'react-hot-toast'
@@ -48,6 +49,8 @@ function formatMessage(text: string) {
 }
 
 export default function CoachPage() {
+  const searchParams = useSearchParams()
+
   const [hasSession, setHasSession]     = useState(false)
   const [company, setCompany]           = useState('')
   const [role, setRole]                 = useState('')
@@ -59,6 +62,9 @@ export default function CoachPage() {
   const [questionCount, setQuestionCount] = useState(0)
   const [sessions, setSessions]         = useState<SessionRecord[]>([])
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const [jobDescription, setJobDescription] = useState('')
+  const [appContext, setAppContext]     = useState<{ company: string; role: string } | null>(null)
+  const [autoStartPending, setAutoStartPending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -68,11 +74,58 @@ export default function CoachPage() {
     authFetch('/api/coach/sessions').then(r => r.json()).then(d => { if (Array.isArray(d)) setSessions(d) }).catch(() => {})
   }, [])
 
+  // ── Read URL params set by application detail page ────────────────────────
+  useEffect(() => {
+    const c       = searchParams.get('company')
+    const r       = searchParams.get('role')
+    const appId   = searchParams.get('appId')
+    const autostart = searchParams.get('autostart')
+
+    if (c) setCompany(c)
+    if (r) setRole(r)
+
+    if (appId) {
+      // Fetch the full application to get job description + confirm context
+      authFetch(`/api/applications/${appId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.job_description) setJobDescription(data.job_description)
+          if (data.company_name && data.role_title) {
+            setAppContext({ company: data.company_name, role: data.role_title })
+          }
+          if (autostart === '1') {
+            setSelectedType('general')
+            setAutoStartPending(true)
+          }
+        })
+        .catch(() => {
+          // If fetch fails, still try to autostart with what we have
+          if (autostart === '1' && c) {
+            setSelectedType('general')
+            setAutoStartPending(true)
+          }
+        })
+    } else if (autostart === '1' && c) {
+      setSelectedType('general')
+      setAutoStartPending(true)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     if (hasSession) { timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000) }
     else { if (timerRef.current) clearInterval(timerRef.current); setElapsedSeconds(0) }
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [hasSession])
+
+  // ── Auto-start when all context is ready ─────────────────────────────────
+  useEffect(() => {
+    if (autoStartPending && company && selectedType && !hasSession && !isTyping) {
+      setAutoStartPending(false)
+      startSession()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStartPending, company, selectedType])
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
@@ -97,7 +150,7 @@ export default function CoachPage() {
     if (!company || !selectedType) return
     setIsTyping(true)
     try {
-      const res = await authFetch('/api/coach/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company, role, sessionType: selectedType }) })
+      const res = await authFetch('/api/coach/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company, role, sessionType: selectedType, jobDescription: jobDescription || undefined }) })
       const data = await res.json().catch(() => null)
       if (!res.ok) throw new Error(data?.error || 'Failed to start session')
       setSessionId(data.session.id); setHasSession(true)
@@ -231,6 +284,17 @@ export default function CoachPage() {
                   </div>
                 </div>
 
+                {/* Application context banner */}
+                {appContext && (
+                  <div className="flex items-center gap-2.5 p-3 bg-[#0A6A47]/8 rounded-xl border border-[#0A6A47]/20 mb-4">
+                    <Briefcase className="w-3.5 h-3.5 text-[#0A6A47] flex-shrink-0" />
+                    <p className="text-[11px] text-[#0A6A47] leading-relaxed font-medium">
+                      Loaded from your application — <strong>{appContext.role}</strong> at <strong>{appContext.company}</strong>.
+                      {jobDescription ? ' Job description included for tailored questions.' : ''}
+                    </p>
+                  </div>
+                )}
+
                 {/* Curator Insight — compact */}
                 {(company || selectedType) && (
                   <div className="flex items-center gap-2.5 p-3 bg-emerald-50/80 rounded-xl border border-emerald-100 mb-4">
@@ -253,8 +317,8 @@ export default function CoachPage() {
                       : 'bg-stone-100 text-stone-300 cursor-not-allowed'
                   }`}
                 >
-                  {isTyping ? 'Initializing...' : 'Initialize Session'}
-                  {!isTyping && <ArrowRight className="w-4 h-4" />}
+                  {isTyping || autoStartPending ? 'Initializing…' : 'Initialize Session'}
+                  {!isTyping && !autoStartPending && <ArrowRight className="w-4 h-4" />}
                 </button>
               </div>
             </div>
