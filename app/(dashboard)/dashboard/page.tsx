@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 import {
   Briefcase, Calendar, BarChart3, Plus, Clock,
   CheckCircle2, Loader2, Send, Upload, FileText,
-  Bot, Bell, TrendingUp, ChevronRight, AlertCircle,
+  Bot, Bell, TrendingUp, ChevronRight, AlertCircle, X, Puzzle,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { statusConfig, cn } from '@/lib/utils'
@@ -26,8 +26,18 @@ export default function DashboardPage() {
   const { applications, loading: appsLoading } = useApplications()
   const { user, profile } = useUser()
   const [reminders, setReminders] = useState<Reminder[]>([])
+  const [showExtBanner, setShowExtBanner] = useState(false)
 
   const userName = profile?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
+
+  useEffect(() => {
+    if (!localStorage.getItem('ext_banner_dismissed')) setShowExtBanner(true)
+  }, [])
+
+  function dismissExtBanner() {
+    localStorage.setItem('ext_banner_dismissed', '1')
+    setShowExtBanner(false)
+  }
 
   useEffect(() => {
     authFetch('/api/reminders')
@@ -105,6 +115,32 @@ export default function DashboardPage() {
               </button>
             </Link>
           </div>
+
+          {/* Extension banner */}
+          {showExtBanner && (
+            <div className="flex items-start gap-3 bg-[#0A6A47]/8 border border-[#0A6A47]/20 rounded-2xl px-4 py-3.5">
+              <div className="w-8 h-8 rounded-lg bg-[#0A6A47]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Puzzle className="w-4 h-4 text-[#0A6A47]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-slate-900">Auto-track jobs with our Chrome extension</p>
+                <p className="text-[12px] text-slate-500 mt-0.5">
+                  Apply on LinkedIn or any job site and JobFlow will save it automatically.{' '}
+                  <a
+                    href="https://chrome.google.com/webstore"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#0A6A47] font-semibold hover:underline"
+                  >
+                    Install free →
+                  </a>
+                </p>
+              </div>
+              <button onClick={dismissExtBanner} className="text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0 mt-0.5">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Stats */}
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
