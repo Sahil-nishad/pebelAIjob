@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { requireAuth, unauthorized } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
-  const auth = await requireAuth()
+  const auth = await requireAuth(req)
   if (!auth) return unauthorized()
 
   const { user, supabase } = auth

@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react'
 import { Sidebar } from '@/components/layout/sidebar'
 import { TopNav } from '@/components/layout/topnav'
 import { MobileNav } from '@/components/layout/mobile-nav'
+import { ExtensionBridge } from '@/components/extension-bridge'
 
 function DashboardGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -27,6 +28,7 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
+      <ExtensionBridge />
       <Sidebar />
       <TopNav />
       <main className="md:ml-[244px] mt-16 md:mt-24 pb-24 md:pb-8 p-4 md:p-6 lg:p-12">

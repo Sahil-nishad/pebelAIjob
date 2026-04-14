@@ -4,7 +4,7 @@ import { sendReminderEmail } from '@/lib/email'
 import type { Application } from '@/types'
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth()
+  const auth = await requireAuth(req)
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 

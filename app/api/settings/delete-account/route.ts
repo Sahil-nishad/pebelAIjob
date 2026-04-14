@@ -5,7 +5,7 @@ import { deleteCoachSessions } from '@/lib/coach-session-store'
 import { isMissingTableError } from '@/lib/supabase'
 
 export async function DELETE(req: NextRequest) {
-  const auth = await requireAuth()
+  const auth = await requireAuth(req)
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 

@@ -3,7 +3,7 @@ import { requireAuth, unauthorized } from '@/lib/auth'
 import { sendApplicationConfirmationEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth()
+  const auth = await requireAuth(req)
   if (!auth) return unauthorized()
 
   const { user, supabase } = auth
