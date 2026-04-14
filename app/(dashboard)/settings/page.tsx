@@ -66,19 +66,35 @@ export default function SettingsPage() {
   const [orig, setOrig] = useState({ name: '', phone: '', title: '', linkedin: '', location: '' })
 
   useEffect(() => {
-    if (profile?.name) {
-      const p = profile as unknown as Record<string, unknown>
-      const vals = {
-        name:     (profile.name        as string) || '',
-        phone:    (p.phone    as string) || '',
-        title:    (p.title    as string) || '',
-        linkedin: (p.linkedin as string) || '',
-        location: (p.location as string) || '',
-      }
-      setName(vals.name); setPhone(vals.phone); setTitle(vals.title)
-      setLinkedin(vals.linkedin); setLocation(vals.location)
-      setOrig(vals)
+    if (!profile) return
+    const p = profile as unknown as Record<string, unknown>
+
+    // Personal info
+    const vals = {
+      name:     (p.name     as string) || '',
+      phone:    (p.phone    as string) || '',
+      title:    (p.title    as string) || '',
+      linkedin: (p.linkedin as string) || '',
+      location: (p.location as string) || '',
     }
+    setName(vals.name); setPhone(vals.phone); setTitle(vals.title)
+    setLinkedin(vals.linkedin); setLocation(vals.location)
+    setOrig(vals)
+
+    // Preferences
+    const roles = p.target_roles
+    const companies = p.target_companies
+    if (Array.isArray(roles))     setTargetRoles(roles.join(', '))
+    if (Array.isArray(companies)) setTargetCompanies(companies.join(', '))
+    if (p.job_type)         setJobTypes((p.job_type as string).split(',').filter(Boolean))
+    if (p.experience_level) setExpLevel(p.experience_level as string)
+    if (p.salary_min)       setSalaryMin(String(p.salary_min))
+    if (p.salary_max)       setSalaryMax(String(p.salary_max))
+
+    // Notifications
+    if (p.email_digest)         setEmailDigest(p.email_digest as string)
+    if (p.follow_up_days)       setFollowUpDays(p.follow_up_days as number)
+    if (p.interview_prep_days)  setPrepDays(p.interview_prep_days as number)
   }, [profile])
 
   function discardChanges() {

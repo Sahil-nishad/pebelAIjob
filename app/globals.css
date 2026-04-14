@@ -133,6 +133,14 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(47, 133, 90, 0.16);
   color: #13211B;
 }
+/* ── Readability: darken Tailwind's lightest slate shades ─────────────────
+   text-slate-400 (#94a3b8) and text-slate-500 (#64748b) are too pale on
+   the off-white background. Shift them one step darker so all secondary
+   text is comfortably readable without redesigning every component.       */
+.text-slate-400 { color: #64748b; }   /* was #94a3b8, now slate-500 */
+.text-slate-500 { color: #475569; }   /* was #64748b, now slate-600 */
+.text-slate-300 { color: #94a3b8; }   /* was #cbd5e1, now slate-400 */
+
 /* Utilities */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
