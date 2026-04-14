@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Download, Trash2, Send, CheckCircle2, Loader2,
   LogOut, Pencil, ChevronRight, Sparkles, BadgeCheck,
-  User, Settings, Bell, ShieldAlert,
+  User, Settings, Bell, ShieldAlert, ArrowLeft, Lock,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -46,6 +47,7 @@ function Field({
 }
 
 export default function SettingsPage() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState('profile')
   const { user, profile, signOut } = useUser()
   const avatarInputRef = useRef<HTMLInputElement>(null)
@@ -250,8 +252,125 @@ export default function SettingsPage() {
   const toggleJobType = (type: string) =>
     setJobTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type])
 
+  // ── Mobile field row ──────────────────────────────────────────────────────
+  function MobileField({ label, value, onChange, disabled, placeholder }: {
+    label: string; value: string; onChange?: (v: string) => void
+    disabled?: boolean; placeholder?: string
+  }) {
+    return (
+      <div className="py-4 border-b border-slate-100 last:border-0">
+        <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-1">{label}</p>
+        <input
+          value={value}
+          placeholder={placeholder || '—'}
+          disabled={disabled}
+          onChange={e => onChange?.(e.target.value)}
+          className={cn(
+            'w-full text-[15px] font-medium bg-transparent focus:outline-none placeholder:text-slate-300',
+            disabled ? 'text-slate-500 cursor-not-allowed' : 'text-slate-900',
+          )}
+        />
+      </div>
+    )
+  }
+
   return (
-    <div className="max-w-5xl mx-auto animate-fade-up">
+    <>
+    {/* ════════════════════════════════════════════════════════════════
+        MOBILE LAYOUT  (hidden on md+)
+    ════════════════════════════════════════════════════════════════ */}
+    <div className="md:hidden -mx-4 -mt-0 min-h-screen bg-white animate-fade-up flex flex-col">
+
+      {/* Top bar */}
+      <div className="flex items-center gap-3 px-4 py-4 border-b border-slate-100">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1 text-[#0A6A47] font-semibold text-[14px] cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+        <h1 className="text-[16px] font-bold text-slate-900">Settings</h1>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto pb-32">
+
+        {/* Avatar + name */}
+        <div className="flex flex-col items-center pt-8 pb-6 px-6">
+          <div className="relative mb-4">
+            <div className="w-24 h-24 rounded-2xl bg-[#13211B] flex items-center justify-center text-2xl font-black text-white select-none">
+              {initials}
+            </div>
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-[#0A6A47] rounded-lg flex items-center justify-center shadow-sm"
+            >
+              <Pencil className="w-3.5 h-3.5 text-white" />
+            </button>
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" />
+          </div>
+          <h2 className="text-[20px] font-black text-slate-900">{displayName}</h2>
+          {title && <p className="text-[13px] text-slate-500 mt-0.5">{title}</p>}
+        </div>
+
+        {/* Profile fields */}
+        <div className="px-5">
+          <MobileField label="Full Name"          value={name}     onChange={setName}     placeholder="Your full name" />
+          <MobileField label="Email Address"       value={displayEmail} disabled />
+          <MobileField label="Phone Number"        value={phone}    onChange={setPhone}    placeholder="+1 (555) 000-0000" />
+          <MobileField label="Professional Title"  value={title}    onChange={setTitle}    placeholder="e.g. Software Engineer" />
+          <MobileField label="LinkedIn URL"        value={linkedin} onChange={setLinkedin} placeholder="linkedin.com/in/you" />
+          <MobileField label="Location"            value={location} onChange={setLocation} placeholder="San Francisco, CA" />
+        </div>
+
+        {/* Security row */}
+        <div className="mx-5 mt-4 mb-2">
+          <button
+            onClick={() => setActiveTab('security')}
+            className="w-full flex items-center gap-3 py-4 cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-full bg-[#0A6A47] flex items-center justify-center shrink-0">
+              <Lock className="w-4.5 h-4.5 text-white w-[18px] h-[18px]" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-[14px] font-semibold text-slate-900">Security &amp; Password</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Manage account security settings</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
+          </button>
+        </div>
+
+        {/* Sign out */}
+        <div className="mx-5 border-t border-slate-100 pt-2">
+          <button
+            onClick={signOut}
+            className="w-full flex items-center gap-3 py-4 cursor-pointer"
+          >
+            <LogOut className="w-4 h-4 text-red-400" />
+            <span className="text-[14px] font-medium text-red-500">Sign out</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Fixed save button */}
+      <div className="fixed bottom-16 left-0 right-0 px-5 pb-4 pt-3 bg-white border-t border-slate-100">
+        <button
+          onClick={saveProfile}
+          disabled={savingProfile}
+          className="w-full flex items-center justify-center gap-2 bg-[#0A6A47] hover:bg-[#085438] disabled:opacity-60 text-white text-[15px] font-bold py-4 rounded-2xl transition-colors cursor-pointer shadow-sm"
+        >
+          {savingProfile
+            ? <Loader2 className="w-4 h-4 animate-spin" />
+            : <Sparkles className="w-4 h-4" />}
+          Save Changes
+        </button>
+      </div>
+    </div>
+
+    {/* ════════════════════════════════════════════════════════════════
+        DESKTOP LAYOUT  (hidden on mobile)
+    ════════════════════════════════════════════════════════════════ */}
+    <div className="hidden md:block max-w-5xl mx-auto animate-fade-up">
 
       {/* ── Top hero ────────────────────────────────────────────────── */}
       <div className="flex items-center gap-6 mb-8">
@@ -607,6 +726,7 @@ export default function SettingsPage() {
 
         </div>{/* end right content */}
       </div>{/* end 2-col */}
-    </div>
+    </div>{/* end desktop */}
+    </>
   )
 }
