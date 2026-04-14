@@ -3,7 +3,7 @@ import { requireAuth, unauthorized } from '@/lib/auth'
 import { deleteCoachSession, getCoachSession } from '@/lib/coach-session-store'
 import { isMissingTableError } from '@/lib/supabase'
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(req)
   if (!auth) return unauthorized()
   const { user, supabase } = auth
