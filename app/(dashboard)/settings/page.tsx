@@ -110,11 +110,18 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, phone, title, linkedin, location }),
       })
-      if (!res.ok) throw new Error()
+      if (res.status === 401) {
+        toast.error('Session expired. Please sign in again.')
+        return
+      }
+      if (!res.ok) {
+        const d = await res.json().catch(() => null)
+        throw new Error(d?.error || 'Failed to save profile')
+      }
       setOrig({ name, phone, title, linkedin, location })
       toast.success('Profile saved!')
-    } catch {
-      toast.error('Failed to save profile')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save profile')
     } finally {
       setSavingProfile(false)
     }

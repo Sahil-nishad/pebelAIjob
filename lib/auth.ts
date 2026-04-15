@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 import { getToken } from 'next-auth/jwt'
-import { authOptions } from './nextauth'
 import { getSupabaseServer } from './supabase'
 
 export async function requireAuth(req?: NextRequest) {
@@ -31,21 +29,35 @@ export async function requireAuth(req?: NextRequest) {
             }
           }
         } catch (_) {
-          // Invalid token — fall through to session check
+          // Invalid token — fall through
         }
       }
     }
+
+    // ── Normal web session: read JWT directly from the request cookies ──────────
+    // Using getToken(req) instead of getServerSession() to avoid compatibility
+    // issues with Next.js 15/16 App Router where cookies() must be awaited.
+    try {
+      const token = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET!,
+      })
+      if (token?.dbId) {
+        const supabase = getSupabaseServer()
+        return {
+          user: {
+            id: token.dbId as string,
+            email: (token.email as string) || '',
+          },
+          supabase,
+        }
+      }
+    } catch (_) {
+      // Token decode failed — fall through to null
+    }
   }
 
-  // ── Normal web session (cookie-based) ───────────────────────────────────────
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return null
-
-  const supabase = getSupabaseServer()
-  return {
-    user: { id: session.user.id, email: session.user.email },
-    supabase,
-  }
+  return null
 }
 
 export function unauthorized() {
