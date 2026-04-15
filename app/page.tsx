@@ -8,15 +8,13 @@ import {
   ArrowRight,
   Check,
   Sparkles,
-  Bell,
   BarChart3,
-  Star,
   Puzzle,
-  ChevronRight,
   Bot,
-  Clock,
+  Zap,
+  Bell,
+  Users,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 
 /* ─── Navbar ─── */
 function Navbar() {
@@ -34,7 +32,7 @@ function Navbar() {
           <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-7 w-auto" />
         </Link>
         <div className="hidden md:flex items-center gap-8">
-          {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['#testimonials', 'Reviews']].map(([href, label]) => (
+          {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['#why-pebelai', 'Why PebelAI']].map(([href, label]) => (
             <a key={href} href={href} className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors">{label}</a>
           ))}
         </div>
@@ -125,15 +123,15 @@ function DashboardMockup() {
         </div>
       </div>
 
-      {/* Stats chip */}
+      {/* Extension chip */}
       <motion.div
         initial={{ opacity: 0, x: -8 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 1.3, duration: 0.5 }}
         className="absolute -bottom-3 -left-3 z-10 flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-[0_4px_20px_rgba(0,0,0,0.08)]"
       >
-        <BarChart3 className="w-3.5 h-3.5 text-[#16a34a]" />
-        <p className="text-[11px] font-semibold text-slate-700">67% response rate <span className="text-[#16a34a]">↑ +12%</span></p>
+        <Puzzle className="w-3.5 h-3.5 text-[#16a34a]" />
+        <p className="text-[11px] font-semibold text-slate-700">Auto-tracked via extension</p>
       </motion.div>
     </div>
   )
@@ -189,7 +187,7 @@ function AIChatMini() {
           <Bot className="w-3 h-3 text-white" />
         </div>
         <div className="bg-white/15 rounded-lg px-3 py-2 text-[11px] text-white leading-relaxed">
-          <span className="font-semibold">What worked:</span> Strong impact framing ✓<br />
+          <span className="font-semibold">Strong:</span> Clear impact framing ✓<br />
           <span className="font-semibold">Improve:</span> Add specific metrics
         </div>
       </div>
@@ -213,7 +211,7 @@ function AnalyticsMini() {
         ))}
       </div>
       <div className="grid grid-cols-3 gap-2">
-        {[['67%', 'Response rate'], ['3.2×', 'More interviews'], ['2×', 'Offer rate']].map(([v, l]) => (
+        {[['Free', 'Forever plan'], ['1-click', 'Job capture'], ['AI', 'Interview prep']].map(([v, l]) => (
           <div key={l} className="bg-slate-50 rounded-lg p-2 text-center">
             <p className="text-[13px] font-bold text-slate-900">{v}</p>
             <p className="text-[9px] text-slate-400 leading-tight">{l}</p>
@@ -263,38 +261,39 @@ export default function LandingPage() {
               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               className="space-y-6"
             >
-              <h1 className="text-[42px] md:text-[52px] lg:text-[56px] font-bold leading-[1.08] tracking-[-0.03em] text-slate-900 font-[family-name:var(--font-heading)]">
-                Track smarter.<br />
-                Interview better.<br />
-                <span className="text-[#16a34a]">Land the offer.</span>
-              </h1>
-              <p className="text-[16px] text-slate-500 leading-[1.7] max-w-[420px]">
-                The all-in-one job management platform for ambitious candidates. Organize every application, prep with AI, and never miss a follow-up.
-              </p>
-
-              <div className="flex flex-wrap items-center gap-3 pt-1">
-                <Link href="/signup">
-                  <button className="flex items-center gap-2 h-11 px-6 rounded-xl bg-slate-900 text-white text-[14px] font-semibold hover:bg-slate-800 transition-colors">
-                    Start for free <ArrowRight className="w-4 h-4" />
-                  </button>
-                </Link>
-                <a href="#how-it-works" className="flex items-center gap-2 h-11 px-5 text-[14px] text-slate-500 hover:text-slate-900 transition-colors">
-                  <Clock className="w-4 h-4" /> See how it works
-                </a>
+              {/* Positioning badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
+                <Zap className="w-3 h-3 text-[#16a34a]" />
+                <span className="text-[11px] font-semibold text-[#16a34a] tracking-wide">Built for high-volume job applicants</span>
               </div>
 
-              {/* Social proof */}
-              <div className="flex items-center gap-3 pt-2">
-                <div className="flex -space-x-2">
-                  {['bg-blue-400', 'bg-violet-400', 'bg-rose-400', 'bg-amber-400', 'bg-[#16a34a]'].map((c, i) => (
-                    <div key={i} className={`w-7 h-7 rounded-full border-2 border-white ${c}`} />
-                  ))}
-                </div>
-                <div>
-                  <div className="flex items-center gap-0.5">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
-                  </div>
-                  <p className="text-[12px] text-slate-400 mt-0.5">Loved by <span className="font-semibold text-slate-700">5,000+</span> job seekers</p>
+              <h1 className="text-[42px] md:text-[52px] lg:text-[54px] font-bold leading-[1.08] tracking-[-0.03em] text-slate-900 font-[family-name:var(--font-heading)]">
+                Apply anywhere.<br />
+                Track automatically.<br />
+                <span className="text-[#16a34a]">Prepare with AI.</span>
+              </h1>
+              <p className="text-[16px] text-slate-500 leading-[1.7] max-w-[440px]">
+                PebelAI auto-tracks your job applications via browser extension, sends smart reminders for follow-ups and interviews, and coaches you with AI — built for candidates applying to 50–200 roles.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-start gap-3 pt-1">
+                <Link href="/signup">
+                  <button className="flex items-center gap-2 h-11 px-6 rounded-xl bg-[#16a34a] text-white text-[14px] font-semibold hover:bg-[#15803d] transition-colors shadow-sm">
+                    <Puzzle className="w-4 h-4" /> Install Extension — Free
+                  </button>
+                </Link>
+                <Link href="/signup">
+                  <button className="flex items-center gap-2 h-11 px-5 text-[14px] text-slate-500 hover:text-slate-900 transition-colors border border-slate-200 rounded-xl hover:border-slate-300">
+                    Sign up — track manually <ArrowRight className="w-4 h-4" />
+                  </button>
+                </Link>
+              </div>
+
+              {/* Honest early-stage social proof */}
+              <div className="flex items-center gap-3 pt-1">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <Users className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-[12px] text-slate-500">Be among the first users — early access, always free</span>
                 </div>
               </div>
             </motion.div>
@@ -312,15 +311,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── TRUST STRIP ─── */}
-      <div className="border-y border-slate-100 py-8 px-6">
+      {/* ─── POSITIONING STRIP ─── */}
+      <div className="border-y border-slate-100 py-7 px-6 bg-slate-50/60">
         <div className="max-w-4xl mx-auto">
-          <p className="text-center text-[11px] text-slate-400 tracking-widest uppercase font-medium mb-6">Users now work at</p>
-          <div className="flex items-center justify-center gap-10 flex-wrap">
-            {['Google', 'Meta', 'Stripe', 'Vercel', 'Figma', 'Notion'].map(name => (
-              <span key={name} className="text-[14px] font-bold text-slate-200 hover:text-slate-300 transition-colors cursor-default tracking-tight">{name}</span>
-            ))}
-          </div>
+          <p className="text-center text-[15px] text-slate-600 font-medium leading-relaxed max-w-2xl mx-auto">
+            The only job tracker that automatically captures applications as you browse — so you can focus on applying, not spreadsheets.
+          </p>
         </div>
       </div>
 
@@ -331,32 +327,32 @@ export default function LandingPage() {
           <div className="mb-14">
             <p className="text-[12px] text-[#16a34a] font-semibold uppercase tracking-widest mb-3">Features</p>
             <h2 className="text-[32px] md:text-[40px] font-bold tracking-[-0.025em] text-slate-900 font-[family-name:var(--font-heading)] mb-3">
-              Precision tools for the modern hunt
+              Everything you need for a high-volume search
             </h2>
             <p className="text-[15px] text-slate-500 max-w-lg">
-              Stop juggling spreadsheets and sticky notes. PebelAI gives you a professional-grade toolkit built for the way job searching actually works.
+              Stop managing your job search in a spreadsheet. PebelAI automates the tedious parts so you spend time applying — not tracking.
             </p>
           </div>
 
           {/* Bento grid */}
           <div className="grid md:grid-cols-2 gap-4">
 
-            {/* Visual Pipeline */}
+            {/* Auto Job Tracking */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               className="p-7 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all duration-300"
             >
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-4">Visual Pipeline Management</p>
-              <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">See every application at a glance</h3>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-4">Auto Job Tracking</p>
+              <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">Your pipeline, built automatically</h3>
               <p className="text-[13px] text-slate-500 leading-relaxed mb-5">
-                Drag-and-drop Kanban and list views. Move cards through stages, spot patterns, and never lose an opportunity in the noise.
+                Install the browser extension and save any job in one click from LinkedIn, Indeed, or any site. Or add manually in seconds. Every application in one place, always up to date.
               </p>
               <KanbanMini />
             </motion.div>
 
-            {/* AI Advisor */}
+            {/* AI Interview Coach */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -364,15 +360,15 @@ export default function LandingPage() {
               transition={{ delay: 0.08 }}
               className="p-7 rounded-2xl bg-[#16a34a] border border-[#15803d] hover:shadow-[0_8px_32px_rgba(22,163,74,0.25)] transition-all duration-300"
             >
-              <p className="text-[11px] font-semibold text-white/60 uppercase tracking-widest mb-4">AI Advisor</p>
-              <h3 className="text-[18px] font-bold text-white mb-2 tracking-tight font-[family-name:var(--font-heading)]">Practice. Get feedback. Nail it.</h3>
+              <p className="text-[11px] font-semibold text-white/60 uppercase tracking-widest mb-4">AI Interview Coach</p>
+              <h3 className="text-[18px] font-bold text-white mb-2 tracking-tight font-[family-name:var(--font-heading)]">Quick revision before every interview.</h3>
               <p className="text-[13px] text-white/70 leading-relaxed mb-5">
-                Role-specific interview coaching powered by AI. Get STAR-format feedback and concrete improvements after every answer.
+                Practice role-specific questions, get structured STAR-format feedback, and walk in confident. Designed for last-minute prep, not lengthy courses.
               </p>
               <AIChatMini />
             </motion.div>
 
-            {/* Analytics */}
+            {/* Smart Reminders */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -380,10 +376,10 @@ export default function LandingPage() {
               transition={{ delay: 0.12 }}
               className="p-7 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all duration-300"
             >
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-4">Search Analytics</p>
-              <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">Know what&apos;s working</h3>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-4">Smart Reminders</p>
+              <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">Never ghost a follow-up again</h3>
               <p className="text-[13px] text-slate-500 leading-relaxed mb-5">
-                Track response rates, interview conversion, and offer velocity. Data-driven decisions instead of gut feelings.
+                Get email alerts for follow-ups, application deadlines, and upcoming interviews — timed automatically based on your pipeline. Stay on top of 100+ applications without thinking about it.
               </p>
               <AnalyticsMini />
             </motion.div>
@@ -397,9 +393,9 @@ export default function LandingPage() {
               className="p-7 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all duration-300"
             >
               <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-4">Browser Extension</p>
-              <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">Save jobs in one click</h3>
+              <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">Save jobs without switching tabs</h3>
               <p className="text-[13px] text-slate-500 leading-relaxed mb-5">
-                Browse LinkedIn or any job board and add applications directly to PebelAI without leaving the page.
+                The PebelAI extension detects job listings as you browse and lets you capture them instantly. No copy-pasting, no manual entry — just click and track.
               </p>
               <ExtensionMini />
             </motion.div>
@@ -410,20 +406,41 @@ export default function LandingPage() {
 
       {/* ─── HOW IT WORKS ─── */}
       <section id="how-it-works" className="py-20 md:py-28 px-6 bg-slate-50/70 border-y border-slate-100">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
             <p className="text-[12px] text-[#16a34a] font-semibold uppercase tracking-widest mb-3">How it works</p>
             <h2 className="text-[32px] md:text-[40px] font-bold tracking-[-0.025em] text-slate-900 font-[family-name:var(--font-heading)]">
-              Three steps to a better job search
+              From application to offer in 4 steps
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 relative">
-            <div className="hidden md:block absolute top-6 left-[calc(33%+16px)] right-[calc(33%+16px)] h-px bg-gradient-to-r from-slate-200 via-[#16a34a]/30 to-slate-200" />
+          <div className="grid md:grid-cols-4 gap-6 relative">
+            <div className="hidden md:block absolute top-6 left-[calc(25%+16px)] right-[calc(25%+16px)] h-px bg-gradient-to-r from-slate-200 via-[#16a34a]/30 to-slate-200" />
             {[
-              { step: '01', title: 'Add your applications', desc: 'Paste a job URL or enter details in seconds. AI auto-fills and suggests follow-up timing.' },
-              { step: '02', title: 'Track every stage', desc: 'Move cards through your pipeline. Spot patterns and never let anything fall through the cracks.' },
-              { step: '03', title: 'Prep, apply, repeat', desc: 'Practice interviews with AI, get personalized coaching, and land offers faster.' },
+              {
+                step: '01',
+                icon: Puzzle,
+                title: 'Apply to jobs anywhere',
+                desc: 'Browse LinkedIn, Indeed, company sites — wherever you find opportunities.',
+              },
+              {
+                step: '02',
+                icon: Zap,
+                title: 'Auto-track or add manually',
+                desc: 'Extension captures it in 1 click. Or enter details manually in under 30 seconds.',
+              },
+              {
+                step: '03',
+                icon: Bell,
+                title: 'Get smart reminders',
+                desc: 'Email alerts for follow-ups, deadlines, and interviews — sent at the right time.',
+              },
+              {
+                step: '04',
+                icon: Bot,
+                title: 'Prep with AI coach',
+                desc: 'Practice role-specific questions and get real feedback before every interview.',
+              },
             ].map((item, i) => (
               <motion.div
                 key={item.step}
@@ -434,94 +451,120 @@ export default function LandingPage() {
                 className="text-center"
               >
                 <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center mx-auto mb-4">
-                  <span className="text-[14px] font-bold text-slate-900">{item.step}</span>
+                  <item.icon className="w-5 h-5 text-[#16a34a]" />
+                </div>
+                <p className="text-[10px] font-bold text-slate-300 tracking-widest mb-1">{item.step}</p>
+                <h3 className="text-[14px] font-bold text-slate-900 mb-2">{item.title}</h3>
+                <p className="text-[12px] text-slate-500 leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── WHY PEBELAI (DIFFERENTIATION) ─── */}
+      <section id="why-pebelai" className="py-24 md:py-32 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-[12px] text-[#16a34a] font-semibold uppercase tracking-widest mb-3">Why PebelAI</p>
+            <h2 className="text-[32px] md:text-[40px] font-bold tracking-[-0.025em] text-slate-900 font-[family-name:var(--font-heading)]">
+              Built for volume. Manual trackers aren&apos;t.
+            </h2>
+            <p className="text-[15px] text-slate-500 mt-3 max-w-lg mx-auto">
+              When you&apos;re applying to 50–200 roles, a spreadsheet breaks down. Here&apos;s what&apos;s different.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: Zap,
+                title: 'Automation, not manual entry',
+                desc: 'Most trackers make you enter every field by hand. PebelAI captures job details automatically from any site — company, role, date, URL — in one click.',
+              },
+              {
+                icon: Bell,
+                title: 'Reminders that actually matter',
+                desc: 'A spreadsheet won\'t tell you to follow up in 7 days, or alert you the night before an interview. PebelAI does — via email, timed intelligently.',
+              },
+              {
+                icon: Bot,
+                title: 'AI prep at the right moment',
+                desc: 'Once an interview is booked, your coach knows the company and role. Practice targeted questions for that specific job — not generic advice.',
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-[#16a34a]/30 hover:shadow-[0_8px_24px_rgba(22,163,74,0.08)] transition-all duration-300"
+              >
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center mb-4">
+                  <item.icon className="w-5 h-5 text-[#16a34a]" />
                 </div>
                 <h3 className="text-[15px] font-bold text-slate-900 mb-2">{item.title}</h3>
                 <p className="text-[13px] text-slate-500 leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ─── TESTIMONIAL ─── */}
-      <section id="testimonials" className="py-24 md:py-32 px-6">
-        <div className="max-w-3xl mx-auto">
+          {/* Quick comparison */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-white border border-slate-200 rounded-2xl p-10 md:p-14 text-center shadow-[0_4px_40px_rgba(0,0,0,0.04)]"
+            className="mt-10 rounded-2xl border border-slate-200 bg-slate-50/60 overflow-hidden"
           >
-            <div className="flex justify-center gap-0.5 mb-7">
-              {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
+            <div className="grid grid-cols-3 border-b border-slate-200">
+              <div className="px-6 py-4 text-[12px] font-semibold text-slate-400 uppercase tracking-widest">Feature</div>
+              <div className="px-6 py-4 text-center text-[12px] font-semibold text-slate-500">Spreadsheet</div>
+              <div className="px-6 py-4 text-center text-[12px] font-semibold text-[#16a34a]">PebelAI</div>
             </div>
-            <blockquote className="text-[20px] md:text-[24px] font-medium text-slate-900 leading-[1.5] mb-8 tracking-tight">
-              &ldquo;The first job tracker that actually feels like a professional tool, not a toy.&rdquo;
-            </blockquote>
-            <div className="flex items-center justify-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-[13px] font-bold text-white">
-                MJ
-              </div>
-              <div className="text-left">
-                <p className="text-[13px] font-semibold text-slate-900">Marcus J.</p>
-                <p className="text-[12px] text-slate-400">Product Manager · Now at Google</p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Two small quotes */}
-          <div className="grid md:grid-cols-2 gap-4 mt-4">
             {[
-              { initials: 'SC', color: 'from-violet-400 to-violet-600', name: 'Sarah C.', title: 'Software Eng · Now at Stripe', text: 'Tracked 30+ applications without going insane. The reminders alone are worth it.' },
-              { initials: 'PP', color: 'from-rose-400 to-pink-600', name: 'Priya P.', title: 'UX Designer · Now at Figma', text: 'AI coach helped me nail behaviorals I always struggled with. Got 3 callbacks in one week.' },
-            ].map((t, i) => (
-              <motion.div
-                key={t.name}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-white border border-slate-200 rounded-xl p-6 hover:border-slate-300 transition-colors"
-              >
-                <div className="flex gap-0.5 mb-4">
-                  {[...Array(5)].map((_, j) => <Star key={j} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
+              ['Auto-capture from job boards', false, true],
+              ['Smart follow-up reminders', false, true],
+              ['AI interview prep', false, true],
+              ['Kanban pipeline view', false, true],
+              ['Works at scale (100+ apps)', false, true],
+            ].map(([label, spreadsheet, pebelai]) => (
+              <div key={String(label)} className="grid grid-cols-3 border-b border-slate-100 last:border-0">
+                <div className="px-6 py-3.5 text-[13px] text-slate-700">{String(label)}</div>
+                <div className="px-6 py-3.5 flex justify-center">
+                  {spreadsheet ? <Check className="w-4 h-4 text-[#16a34a]" /> : <span className="text-[13px] text-slate-300">—</span>}
                 </div>
-                <p className="text-[13px] text-slate-600 leading-[1.7] mb-4">&ldquo;{t.text}&rdquo;</p>
-                <div className="flex items-center gap-2 pt-4 border-t border-slate-100">
-                  <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${t.color} flex items-center justify-center text-[10px] font-bold text-white`}>{t.initials}</div>
-                  <div>
-                    <p className="text-[12px] font-semibold text-slate-800">{t.name}</p>
-                    <p className="text-[11px] text-slate-400">{t.title}</p>
-                  </div>
+                <div className="px-6 py-3.5 flex justify-center">
+                  {pebelai ? <Check className="w-4 h-4 text-[#16a34a]" /> : <span className="text-[13px] text-slate-300">—</span>}
                 </div>
-              </motion.div>
+              </div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* ─── STATS ─── */}
-      <div className="border-y border-slate-100 py-12 px-6 bg-slate-50/60">
-        <div className="max-w-3xl mx-auto">
-          <div className="grid grid-cols-3 gap-8 text-center">
-            {[
-              { value: '5.0', label: 'Average rating', sub: 'From 500+ reviews' },
-              { value: '4.8×', label: 'More interviews', sub: 'vs. manual tracking' },
-              { value: 'Free', label: 'To get started', sub: 'No credit card needed' },
-            ].map((s, i) => (
-              <motion.div
-                key={s.label}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-              >
-                <p className="text-[32px] md:text-[40px] font-bold tracking-tight text-slate-900">{s.value}</p>
-                <p className="text-[13px] font-semibold text-slate-700 mt-1">{s.label}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">{s.sub}</p>
-              </motion.div>
-            ))}
+      {/* ─── EARLY ACCESS / TRUST ─── */}
+      <div className="border-y border-slate-100 py-14 px-6 bg-[#0d2818]">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            <div>
+              <p className="text-[11px] text-emerald-500/70 font-semibold tracking-widest uppercase mb-2">Early Access</p>
+              <h3 className="text-[22px] font-bold text-white mb-2">Be among the first users.</h3>
+              <p className="text-[14px] text-white/50 leading-relaxed max-w-sm">
+                PebelAI is launching now. Sign up free, give us feedback, and help shape what gets built next.
+              </p>
+              <p className="text-[12px] text-white/30 mt-4">
+                Built and powered by <span className="text-emerald-400/70 font-semibold">DuneAI</span>
+              </p>
+            </div>
+            <div className="shrink-0 flex flex-col gap-3">
+              <Link href="/signup">
+                <button className="flex items-center gap-2 h-11 px-7 rounded-xl bg-[#16a34a] text-white text-[14px] font-semibold hover:bg-[#15803d] transition-colors whitespace-nowrap">
+                  Get early access — free <ArrowRight className="w-4 h-4" />
+                </button>
+              </Link>
+              <p className="text-[11px] text-white/30 text-center">No credit card. No commitment.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -535,20 +578,27 @@ export default function LandingPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-[36px] md:text-[48px] font-bold tracking-[-0.03em] text-slate-900 mb-4 font-[family-name:var(--font-heading)]">
-              Your next role is out there.
+              Stop losing track.<br />Start landing offers.
             </h2>
             <p className="text-[16px] text-slate-500 mb-8 max-w-sm mx-auto leading-relaxed">
-              Free to start. No credit card required. Set up in under 30 seconds.
+              Install the extension and start tracking in under 60 seconds. Free forever.
             </p>
-            <Link href="/signup">
-              <button className="inline-flex items-center gap-2 h-12 px-8 rounded-xl bg-slate-900 text-white text-[15px] font-semibold hover:bg-slate-800 transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
-                Start tracking — it&apos;s free <ArrowRight className="w-4 h-4" />
-              </button>
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link href="/signup">
+                <button className="flex items-center gap-2 h-12 px-8 rounded-xl bg-[#16a34a] text-white text-[15px] font-semibold hover:bg-[#15803d] transition-colors shadow-sm">
+                  <Puzzle className="w-4 h-4" /> Install Extension — Free
+                </button>
+              </Link>
+              <Link href="/signup">
+                <button className="flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-200 text-slate-600 text-[15px] font-medium hover:border-slate-300 hover:text-slate-900 transition-colors">
+                  Sign up to track manually
+                </button>
+              </Link>
+            </div>
             <div className="flex items-center justify-center gap-6 mt-6 text-[12px] text-slate-400">
               <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#16a34a]" /> Free forever plan</span>
               <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#16a34a]" /> AI-powered</span>
-              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#16a34a]" /> Private & secure</span>
+              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#16a34a]" /> No credit card</span>
             </div>
           </motion.div>
         </div>
@@ -561,14 +611,17 @@ export default function LandingPage() {
             <div className="max-w-xs">
               <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-6 w-auto mb-3" />
               <p className="text-[13px] text-slate-400 leading-relaxed">
-                The AI-powered job tracker that turns your search into a streamlined, winning workflow.
+                The AI-powered job tracker built for candidates applying at scale. Auto-track, get reminded, prep with AI.
+              </p>
+              <p className="text-[12px] text-slate-300 mt-3">
+                Built by <span className="text-slate-400 font-medium">DuneAI</span>
               </p>
             </div>
             <div className="flex gap-14">
               <div>
                 <p className="text-[12px] font-semibold text-slate-900 mb-3">Product</p>
                 <div className="space-y-2">
-                  {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['#testimonials', 'Reviews'], ['/signup', 'Get started']].map(([href, label]) => (
+                  {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['#why-pebelai', 'Why PebelAI'], ['/signup', 'Get started']].map(([href, label]) => (
                     <a key={href} href={href} className="block text-[13px] text-slate-400 hover:text-slate-700 transition-colors">{label}</a>
                   ))}
                 </div>
@@ -576,16 +629,20 @@ export default function LandingPage() {
               <div>
                 <p className="text-[12px] font-semibold text-slate-900 mb-3">Account</p>
                 <div className="space-y-2">
-                  {[['/login', 'Sign in'], ['/signup', 'Create account'], ['/forgot-password', 'Reset password']].map(([href, label]) => (
-                    <Link key={href} href={href} className="block text-[13px] text-slate-400 hover:text-slate-700 transition-colors">{label}</Link>
+                  {[['/login', 'Sign in'], ['/signup', 'Sign up free']].map(([href, label]) => (
+                    <a key={href} href={href} className="block text-[13px] text-slate-400 hover:text-slate-700 transition-colors">{label}</a>
                   ))}
                 </div>
               </div>
             </div>
           </div>
-          <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p className="text-[12px] text-slate-400">&copy; {new Date().getFullYear()} PebelAI. All rights reserved.</p>
-            <p className="text-[12px] text-slate-400">Built for job seekers, by people who&apos;ve been there.</p>
+          <div className="flex flex-col md:flex-row items-center justify-between pt-6 border-t border-slate-100 gap-3">
+            <p className="text-[12px] text-slate-400">© {new Date().getFullYear()} PebelAI · Powered by DuneAI</p>
+            <div className="flex items-center gap-5">
+              {['Privacy', 'Terms'].map(l => (
+                <a key={l} href="#" className="text-[12px] text-slate-400 hover:text-slate-600 transition-colors">{l}</a>
+              ))}
+            </div>
           </div>
         </div>
       </footer>
