@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
   Briefcase, Calendar, BarChart3, Plus, Clock,
-  CheckCircle2, Loader2, Send, Upload, FileText,
+  CheckCircle2, Loader2, Send, Upload, Settings,
   Bot, Bell, TrendingUp, ChevronRight, AlertCircle, X, Puzzle,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
@@ -306,7 +306,7 @@ export default function DashboardPage() {
                 { label: 'Add Application', icon: Plus,     href: '/applications' },
                 { label: 'AI Coach',        icon: Bot,      href: '/coach' },
                 { label: 'Reminders',       icon: Bell,     href: '/reminders' },
-                { label: 'Resume',          icon: FileText, href: '/resume' },
+                { label: 'Settings',        icon: Settings, href: '/settings' },
               ].map(tool => (
                 <Link key={tool.label} href={tool.href}>
                   <div className="flex flex-col items-center justify-center p-4 bg-[#F8F9F8] rounded-xl hover:bg-[#F1F5F2] transition-colors group cursor-pointer">

@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Mail, Lock, User, CheckCircle2, LayoutDashboard, MessageSquare, Bell, FileSearch } from 'lucide-react'
+import { Mail, Lock, User, CheckCircle2, LayoutDashboard, MessageSquare, Bell, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { signIn } from 'next-auth/react'
@@ -13,7 +13,7 @@ const features = [
   { icon: LayoutDashboard, text: 'Track all your applications' },
   { icon: MessageSquare, text: 'AI interview prep coach' },
   { icon: Bell, text: 'Smart follow-up reminders' },
-  { icon: FileSearch, text: 'Resume score analyzer' },
+  { icon: BarChart3, text: 'Career insights & analytics' },
 ]
 
 const jobTypes = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Any']

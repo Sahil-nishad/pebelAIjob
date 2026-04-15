@@ -8,7 +8,6 @@ import {
   LayoutGrid,
   MessageSquare,
   Bell,
-  FileSearch,
   ArrowRight,
   Check,
   Sparkles,
@@ -194,21 +193,6 @@ export default function LandingPage() {
               transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
               className="space-y-7"
             >
-              {/* Announcement banner */}
-              <motion.a
-                href="#features"
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/60 text-[12px] font-semibold text-emerald-700 hover:border-emerald-300 transition-colors cursor-pointer group"
-              >
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
-                  <Sparkles className="w-2.5 h-2.5" />
-                </span>
-                AI Resume Analyzer — now live
-                <ChevronRight className="w-3 h-3 text-emerald-500 group-hover:translate-x-0.5 transition-transform" />
-              </motion.a>
-
               <div className="space-y-3">
                 <h1 className="text-[42px] md:text-[52px] lg:text-[58px] font-bold font-[family-name:var(--font-heading)] leading-[1.08] tracking-[-0.03em] text-slate-900">
                   Track smarter.
@@ -416,26 +400,6 @@ export default function LandingPage() {
               </div>
             </motion.div>
 
-            {/* Resume Analyzer */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.16 }}
-              className="group relative p-7 rounded-2xl bg-white border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.07)] hover:border-slate-300/70 transition-all duration-300 overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-transparent to-transparent -z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center mb-4 shadow-[0_4px_12px_rgba(16,185,129,0.28)]">
-                  <FileSearch className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-[16px] font-bold font-[family-name:var(--font-heading)] text-slate-900 mb-2 tracking-tight">Resume Analyzer</h3>
-                <p className="text-[13px] text-slate-500 leading-relaxed">
-                  Instant match score, missing keywords, ATS tips, and rewritten bullet points in seconds.
-                </p>
-              </div>
-            </motion.div>
-
             {/* Analytics */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
@@ -476,7 +440,7 @@ export default function LandingPage() {
             {[
               { step: '01', title: 'Add your applications', desc: 'Paste a job URL or enter details in seconds. AI auto-fills and suggests optimal follow-up timing.' },
               { step: '02', title: 'Track every stage', desc: 'Move cards through your Kanban pipeline. Spot patterns, see what needs attention, and never let anything fall through.' },
-              { step: '03', title: 'Prep, apply, repeat', desc: 'Practice interviews with AI, analyze your resume against JDs, and land offers faster.' },
+              { step: '03', title: 'Prep, apply, repeat', desc: 'Practice interviews with AI, get personalized coaching, and land offers faster.' },
             ].map((item, i) => (
               <motion.div
                 key={item.step}
@@ -543,7 +507,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 gap-5">
             {[
               { name: 'Sarah C.', title: 'Software Engineer', company: 'Now at Stripe', initials: 'SC', color: 'from-violet-400 to-violet-600', text: 'Tracked 30+ applications without going insane. The Kanban board and reminders saved me from dropping the ball multiple times. Worth every minute of setup.' },
-              { name: 'Priya P.', title: 'UX Designer', company: 'Now at Figma', initials: 'PP', color: 'from-rose-400 to-pink-600', text: 'Resume analyzer showed me I was missing 6 key terms from the job description. Updated my resume on a Sunday, got 3 interview callbacks by Wednesday.' },
+              { name: 'Priya P.', title: 'UX Designer', company: 'Now at Figma', initials: 'PP', color: 'from-rose-400 to-pink-600', text: 'The AI coach helped me nail behavioral questions I always struggled with. Practiced on a Sunday, got 3 interview callbacks by Wednesday.' },
             ].map((t, i) => (
               <motion.div
                 key={t.name}

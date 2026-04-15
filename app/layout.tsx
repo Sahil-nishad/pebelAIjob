@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     "PebelAI is a free AI-powered job tracker and interview coach. Track every application, practice interviews with AI, get follow-up reminders, and land your dream job faster.",
   keywords: [
     "job tracker", "job application tracker", "AI interview coach",
-    "interview practice", "job search tool", "resume analyzer",
+    "interview practice", "job search tool", "AI interview practice",
     "follow-up reminders", "career management", "job hunting app",
     "AI career coach", "application tracker free",
   ],
@@ -115,7 +115,7 @@ const jsonLd = {
     'Job application tracking',
     'AI interview practice',
     'Follow-up reminders',
-    'Resume analysis',
+    'Career insights & analytics',
     'Career dashboard',
   ],
 }
