@@ -279,16 +279,17 @@ export default function ApplicationsPage() {
           </button>
         )}
 
-        {/* Floating action button */}
-        <button
-          onClick={() => setShow(true)}
-          className="fixed bottom-24 right-5 z-50 flex items-center justify-center bg-[#0A6A47] text-white rounded-full shadow-lg hover:bg-[#005344] active:scale-95 transition-all"
-          style={{ width: 52, height: 52 }}
-          aria-label="Add application"
-        >
-          <Plus className="w-6 h-6" />
-        </button>
       </div>
+
+      {/* FAB — outside animate-fade-up so CSS transform doesn't break fixed positioning */}
+      <button
+        onClick={() => setShow(true)}
+        className="md:hidden fixed bottom-[88px] right-5 z-50 flex items-center justify-center bg-[#0A6A47] text-white rounded-full shadow-xl hover:bg-[#005344] active:scale-95 transition-all"
+        style={{ width: 52, height: 52 }}
+        aria-label="Add application"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
 
       {/* ════════════════════════════════════════
           DESKTOP VIEW — kanban / list
