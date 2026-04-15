@@ -3,19 +3,18 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
-  LayoutGrid,
-  MessageSquare,
-  Bell,
   ArrowRight,
   Check,
   Sparkles,
-  Zap,
-  Shield,
+  Bell,
   BarChart3,
-  ChevronRight,
   Star,
+  Puzzle,
+  ChevronRight,
+  Bot,
+  Clock,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -29,24 +28,24 @@ function Navbar() {
   }, [])
 
   return (
-    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 shadow-[0_1px_0_rgba(15,23,42,0.06)] backdrop-blur-xl' : 'bg-white/70 backdrop-blur-xl border-b border-slate-200/40'}`}>
+    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-[0_1px_0_rgba(15,23,42,0.08)]' : 'bg-white/80 backdrop-blur-xl border-b border-slate-100'}`}>
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-8 w-auto" />
+          <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-7 w-auto" />
         </Link>
         <div className="hidden md:flex items-center gap-8">
           {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['#testimonials', 'Reviews']].map(([href, label]) => (
-            <a key={href} href={href} className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors font-medium">{label}</a>
+            <a key={href} href={href} className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors">{label}</a>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <Link href="/login">
-            <Button variant="ghost" size="sm">Log in</Button>
+        <div className="flex items-center gap-3">
+          <Link href="/login" className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">
+            Log in
           </Link>
           <Link href="/signup">
-            <Button size="sm" className="shadow-[0_2px_8px_rgba(47,133,90,0.24)]">
-              Get started <ChevronRight className="w-3.5 h-3.5" />
-            </Button>
+            <button className="h-8 px-4 rounded-lg bg-[#16a34a] text-white text-[13px] font-medium hover:bg-[#15803d] transition-colors">
+              Try it free
+            </button>
           </Link>
         </div>
       </div>
@@ -54,120 +53,194 @@ function Navbar() {
   )
 }
 
-/* ─── Rich Kanban Visual ─── */
-function KanbanVisual() {
-  const cols = [
-    {
-      title: 'Applied', dot: 'bg-blue-400', count: 8,
-      cards: [
-        { name: 'Google', role: 'Senior PM', days: '2d ago', src: 'G' },
-        { name: 'Stripe', role: 'Eng II', days: '4d ago', src: 'S' },
-      ],
-    },
-    {
-      title: 'Interview', dot: 'bg-amber-400', count: 3,
-      cards: [
-        { name: 'Meta', role: 'PM Lead', days: 'Round 2', src: 'M', active: true },
-        { name: 'Figma', role: 'Frontend', days: 'Phone screen', src: 'F' },
-      ],
-    },
-    {
-      title: 'Offer', dot: 'bg-emerald-400', count: 1,
-      cards: [
-        { name: 'Vercel', role: 'DX Eng', days: '$185K', src: 'V' },
-      ],
-    },
+/* ─── Dashboard Mockup ─── */
+function DashboardMockup() {
+  const apps = [
+    { name: 'Google', role: 'Senior PM', status: 'Interview', dot: 'bg-amber-400', badge: 'bg-amber-50 text-amber-700' },
+    { name: 'Stripe', role: 'Engineer II', status: 'Applied', dot: 'bg-blue-400', badge: 'bg-blue-50 text-blue-700' },
+    { name: 'Vercel', role: 'DX Engineer', status: 'Offer', dot: 'bg-emerald-400', badge: 'bg-emerald-50 text-emerald-700' },
+    { name: 'Figma', role: 'Frontend Dev', status: 'Applied', dot: 'bg-blue-400', badge: 'bg-blue-50 text-blue-700' },
+    { name: 'Notion', role: 'Product Lead', status: 'Rejected', dot: 'bg-slate-300', badge: 'bg-slate-50 text-slate-500' },
   ]
 
-  const avatarColors: Record<string, string> = {
-    G: 'from-blue-400 to-blue-600',
-    S: 'from-violet-400 to-violet-600',
-    M: 'from-blue-500 to-indigo-600',
-    F: 'from-pink-400 to-rose-500',
-    V: 'from-slate-700 to-slate-900',
-  }
-
   return (
-    <div className="animate-float relative">
-      {/* AI suggestion toast */}
+    <div className="relative">
+      {/* Floating AI suggestion */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.2, duration: 0.5 }}
-        className="absolute -top-4 -right-4 z-10 flex items-center gap-2 rounded-xl bg-white border border-emerald-200/80 shadow-[0_8px_24px_rgba(47,133,90,0.12)] px-3 py-2"
+        transition={{ delay: 1, duration: 0.5 }}
+        className="absolute -top-3 -right-3 z-10 flex items-center gap-2 bg-white border border-emerald-200 rounded-xl px-3 py-2 shadow-[0_4px_20px_rgba(0,0,0,0.08)]"
       >
-        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shrink-0">
+        <div className="w-5 h-5 rounded-full bg-[#16a34a] flex items-center justify-center">
           <Sparkles className="w-2.5 h-2.5 text-white" />
         </div>
-        <p className="text-[11px] font-medium text-slate-700">Follow up with Meta <span className="text-emerald-600">today</span></p>
+        <p className="text-[11px] font-medium text-slate-700">Follow up with Google <span className="text-[#16a34a]">today</span></p>
       </motion.div>
+
+      {/* Main card */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_8px_40px_rgba(15,23,42,0.10)] overflow-hidden">
+        {/* Window chrome */}
+        <div className="flex items-center gap-1.5 px-4 py-3 border-b border-slate-100 bg-slate-50/80">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#28CA41]" />
+          <div className="flex items-center gap-1 ml-3 px-2.5 py-0.5 bg-white rounded border border-slate-200 text-[10px] text-slate-400">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" />
+            pebelai.com/applications
+          </div>
+        </div>
+
+        {/* Nav strip */}
+        <div className="flex items-center gap-1 px-4 pt-3 pb-0">
+          {['Overview', 'Applications', 'Reminders'].map((tab, i) => (
+            <div key={tab} className={`px-3 py-1.5 rounded-md text-[11px] font-medium ${i === 1 ? 'bg-slate-100 text-slate-800' : 'text-slate-400'}`}>{tab}</div>
+          ))}
+        </div>
+
+        {/* Applications list */}
+        <div className="p-4 space-y-2">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[11px] font-semibold text-slate-700">12 applications tracked</p>
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#16a34a] animate-pulse" />
+              <span className="text-[10px] text-[#16a34a] font-medium">Live</span>
+            </div>
+          </div>
+          {apps.map((app) => (
+            <div key={app.name} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-50 transition-colors">
+              <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-[11px] font-bold text-slate-600 shrink-0">
+                {app.name[0]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold text-slate-800 leading-none mb-0.5">{app.name}</p>
+                <p className="text-[10px] text-slate-400">{app.role}</p>
+              </div>
+              <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${app.badge}`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${app.dot}`} />
+                {app.status}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Stats chip */}
       <motion.div
         initial={{ opacity: 0, x: -8 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 1.5, duration: 0.5 }}
-        className="absolute -bottom-3 -left-4 z-10 flex items-center gap-1.5 rounded-xl bg-white border border-slate-200 shadow-[0_8px_24px_rgba(15,23,42,0.08)] px-3 py-2"
+        transition={{ delay: 1.3, duration: 0.5 }}
+        className="absolute -bottom-3 -left-3 z-10 flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-[0_4px_20px_rgba(0,0,0,0.08)]"
       >
-        <BarChart3 className="w-3.5 h-3.5 text-emerald-500" />
-        <p className="text-[11px] font-semibold text-slate-700">67% response rate</p>
-        <span className="text-[10px] text-emerald-600 font-medium">↑ +12%</span>
+        <BarChart3 className="w-3.5 h-3.5 text-[#16a34a]" />
+        <p className="text-[11px] font-semibold text-slate-700">67% response rate <span className="text-[#16a34a]">↑ +12%</span></p>
       </motion.div>
+    </div>
+  )
+}
 
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_20px_60px_rgba(15,23,42,0.10)] p-5 max-w-[520px] mx-auto">
-        {/* Window chrome */}
-        <div className="flex items-center gap-2 mb-5">
-          <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
-          <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
-          <div className="w-3 h-3 rounded-full bg-[#28CA41]" />
-          <div className="flex items-center gap-1.5 ml-3 px-3 py-1 rounded-md bg-slate-50 border border-slate-100 flex-1 max-w-[160px]">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-[10px] text-slate-400 font-medium truncate">pebel.ai/dashboard</span>
-          </div>
-          <span className="ml-auto text-[10px] text-slate-400 font-medium">Job Pipeline</span>
-        </div>
-
-        <div className="flex gap-3">
-          {cols.map((col) => (
-            <div key={col.title} className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-2.5">
-                <div className={`w-2 h-2 rounded-full ${col.dot}`} />
-                <span className="text-[11px] font-semibold text-slate-700">{col.title}</span>
-                <span className="text-[10px] text-slate-400 bg-slate-100 rounded px-1 ml-auto">{col.count}</span>
-              </div>
-              <div className="space-y-2">
-                {col.cards.map((card) => (
-                  <motion.div
-                    key={card.name}
-                    whileHover={{ y: -1 }}
-                    className={`rounded-lg p-2.5 border cursor-default transition-all ${card.active ? 'bg-amber-50/60 border-amber-200/70 shadow-[0_2px_8px_rgba(245,158,11,0.08)]' : 'bg-slate-50 border-slate-100'}`}
-                  >
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <div className={`w-5 h-5 rounded-md bg-gradient-to-br ${avatarColors[card.src]} flex items-center justify-center text-[8px] font-bold text-white`}>
-                        {card.src}
-                      </div>
-                      <p className="text-[11px] font-semibold text-slate-800">{card.name}</p>
-                    </div>
-                    <p className="text-[10px] text-slate-500">{card.role}</p>
-                    <span className={`inline-block mt-1.5 text-[9px] font-medium px-1.5 py-0.5 rounded ${card.active ? 'bg-amber-100 text-amber-700' : 'bg-white border border-slate-200 text-slate-500'}`}>
-                      {card.days}
-                    </span>
-                  </motion.div>
-                ))}
-              </div>
+/* ─── Kanban Mini ─── */
+function KanbanMini() {
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+      <div className="flex gap-3">
+        {[
+          { label: 'Applied', dot: 'bg-blue-400', count: 8, cards: ['Google – PM', 'Stripe – Eng'] },
+          { label: 'Interview', dot: 'bg-amber-400', count: 3, cards: ['Meta – Lead'] },
+          { label: 'Offer', dot: 'bg-emerald-400', count: 1, cards: ['Vercel – DX'] },
+        ].map((col) => (
+          <div key={col.label} className="flex-1">
+            <div className="flex items-center gap-1.5 mb-2">
+              <div className={`w-1.5 h-1.5 rounded-full ${col.dot}`} />
+              <span className="text-[10px] font-semibold text-slate-600">{col.label}</span>
+              <span className="ml-auto text-[9px] bg-slate-100 rounded px-1 text-slate-400">{col.count}</span>
             </div>
-          ))}
-        </div>
-
-        {/* Bottom bar */}
-        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-          <span className="text-[10px] text-slate-400">12 applications tracked</span>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] text-emerald-600 font-medium">Live sync</span>
+            <div className="space-y-1.5">
+              {col.cards.map(c => (
+                <div key={c} className="bg-slate-50 border border-slate-100 rounded-md px-2 py-1.5 text-[10px] text-slate-600 font-medium">{c}</div>
+              ))}
+            </div>
           </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ─── AI Chat Mini ─── */
+function AIChatMini() {
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2 items-start">
+        <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0 mt-0.5">
+          <Bot className="w-3 h-3 text-white" />
+        </div>
+        <div className="bg-white/15 rounded-lg px-3 py-2 text-[11px] text-white leading-relaxed">
+          Tell me about a time you led a cross-functional project.
         </div>
       </div>
+      <div className="flex gap-2 items-start justify-end">
+        <div className="bg-white/25 rounded-lg px-3 py-2 text-[11px] text-white leading-relaxed max-w-[80%]">
+          At my last role I led the redesign of our onboarding flow...
+        </div>
+      </div>
+      <div className="flex gap-2 items-start">
+        <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0 mt-0.5">
+          <Bot className="w-3 h-3 text-white" />
+        </div>
+        <div className="bg-white/15 rounded-lg px-3 py-2 text-[11px] text-white leading-relaxed">
+          <span className="font-semibold">What worked:</span> Strong impact framing ✓<br />
+          <span className="font-semibold">Improve:</span> Add specific metrics
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─── Analytics Mini ─── */
+function AnalyticsMini() {
+  const bars = [40, 65, 45, 80, 55, 90, 70]
+  return (
+    <div className="space-y-3">
+      <div className="flex items-end gap-1 h-16">
+        {bars.map((h, i) => (
+          <div key={i} className="flex-1 rounded-sm bg-slate-100 relative overflow-hidden">
+            <div
+              className="absolute bottom-0 w-full rounded-sm bg-[#16a34a]/60"
+              style={{ height: `${h}%` }}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {[['67%', 'Response rate'], ['3.2×', 'More interviews'], ['2×', 'Offer rate']].map(([v, l]) => (
+          <div key={l} className="bg-slate-50 rounded-lg p-2 text-center">
+            <p className="text-[13px] font-bold text-slate-900">{v}</p>
+            <p className="text-[9px] text-slate-400 leading-tight">{l}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ─── Extension Mini ─── */
+function ExtensionMini() {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
+        <Puzzle className="w-4 h-4 text-[#16a34a]" />
+        <span className="text-[11px] font-medium text-slate-700">PebelAI extension active</span>
+        <div className="ml-auto w-2 h-2 rounded-full bg-[#16a34a]" />
+      </div>
+      <div className="bg-slate-50 rounded-lg border border-slate-100 p-3">
+        <p className="text-[10px] text-slate-400 mb-1.5">Detected on LinkedIn job page</p>
+        <p className="text-[11px] font-semibold text-slate-800 mb-2">Senior Product Manager · Google</p>
+        <button className="w-full py-1.5 rounded-md bg-[#16a34a] text-white text-[10px] font-semibold">
+          Add to PebelAI →
+        </button>
+      </div>
+      <p className="text-[10px] text-slate-400 text-center">Saved to your tracker in 1 click</p>
     </div>
   )
 }
@@ -179,281 +252,191 @@ export default function LandingPage() {
       <Navbar />
 
       {/* ─── HERO ─── */}
-      <section className="relative pt-28 pb-24 md:pt-36 md:pb-32 px-6 overflow-hidden">
-        <div className="absolute inset-0 -z-10 mesh-gradient" />
-        <div className="absolute top-20 left-[5%] w-96 h-96 bg-emerald-100/40 rounded-full blur-3xl -z-10" />
-        <div className="absolute top-40 right-[5%] w-80 h-80 bg-sky-100/30 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 left-[30%] w-64 h-64 bg-violet-100/20 rounded-full blur-3xl -z-10" />
-
+      <section className="pt-28 pb-20 md:pt-32 md:pb-28 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <motion.div
-              initial={{ opacity: 0, y: 28 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-              className="space-y-7"
-            >
-              <div className="space-y-3">
-                <h1 className="text-[42px] md:text-[52px] lg:text-[58px] font-bold font-[family-name:var(--font-heading)] leading-[1.08] tracking-[-0.03em] text-slate-900">
-                  Track smarter.
-                  <br />
-                  <span className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 bg-clip-text text-transparent">
-                    Interview better.
-                  </span>
-                  <br />
-                  Land the offer.
-                </h1>
-                <p className="text-[16px] leading-[1.7] text-slate-500 max-w-[420px]">
-                  The all-in-one platform that organizes your job search, preps you with AI coaching, and makes sure you never drop the ball on a follow-up.
-                </p>
-              </div>
 
-              <div className="flex flex-wrap items-center gap-3">
+            {/* Left */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="space-y-6"
+            >
+              <h1 className="text-[42px] md:text-[52px] lg:text-[56px] font-bold leading-[1.08] tracking-[-0.03em] text-slate-900 font-[family-name:var(--font-heading)]">
+                Track smarter.<br />
+                Interview better.<br />
+                <span className="text-[#16a34a]">Land the offer.</span>
+              </h1>
+              <p className="text-[16px] text-slate-500 leading-[1.7] max-w-[420px]">
+                The all-in-one job management platform for ambitious candidates. Organize every application, prep with AI, and never miss a follow-up.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-3 pt-1">
                 <Link href="/signup">
-                  <Button size="lg" className="h-12 px-7 text-[14px] rounded-xl shadow-[0_8px_28px_rgba(47,133,90,0.28)] hover:shadow-[0_12px_36px_rgba(47,133,90,0.36)]">
-                    Start for free
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  <button className="flex items-center gap-2 h-11 px-6 rounded-xl bg-slate-900 text-white text-[14px] font-semibold hover:bg-slate-800 transition-colors">
+                    Start for free <ArrowRight className="w-4 h-4" />
+                  </button>
                 </Link>
-                <a href="#how-it-works">
-                  <Button variant="ghost" size="lg" className="h-12 gap-2 text-[14px] text-slate-600">
-                    See how it works →
-                  </Button>
+                <a href="#how-it-works" className="flex items-center gap-2 h-11 px-5 text-[14px] text-slate-500 hover:text-slate-900 transition-colors">
+                  <Clock className="w-4 h-4" /> See how it works
                 </a>
               </div>
 
-              <div className="flex items-center gap-3 pt-1">
-                <div className="flex -space-x-2.5">
-                  {[
-                    'from-blue-400 to-blue-600',
-                    'from-violet-400 to-violet-600',
-                    'from-rose-400 to-pink-600',
-                    'from-amber-400 to-orange-500',
-                    'from-emerald-400 to-emerald-600',
-                  ].map((g, i) => (
-                    <div key={i} className={`w-8 h-8 rounded-full border-2 border-white bg-gradient-to-br ${g} shadow-sm`} />
+              {/* Social proof */}
+              <div className="flex items-center gap-3 pt-2">
+                <div className="flex -space-x-2">
+                  {['bg-blue-400', 'bg-violet-400', 'bg-rose-400', 'bg-amber-400', 'bg-[#16a34a]'].map((c, i) => (
+                    <div key={i} className={`w-7 h-7 rounded-full border-2 border-white ${c}`} />
                   ))}
                 </div>
                 <div>
-                  <div className="flex items-center gap-0.5 mb-0.5">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 text-amber-400 fill-amber-400" />)}
+                  <div className="flex items-center gap-0.5">
+                    {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
                   </div>
-                  <p className="text-[12px] text-slate-500">
-                    Loved by <span className="font-semibold text-slate-700">5,000+</span> job seekers
-                  </p>
+                  <p className="text-[12px] text-slate-400 mt-0.5">Loved by <span className="font-semibold text-slate-700">5,000+</span> job seekers</p>
                 </div>
               </div>
             </motion.div>
 
+            {/* Right */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.75, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="hidden lg:block relative px-6"
+              initial={{ opacity: 0, y: 20, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+              className="hidden lg:block relative"
             >
-              <KanbanVisual />
+              <DashboardMockup />
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* ─── TRUST STRIP ─── */}
-      <section className="py-10 px-6 border-y border-slate-100 bg-slate-50/60">
+      <div className="border-y border-slate-100 py-8 px-6">
         <div className="max-w-4xl mx-auto">
-          <p className="text-center text-[11px] text-slate-400 font-semibold uppercase tracking-[0.12em] mb-7">
-            Our users have landed roles at
-          </p>
-          <div className="flex items-center justify-center gap-8 md:gap-14 flex-wrap">
-            {[
-              { name: 'Google', color: '#4285F4' },
-              { name: 'Meta', color: '#0467DF' },
-              { name: 'Stripe', color: '#635BFF' },
-              { name: 'Vercel', color: '#000000' },
-              { name: 'Notion', color: '#000000' },
-              { name: 'Figma', color: '#F24E1E' },
-            ].map(({ name }) => (
-              <span key={name} className="text-[15px] font-bold text-slate-300 tracking-tight hover:text-slate-400 transition-colors cursor-default">{name}</span>
+          <p className="text-center text-[11px] text-slate-400 tracking-widest uppercase font-medium mb-6">Users now work at</p>
+          <div className="flex items-center justify-center gap-10 flex-wrap">
+            {['Google', 'Meta', 'Stripe', 'Vercel', 'Figma', 'Notion'].map(name => (
+              <span key={name} className="text-[14px] font-bold text-slate-200 hover:text-slate-300 transition-colors cursor-default tracking-tight">{name}</span>
             ))}
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* ─── PROBLEM / STATS ─── */}
-      <section className="py-24 md:py-32 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
-            <p className="text-[11px] text-emerald-600 font-semibold uppercase tracking-[0.12em] mb-4">The problem</p>
-            <h2 className="text-[32px] md:text-[42px] font-bold font-[family-name:var(--font-heading)] text-slate-900 leading-tight mb-5 tracking-[-0.025em]">
-              Your job search is a mess.
-              <br />
-              <span className="text-slate-400 font-normal">It doesn&apos;t have to be.</span>
-            </h2>
-            <p className="text-[15px] text-slate-500 leading-relaxed max-w-xl mx-auto mb-14">
-              Spreadsheets lose rows. Bookmarks pile up. Emails go unanswered. You forget which company you&apos;re interviewing with tomorrow.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-4">
-            {[
-              { num: '73%', text: 'of job seekers lose track of their applications', sub: 'LinkedIn Survey', accent: 'border-t-red-400', bg: 'bg-red-50/60' },
-              { num: '5 days', text: 'average response window before you get ghosted', sub: 'Follow up or lose out', accent: 'border-t-amber-400', bg: 'bg-amber-50/60' },
-              { num: '40%', text: 'of candidates feel unprepared for interviews', sub: 'AI coaching changes this', accent: 'border-t-violet-400', bg: 'bg-violet-50/40' },
-            ].map((stat, i) => (
-              <motion.div
-                key={stat.num}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.6 }}
-                className={`p-6 rounded-2xl ${stat.bg} border border-slate-100 border-t-2 ${stat.accent} text-left`}
-              >
-                <p className="text-[36px] font-bold font-[family-name:var(--font-heading)] text-slate-900 mb-2 tracking-tight">{stat.num}</p>
-                <p className="text-[13px] text-slate-600 leading-snug mb-2">{stat.text}</p>
-                <p className="text-[11px] text-slate-400 font-medium">{stat.sub}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── FEATURES BENTO ─── */}
-      <section id="features" className="py-24 md:py-32 px-6 bg-slate-50/60">
+      {/* ─── FEATURES ─── */}
+      <section id="features" className="py-24 md:py-32 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-[11px] text-emerald-600 font-semibold uppercase tracking-[0.12em] mb-4">Features</p>
-            <h2 className="text-[32px] md:text-[42px] font-bold font-[family-name:var(--font-heading)] text-slate-900 leading-tight mb-4 tracking-[-0.025em]">
-              One platform. Every advantage.
+
+          <div className="mb-14">
+            <p className="text-[12px] text-[#16a34a] font-semibold uppercase tracking-widest mb-3">Features</p>
+            <h2 className="text-[32px] md:text-[40px] font-bold tracking-[-0.025em] text-slate-900 font-[family-name:var(--font-heading)] mb-3">
+              Precision tools for the modern hunt
             </h2>
-            <p className="text-[15px] text-slate-500 max-w-md mx-auto">
-              Stop juggling tools. Everything you need to land the role — tracking, coaching, reminders, and analysis — in one place.
+            <p className="text-[15px] text-slate-500 max-w-lg">
+              Stop juggling spreadsheets and sticky notes. PebelAI gives you a professional-grade toolkit built for the way job searching actually works.
             </p>
           </div>
 
           {/* Bento grid */}
-          <div className="grid md:grid-cols-3 gap-4">
-            {/* Large card: Kanban */}
+          <div className="grid md:grid-cols-2 gap-4">
+
+            {/* Visual Pipeline */}
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="md:col-span-2 group relative p-8 rounded-2xl bg-white border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.07)] hover:border-slate-300/70 transition-all duration-300 overflow-hidden"
+              className="p-7 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all duration-300"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 via-transparent to-transparent -z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-5 shadow-[0_4px_12px_rgba(59,130,246,0.30)]">
-                  <LayoutGrid className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-[20px] font-bold font-[family-name:var(--font-heading)] text-slate-900 mb-3 tracking-tight">Visual Kanban Tracker</h3>
-                <p className="text-[14px] text-slate-500 leading-relaxed mb-6 max-w-md">
-                  Drag-and-drop your applications through stages. See your entire pipeline at a glance — who ghosted, who responded, what&apos;s next. Never lose track of an opportunity again.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {['Drag & drop', 'Kanban + List view', 'Quick filters', 'Status tracking'].map((chip) => (
-                    <span key={chip} className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-100 text-[12px] font-medium text-blue-600">{chip}</span>
-                  ))}
-                </div>
-              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-4">Visual Pipeline Management</p>
+              <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">See every application at a glance</h3>
+              <p className="text-[13px] text-slate-500 leading-relaxed mb-5">
+                Drag-and-drop Kanban and list views. Move cards through stages, spot patterns, and never lose an opportunity in the noise.
+              </p>
+              <KanbanMini />
             </motion.div>
 
-            {/* AI Coach */}
+            {/* AI Advisor */}
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.08 }}
-              className="group relative p-8 rounded-2xl bg-white border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.07)] hover:border-slate-300/70 transition-all duration-300 overflow-hidden"
+              className="p-7 rounded-2xl bg-[#16a34a] border border-[#15803d] hover:shadow-[0_8px_32px_rgba(22,163,74,0.25)] transition-all duration-300"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-violet-50/50 via-transparent to-transparent -z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mb-5 shadow-[0_4px_12px_rgba(139,92,246,0.30)]">
-                  <MessageSquare className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-[18px] font-bold font-[family-name:var(--font-heading)] text-slate-900 mb-3 tracking-tight">AI Interview Coach</h3>
-                <p className="text-[13px] text-slate-500 leading-relaxed mb-5">
-                  Practice with an AI that knows the role and company. Get STAR-method feedback and real-time tips.
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {['Role-specific', 'Live feedback', 'Score tracking'].map((chip) => (
-                    <span key={chip} className="px-2 py-0.5 rounded-md bg-violet-50 border border-violet-100 text-[11px] font-medium text-violet-600">{chip}</span>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Smart Reminders */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.12 }}
-              className="group relative p-7 rounded-2xl bg-white border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.07)] hover:border-slate-300/70 transition-all duration-300 overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 via-transparent to-transparent -z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="relative z-10">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mb-4 shadow-[0_4px_12px_rgba(245,158,11,0.28)]">
-                  <Bell className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-[16px] font-bold font-[family-name:var(--font-heading)] text-slate-900 mb-2 tracking-tight">Smart Reminders</h3>
-                <p className="text-[13px] text-slate-500 leading-relaxed">
-                  AI-suggested follow-up timing based on industry norms. Never miss the window again.
-                </p>
-              </div>
+              <p className="text-[11px] font-semibold text-white/60 uppercase tracking-widest mb-4">AI Advisor</p>
+              <h3 className="text-[18px] font-bold text-white mb-2 tracking-tight font-[family-name:var(--font-heading)]">Practice. Get feedback. Nail it.</h3>
+              <p className="text-[13px] text-white/70 leading-relaxed mb-5">
+                Role-specific interview coaching powered by AI. Get STAR-format feedback and concrete improvements after every answer.
+              </p>
+              <AIChatMini />
             </motion.div>
 
             {/* Analytics */}
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="group relative p-7 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/50 shadow-[0_1px_3px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.18)] transition-all duration-300 overflow-hidden"
+              transition={{ delay: 0.12 }}
+              className="p-7 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all duration-300"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl" />
-              <div className="relative z-10">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 border border-slate-600/50 flex items-center justify-center mb-4">
-                  <BarChart3 className="w-5 h-5 text-emerald-400" />
-                </div>
-                <h3 className="text-[16px] font-bold font-[family-name:var(--font-heading)] text-white mb-2 tracking-tight">Analytics & Insights</h3>
-                <p className="text-[13px] text-slate-400 leading-relaxed">
-                  Track your offer rate, response rate, and interview conversion in a live dashboard.
-                </p>
-              </div>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-4">Search Analytics</p>
+              <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">Know what&apos;s working</h3>
+              <p className="text-[13px] text-slate-500 leading-relaxed mb-5">
+                Track response rates, interview conversion, and offer velocity. Data-driven decisions instead of gut feelings.
+              </p>
+              <AnalyticsMini />
             </motion.div>
+
+            {/* Browser Extension */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.16 }}
+              className="p-7 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all duration-300"
+            >
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-4">Browser Extension</p>
+              <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">Save jobs in one click</h3>
+              <p className="text-[13px] text-slate-500 leading-relaxed mb-5">
+                Browse LinkedIn or any job board and add applications directly to PebelAI without leaving the page.
+              </p>
+              <ExtensionMini />
+            </motion.div>
+
           </div>
         </div>
       </section>
 
       {/* ─── HOW IT WORKS ─── */}
-      <section id="how-it-works" className="py-24 md:py-32 px-6">
+      <section id="how-it-works" className="py-20 md:py-28 px-6 bg-slate-50/70 border-y border-slate-100">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-[11px] text-emerald-600 font-semibold uppercase tracking-[0.12em] mb-4">How it works</p>
-            <h2 className="text-[32px] md:text-[42px] font-bold font-[family-name:var(--font-heading)] text-slate-900 leading-tight tracking-[-0.025em]">
+          <div className="text-center mb-14">
+            <p className="text-[12px] text-[#16a34a] font-semibold uppercase tracking-widest mb-3">How it works</p>
+            <h2 className="text-[32px] md:text-[40px] font-bold tracking-[-0.025em] text-slate-900 font-[family-name:var(--font-heading)]">
               Three steps to a better job search
             </h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 relative">
-            {/* Connecting line */}
-            <div className="hidden md:block absolute top-7 left-[calc(33%+16px)] right-[calc(33%+16px)] h-px bg-gradient-to-r from-slate-200 via-emerald-200 to-slate-200" />
-
+            <div className="hidden md:block absolute top-6 left-[calc(33%+16px)] right-[calc(33%+16px)] h-px bg-gradient-to-r from-slate-200 via-[#16a34a]/30 to-slate-200" />
             {[
-              { step: '01', title: 'Add your applications', desc: 'Paste a job URL or enter details in seconds. AI auto-fills and suggests optimal follow-up timing.' },
-              { step: '02', title: 'Track every stage', desc: 'Move cards through your Kanban pipeline. Spot patterns, see what needs attention, and never let anything fall through.' },
+              { step: '01', title: 'Add your applications', desc: 'Paste a job URL or enter details in seconds. AI auto-fills and suggests follow-up timing.' },
+              { step: '02', title: 'Track every stage', desc: 'Move cards through your pipeline. Spot patterns and never let anything fall through the cracks.' },
               { step: '03', title: 'Prep, apply, repeat', desc: 'Practice interviews with AI, get personalized coaching, and land offers faster.' },
             ].map((item, i) => (
               <motion.div
                 key={item.step}
-                initial={{ opacity: 0, y: 24 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.12, duration: 0.6 }}
-                className="relative text-center"
+                transition={{ delay: i * 0.1 }}
+                className="text-center"
               >
-                <div className="w-14 h-14 rounded-2xl bg-white border-2 border-slate-200 shadow-[0_4px_16px_rgba(15,23,42,0.06)] flex items-center justify-center mx-auto mb-5">
-                  <span className="text-[15px] font-bold font-[family-name:var(--font-heading)] text-slate-900">{item.step}</span>
+                <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center mx-auto mb-4">
+                  <span className="text-[14px] font-bold text-slate-900">{item.step}</span>
                 </div>
-                <h3 className="text-[16px] font-bold font-[family-name:var(--font-heading)] text-slate-900 mb-2 tracking-tight">{item.title}</h3>
+                <h3 className="text-[15px] font-bold text-slate-900 mb-2">{item.title}</h3>
                 <p className="text-[13px] text-slate-500 leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
@@ -461,184 +444,146 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── TESTIMONIALS ─── */}
-      <section id="testimonials" className="py-24 md:py-32 px-6 bg-slate-50/60">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-[11px] text-emerald-600 font-semibold uppercase tracking-[0.12em] mb-4">Reviews</p>
-            <h2 className="text-[32px] md:text-[42px] font-bold font-[family-name:var(--font-heading)] text-slate-900 tracking-[-0.025em]">
-              Real stories. Real offers.
-            </h2>
-          </div>
-
-          {/* Featured testimonial */}
+      {/* ─── TESTIMONIAL ─── */}
+      <section id="testimonials" className="py-24 md:py-32 px-6">
+        <div className="max-w-3xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="relative mb-5 p-8 md:p-12 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/50 overflow-hidden"
+            className="bg-white border border-slate-200 rounded-2xl p-10 md:p-14 text-center shadow-[0_4px_40px_rgba(0,0,0,0.04)]"
           >
-            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/8 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/6 rounded-full blur-3xl" />
-            <div className="relative z-10 max-w-2xl">
-              <div className="flex items-center gap-1 mb-6">
-                {[...Array(5)].map((_, j) => <Star key={j} className="w-4 h-4 text-amber-400 fill-amber-400" />)}
+            <div className="flex justify-center gap-0.5 mb-7">
+              {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
+            </div>
+            <blockquote className="text-[20px] md:text-[24px] font-medium text-slate-900 leading-[1.5] mb-8 tracking-tight">
+              &ldquo;The first job tracker that actually feels like a professional tool, not a toy.&rdquo;
+            </blockquote>
+            <div className="flex items-center justify-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-[13px] font-bold text-white">
+                MJ
               </div>
-              <p className="text-[20px] md:text-[24px] text-white leading-[1.5] font-medium mb-8">
-                &ldquo;The AI coach asked me questions I <em>actually got</em> in my final round. I walked in feeling genuinely prepared for the first time in my career. Landed the PM role at Google.&rdquo;
-              </p>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-[14px] font-bold text-white shadow-lg">
-                  MJ
-                </div>
-                <div>
-                  <p className="text-[14px] font-semibold text-white">Marcus J.</p>
-                  <p className="text-[12px] text-slate-400">Product Manager · Now at Google</p>
-                </div>
-                <div className="ml-auto hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/25">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                  <span className="text-[11px] font-medium text-emerald-400">Verified user</span>
-                </div>
+              <div className="text-left">
+                <p className="text-[13px] font-semibold text-slate-900">Marcus J.</p>
+                <p className="text-[12px] text-slate-400">Product Manager · Now at Google</p>
               </div>
             </div>
           </motion.div>
 
-          {/* Two smaller testimonials */}
-          <div className="grid md:grid-cols-2 gap-5">
+          {/* Two small quotes */}
+          <div className="grid md:grid-cols-2 gap-4 mt-4">
             {[
-              { name: 'Sarah C.', title: 'Software Engineer', company: 'Now at Stripe', initials: 'SC', color: 'from-violet-400 to-violet-600', text: 'Tracked 30+ applications without going insane. The Kanban board and reminders saved me from dropping the ball multiple times. Worth every minute of setup.' },
-              { name: 'Priya P.', title: 'UX Designer', company: 'Now at Figma', initials: 'PP', color: 'from-rose-400 to-pink-600', text: 'The AI coach helped me nail behavioral questions I always struggled with. Practiced on a Sunday, got 3 interview callbacks by Wednesday.' },
+              { initials: 'SC', color: 'from-violet-400 to-violet-600', name: 'Sarah C.', title: 'Software Eng · Now at Stripe', text: 'Tracked 30+ applications without going insane. The reminders alone are worth it.' },
+              { initials: 'PP', color: 'from-rose-400 to-pink-600', name: 'Priya P.', title: 'UX Designer · Now at Figma', text: 'AI coach helped me nail behaviorals I always struggled with. Got 3 callbacks in one week.' },
             ].map((t, i) => (
               <motion.div
                 key={t.name}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.6 }}
-                className="p-7 rounded-2xl bg-white border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] hover:border-slate-200 transition-all duration-300"
-              >
-                <div className="flex items-center gap-1 mb-5">
-                  {[...Array(5)].map((_, j) => <Star key={j} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />)}
-                </div>
-                <p className="text-[14px] text-slate-600 leading-[1.7] mb-6">&ldquo;{t.text}&rdquo;</p>
-                <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${t.color} flex items-center justify-center text-[12px] font-bold text-white`}>
-                    {t.initials}
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-semibold text-slate-900">{t.name}</p>
-                    <p className="text-[12px] text-slate-400">{t.title} · {t.company}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── METRICS BAR ─── */}
-      <section className="py-16 px-6 border-y border-slate-100 bg-white">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-3 gap-8 text-center">
-            {[
-              { value: '3.2×', label: 'more interviews booked', icon: '📈' },
-              { value: '67%', label: 'faster follow-up times', icon: '⚡' },
-              { value: '2×', label: 'higher offer rate', icon: '🏆' },
-            ].map((stat, i) => (
-              <motion.div
-                key={stat.label}
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-white border border-slate-200 rounded-xl p-6 hover:border-slate-300 transition-colors"
               >
-                <p className="text-[11px] mb-2">{stat.icon}</p>
-                <p className="text-[32px] md:text-[40px] font-bold font-[family-name:var(--font-heading)] text-slate-900 tracking-tight">{stat.value}</p>
-                <p className="text-[12px] text-slate-400 mt-1 font-medium">{stat.label}</p>
+                <div className="flex gap-0.5 mb-4">
+                  {[...Array(5)].map((_, j) => <Star key={j} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
+                </div>
+                <p className="text-[13px] text-slate-600 leading-[1.7] mb-4">&ldquo;{t.text}&rdquo;</p>
+                <div className="flex items-center gap-2 pt-4 border-t border-slate-100">
+                  <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${t.color} flex items-center justify-center text-[10px] font-bold text-white`}>{t.initials}</div>
+                  <div>
+                    <p className="text-[12px] font-semibold text-slate-800">{t.name}</p>
+                    <p className="text-[11px] text-slate-400">{t.title}</p>
+                  </div>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─── CTA ─── */}
-      <section className="py-28 md:py-36 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500" />
-        <div className="absolute inset-0 -z-10 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
-        <div className="absolute top-0 left-[20%] w-80 h-80 bg-white/5 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 right-[15%] w-64 h-64 bg-teal-400/10 rounded-full blur-3xl -z-10" />
+      {/* ─── STATS ─── */}
+      <div className="border-y border-slate-100 py-12 px-6 bg-slate-50/60">
+        <div className="max-w-3xl mx-auto">
+          <div className="grid grid-cols-3 gap-8 text-center">
+            {[
+              { value: '5.0', label: 'Average rating', sub: 'From 500+ reviews' },
+              { value: '4.8×', label: 'More interviews', sub: 'vs. manual tracking' },
+              { value: 'Free', label: 'To get started', sub: 'No credit card needed' },
+            ].map((s, i) => (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+              >
+                <p className="text-[32px] md:text-[40px] font-bold tracking-tight text-slate-900">{s.value}</p>
+                <p className="text-[13px] font-semibold text-slate-700 mt-1">{s.label}</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">{s.sub}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
 
+      {/* ─── CTA ─── */}
+      <section className="py-24 md:py-32 px-6">
         <div className="max-w-2xl mx-auto text-center">
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
           >
-            <p className="text-emerald-200/70 text-[12px] font-semibold uppercase tracking-[0.12em] mb-5">Get started today</p>
-            <h2 className="text-[36px] md:text-[48px] font-bold font-[family-name:var(--font-heading)] text-white leading-[1.1] mb-5 tracking-[-0.025em]">
+            <h2 className="text-[36px] md:text-[48px] font-bold tracking-[-0.03em] text-slate-900 mb-4 font-[family-name:var(--font-heading)]">
               Your next role is out there.
-              <br />
-              <span className="text-emerald-200">Let&apos;s go get it.</span>
             </h2>
-            <p className="text-emerald-100/70 text-[15px] mb-10 max-w-sm mx-auto leading-relaxed">
+            <p className="text-[16px] text-slate-500 mb-8 max-w-sm mx-auto leading-relaxed">
               Free to start. No credit card required. Set up in under 30 seconds.
             </p>
             <Link href="/signup">
-              <Button
-                variant="secondary"
-                size="lg"
-                className="h-13 px-9 bg-white text-emerald-700 hover:bg-emerald-50 rounded-xl text-[15px] font-semibold shadow-[0_8px_40px_rgba(0,0,0,0.20)] hover:shadow-[0_12px_50px_rgba(0,0,0,0.25)] transition-all"
-              >
-                Start tracking — it&apos;s free
-                <ArrowRight className="w-4 h-4" />
-              </Button>
+              <button className="inline-flex items-center gap-2 h-12 px-8 rounded-xl bg-slate-900 text-white text-[15px] font-semibold hover:bg-slate-800 transition-colors shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
+                Start tracking — it&apos;s free <ArrowRight className="w-4 h-4" />
+              </button>
             </Link>
-            <div className="flex items-center justify-center gap-6 mt-8 text-[12px] text-emerald-200/60">
-              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> Free forever plan</span>
-              <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5" /> AI-powered</span>
-              <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5" /> Private & secure</span>
+            <div className="flex items-center justify-center gap-6 mt-6 text-[12px] text-slate-400">
+              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#16a34a]" /> Free forever plan</span>
+              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#16a34a]" /> AI-powered</span>
+              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#16a34a]" /> Private & secure</span>
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* ─── FOOTER ─── */}
-      <footer className="py-14 px-6 border-t border-slate-100 bg-white">
+      <footer className="border-t border-slate-100 py-10 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-10 mb-10">
-            {/* Brand */}
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-7 w-auto" />
-              </div>
-              <p className="text-[13px] text-slate-400 leading-relaxed max-w-xs">
+          <div className="flex flex-col md:flex-row items-start justify-between gap-8 mb-10">
+            <div className="max-w-xs">
+              <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-6 w-auto mb-3" />
+              <p className="text-[13px] text-slate-400 leading-relaxed">
                 The AI-powered job tracker that turns your search into a streamlined, winning workflow.
               </p>
             </div>
-
-            {/* Product links */}
-            <div>
-              <p className="text-[12px] font-semibold text-slate-900 uppercase tracking-wider mb-4">Product</p>
-              <div className="space-y-2.5">
-                {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['#testimonials', 'Reviews'], ['/signup', 'Get started free']].map(([href, label]) => (
-                  <a key={href} href={href} className="block text-[13px] text-slate-400 hover:text-slate-700 transition-colors">{label}</a>
-                ))}
+            <div className="flex gap-14">
+              <div>
+                <p className="text-[12px] font-semibold text-slate-900 mb-3">Product</p>
+                <div className="space-y-2">
+                  {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['#testimonials', 'Reviews'], ['/signup', 'Get started']].map(([href, label]) => (
+                    <a key={href} href={href} className="block text-[13px] text-slate-400 hover:text-slate-700 transition-colors">{label}</a>
+                  ))}
+                </div>
               </div>
-            </div>
-
-            {/* Account links */}
-            <div>
-              <p className="text-[12px] font-semibold text-slate-900 uppercase tracking-wider mb-4">Account</p>
-              <div className="space-y-2.5">
-                {[['/login', 'Sign in'], ['/signup', 'Create account'], ['/forgot-password', 'Reset password']].map(([href, label]) => (
-                  <Link key={href} href={href} className="block text-[13px] text-slate-400 hover:text-slate-700 transition-colors">{label}</Link>
-                ))}
+              <div>
+                <p className="text-[12px] font-semibold text-slate-900 mb-3">Account</p>
+                <div className="space-y-2">
+                  {[['/login', 'Sign in'], ['/signup', 'Create account'], ['/forgot-password', 'Reset password']].map(([href, label]) => (
+                    <Link key={href} href={href} className="block text-[13px] text-slate-400 hover:text-slate-700 transition-colors">{label}</Link>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-
-          <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2">
             <p className="text-[12px] text-slate-400">&copy; {new Date().getFullYear()} PebelAI. All rights reserved.</p>
             <p className="text-[12px] text-slate-400">Built for job seekers, by people who&apos;ve been there.</p>
           </div>
