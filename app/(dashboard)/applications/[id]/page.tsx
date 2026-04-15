@@ -195,49 +195,59 @@ export default function ApplicationDetailPage() {
   return (
     <div className="space-y-6 animate-fade-up">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-3">
-          <Link href="/applications" className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back to Applications
+      <div className="space-y-3">
+        {/* Row 1: back + actions — always in one line */}
+        <div className="flex items-center justify-between gap-2">
+          <Link href="/applications" className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors shrink-0">
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Back to Applications</span>
+            <span className="sm:hidden">Back</span>
           </Link>
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-xl font-bold text-slate-600">
-              {app.company_name.charAt(0)}
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold font-[family-name:var(--font-heading)] text-slate-900">{app.company_name}</h1>
-              <p className="text-slate-600">{app.role_title}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <Badge variant={badgeVariant(app.status)}>{config.label}</Badge>
-            <span className="text-sm text-slate-500">Applied {app.applied_date}</span>
-            {app.location && (
-              <span className="flex items-center gap-1 text-sm text-slate-400"><MapPin className="w-3 h-3" />{app.location}</span>
-            )}
-            <div className="flex gap-0.5">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <Star key={n} className={`w-3.5 h-3.5 ${n <= app.excitement_level ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
+          <div className="flex items-center gap-1.5 shrink-0">
+            <select
+              value={app.status}
+              onChange={(e) => handleStatusChange(e.target.value as ApplicationStatus)}
+              className="h-8 px-2 rounded-lg border border-slate-200 text-xs text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer max-w-[110px]"
+            >
+              {(['applied','phone_screen','interviewing','offer','rejected','ghosted'] as ApplicationStatus[]).map((s) => (
+                <option key={s} value={s}>{statusConfig[s].label}</option>
               ))}
-            </div>
+            </select>
+            <Button variant="ghost" size="sm" onClick={handleDelete}>
+              <Trash2 className="w-4 h-4 text-red-400" />
+            </Button>
+            <Link href={`/coach?appId=${id}&company=${encodeURIComponent(app.company_name)}&role=${encodeURIComponent(app.role_title)}&autostart=1`}>
+              <Button size="sm">
+                <Bot className="w-4 h-4" />
+                <span className="hidden sm:inline">AI Prep</span>
+              </Button>
+            </Link>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <select
-            value={app.status}
-            onChange={(e) => handleStatusChange(e.target.value as ApplicationStatus)}
-            className="h-8 px-2 rounded-lg border border-slate-200 text-xs text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
-          >
-            {(['applied','phone_screen','interviewing','offer','rejected','ghosted'] as ApplicationStatus[]).map((s) => (
-              <option key={s} value={s}>{statusConfig[s].label}</option>
+
+        {/* Row 2: company info */}
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-lg md:text-xl font-bold text-slate-600 shrink-0">
+            {app.company_name.charAt(0)}
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-xl md:text-2xl font-bold font-[family-name:var(--font-heading)] text-slate-900 truncate">{app.company_name}</h1>
+            <p className="text-slate-600 text-sm truncate">{app.role_title}</p>
+          </div>
+        </div>
+
+        {/* Row 3: meta badges */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant={badgeVariant(app.status)}>{config.label}</Badge>
+          <span className="text-xs text-slate-500">Applied {app.applied_date}</span>
+          {app.location && (
+            <span className="flex items-center gap-1 text-xs text-slate-400"><MapPin className="w-3 h-3" />{app.location}</span>
+          )}
+          <div className="flex gap-0.5">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <Star key={n} className={`w-3.5 h-3.5 ${n <= app.excitement_level ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
             ))}
-          </select>
-          <Button variant="ghost" size="sm" onClick={handleDelete}>
-            <Trash2 className="w-4 h-4 text-red-400" />
-          </Button>
-          <Link href={`/coach?appId=${id}&company=${encodeURIComponent(app.company_name)}&role=${encodeURIComponent(app.role_title)}&autostart=1`}>
-            <Button size="sm"><Bot className="w-4 h-4" /> AI Prep</Button>
-          </Link>
+          </div>
         </div>
       </div>
 
