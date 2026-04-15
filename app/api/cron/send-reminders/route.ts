@@ -16,10 +16,12 @@ import type { Reminder, Application } from '@/types'
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
-  // Auth check
+  // Auth check — fail closed: if secret is not configured, refuse all requests
   const secret = process.env.CRON_SECRET
-  const auth = req.headers.get('authorization')
-  if (secret && auth !== `Bearer ${secret}`) {
+  if (!secret) {
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 })
+  }
+  if (req.headers.get('authorization') !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

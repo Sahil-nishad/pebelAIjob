@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .eq('user_id', user.id)
     .single()
 
-  if (error) return new NextResponse(JSON.stringify({ error: error.message }), { status: 404 })
+  if (error) return new NextResponse(JSON.stringify({ error: 'Not found' }), { status: 404 })
   return new Response(JSON.stringify(data), { status: 200 })
 }
 
@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .select()
     .single()
 
-  if (error) return new NextResponse(JSON.stringify({ error: error.message }), { status: 400 })
+  if (error) return new NextResponse(JSON.stringify({ error: 'Update failed' }), { status: 400 })
   return new Response(JSON.stringify(data), { status: 200 })
 }
 
@@ -50,6 +50,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) return new NextResponse(JSON.stringify({ error: error.message }), { status: 400 })
+  if (error) return new NextResponse(JSON.stringify({ error: 'Delete failed' }), { status: 400 })
   return new Response(JSON.stringify({ success: true }), { status: 200 })
 }

@@ -9,7 +9,8 @@ export async function POST(req: NextRequest) {
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 
-  const { sessionId, message } = await req.json()
+  const { sessionId, message: rawMessage } = await req.json()
+  const message = String(rawMessage ?? '').slice(0, 4000)
 
   const { data: session, error } = await supabase
     .from('coach_sessions')

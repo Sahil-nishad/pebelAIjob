@@ -72,9 +72,8 @@ export async function POST(req: NextRequest) {
     console.error('[forgot-password] DB lookup error:', userError)
   }
 
-  // Always return success to prevent email enumeration
+  // Always return success to prevent email enumeration — do NOT log the email
   if (!user) {
-    console.log('[forgot-password] No user found for email:', email.toLowerCase().trim())
     return NextResponse.json({ ok: true })
   }
 

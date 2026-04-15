@@ -9,11 +9,11 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabase
     .from('users')
-    .select('*')
+    .select('id, email, name, phone, title, location, linkedin, job_type, experience_level, salary_min, salary_max, target_roles, target_companies, email_digest, follow_up_days, interview_prep_days, created_at')
     .eq('id', user.id)
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) return NextResponse.json({ error: 'Failed to load profile' }, { status: 400 })
   return NextResponse.json(data)
 }
 
@@ -55,6 +55,6 @@ export async function PATCH(req: NextRequest) {
     .update(updates)
     .eq('id', user.id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) return NextResponse.json({ error: 'Failed to update profile' }, { status: 400 })
   return NextResponse.json({ ok: true })
 }

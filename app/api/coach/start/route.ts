@@ -9,7 +9,16 @@ export async function POST(req: NextRequest) {
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 
-  const { company, role, sessionType, jobDescription } = await req.json()
+  const { company: rawCompany, role: rawRole, sessionType: rawSessionType, jobDescription: rawJobDescription } = await req.json()
+
+  // Sanitize user-controlled strings before injecting into LLM prompts
+  const sanitize = (s: unknown, max: number) =>
+    String(s ?? '').replace(/[`<>]/g, '').trim().slice(0, max)
+
+  const company = sanitize(rawCompany, 100)
+  const role = sanitize(rawRole, 100)
+  const sessionType = sanitize(rawSessionType, 50)
+  const jobDescription = rawJobDescription ? sanitize(rawJobDescription, 1000) : ''
 
   let questions: unknown[] = []
   try {
