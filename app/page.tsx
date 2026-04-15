@@ -14,6 +14,9 @@ import {
   Zap,
   Bell,
   Users,
+  Download,
+  MousePointer2,
+  Shield,
 } from 'lucide-react'
 
 /* ─── Navbar ─── */
@@ -32,7 +35,7 @@ function Navbar() {
           <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-7 w-auto" />
         </Link>
         <div className="hidden md:flex items-center gap-8">
-          {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['#why-pebelai', 'Why PebelAI']].map(([href, label]) => (
+          {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['#extension', 'Extension'], ['#why-pebelai', 'Why PebelAI']].map(([href, label]) => (
             <a key={href} href={href} className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors">{label}</a>
           ))}
         </div>
@@ -458,6 +461,125 @@ export default function LandingPage() {
                 <p className="text-[12px] text-slate-500 leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── EXTENSION ─── */}
+      <section id="extension" className="py-24 md:py-32 px-6 bg-slate-50/70 border-y border-slate-100">
+        <div className="max-w-5xl mx-auto">
+
+          {/* Header */}
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+
+            {/* Left — copy */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <p className="text-[12px] text-[#16a34a] font-semibold uppercase tracking-widest mb-3">Browser Extension</p>
+              <h2 className="text-[32px] md:text-[38px] font-bold tracking-[-0.025em] text-slate-900 font-[family-name:var(--font-heading)] mb-4">
+                Save any job in one click —<br />no copy-pasting ever.
+              </h2>
+              <p className="text-[15px] text-slate-500 leading-[1.7] mb-8">
+                The PebelAI Chrome extension sits quietly in your browser. When you spot a job on LinkedIn, Indeed, Naukri, or any company site, it detects the listing and lets you add it to your tracker instantly — company, role, URL and all.
+              </p>
+
+              {/* Trust badges */}
+              <div className="flex flex-wrap gap-3 mb-8">
+                {[
+                  { icon: Shield, label: 'No account data collected' },
+                  { icon: MousePointer2, label: 'Works on any job site' },
+                  { icon: Zap, label: 'Adds in under 2 seconds' },
+                ].map((b) => (
+                  <div key={b.label} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200 text-[12px] text-slate-600 font-medium">
+                    <b.icon className="w-3.5 h-3.5 text-[#16a34a]" />
+                    {b.label}
+                  </div>
+                ))}
+              </div>
+
+              {/* Download CTA */}
+              <a
+                href="https://chromewebstore.google.com/detail/pebelai/YOUR_EXTENSION_ID"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <button className="flex items-center gap-2.5 h-12 px-7 rounded-xl bg-slate-900 text-white text-[14px] font-semibold hover:bg-slate-800 transition-colors shadow-sm">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" fill="#4285F4" />
+                    <circle cx="12" cy="12" r="4" fill="white" />
+                    <path d="M12 8 L20.66 8" stroke="#EA4335" strokeWidth="2.5" />
+                    <path d="M12 8 C9 8 6.34 9.5 4.77 11.83" stroke="#FBBC05" strokeWidth="2.5" />
+                    <path d="M4.77 11.83 C6.34 14.17 9 15.67 12 15.67 C15 15.67 17.66 14.17 19.23 11.83" stroke="#34A853" strokeWidth="2.5" />
+                  </svg>
+                  Add to Chrome — Free
+                  <Download className="w-4 h-4" />
+                </button>
+              </a>
+              <p className="text-[12px] text-slate-400 mt-3">Chrome Web Store · Reviewed by Google</p>
+            </motion.div>
+
+            {/* Right — step by step */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="space-y-4"
+            >
+              <p className="text-[11px] font-bold tracking-widest text-slate-400 uppercase mb-5">Setup in 3 steps</p>
+
+              {[
+                {
+                  step: '01',
+                  title: 'Install from Chrome Web Store',
+                  desc: 'Click "Add to Chrome" above. The extension installs in seconds — no sign-in required at this step.',
+                  icon: Download,
+                },
+                {
+                  step: '02',
+                  title: 'Sign in to your PebelAI account',
+                  desc: 'Click the PebelAI icon in your browser toolbar. Log in with your account to connect the extension to your dashboard.',
+                  icon: Shield,
+                },
+                {
+                  step: '03',
+                  title: 'Browse jobs and click "Add to PebelAI"',
+                  desc: 'Visit any job listing on LinkedIn, Indeed, Glassdoor, or a company careers page. The extension pops up — hit the button and the job is saved instantly.',
+                  icon: MousePointer2,
+                },
+              ].map((item) => (
+                <motion.div
+                  key={item.step}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="flex gap-4 p-5 rounded-2xl bg-white border border-slate-200 hover:border-[#16a34a]/30 hover:shadow-[0_4px_20px_rgba(22,163,74,0.06)] transition-all"
+                >
+                  <div className="shrink-0 flex flex-col items-center gap-2">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                      <item.icon className="w-4 h-4 text-[#16a34a]" />
+                    </div>
+                    <span className="text-[9px] font-bold text-slate-300 tracking-widest">{item.step}</span>
+                  </div>
+                  <div>
+                    <h4 className="text-[14px] font-bold text-slate-900 mb-1">{item.title}</h4>
+                    <p className="text-[12px] text-slate-500 leading-relaxed">{item.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+
+              {/* After install note */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-100 mt-2">
+                <Check className="w-4 h-4 text-[#16a34a] shrink-0 mt-0.5" />
+                <p className="text-[12px] text-emerald-800 leading-relaxed">
+                  That&apos;s it. Every job you save goes straight into your PebelAI dashboard, ready for tracking, reminders, and interview prep.
+                </p>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
