@@ -282,12 +282,12 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row items-start gap-3 pt-1">
                 <Link href="/signup">
                   <button className="flex items-center gap-2 h-11 px-6 rounded-xl bg-[#16a34a] text-white text-[14px] font-semibold hover:bg-[#15803d] transition-colors shadow-sm">
-                    <Puzzle className="w-4 h-4" /> Install Extension — Free
+                    Get started free <ArrowRight className="w-4 h-4" />
                   </button>
                 </Link>
-                <Link href="/signup">
+                <Link href="/login">
                   <button className="flex items-center gap-2 h-11 px-5 text-[14px] text-slate-500 hover:text-slate-900 transition-colors border border-slate-200 rounded-xl hover:border-slate-300">
-                    Sign up — track manually <ArrowRight className="w-4 h-4" />
+                    Log in
                   </button>
                 </Link>
               </div>
@@ -703,17 +703,17 @@ export default function LandingPage() {
               Stop losing track.<br />Start landing offers.
             </h2>
             <p className="text-[16px] text-slate-500 mb-8 max-w-sm mx-auto leading-relaxed">
-              Install the extension and start tracking in under 60 seconds. Free forever.
+              Sign up free and start tracking your job search today. No credit card needed.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link href="/signup">
                 <button className="flex items-center gap-2 h-12 px-8 rounded-xl bg-[#16a34a] text-white text-[15px] font-semibold hover:bg-[#15803d] transition-colors shadow-sm">
-                  <Puzzle className="w-4 h-4" /> Install Extension — Free
+                  Create free account <ArrowRight className="w-4 h-4" />
                 </button>
               </Link>
-              <Link href="/signup">
+              <Link href="/login">
                 <button className="flex items-center gap-2 h-12 px-6 rounded-xl border border-slate-200 text-slate-600 text-[15px] font-medium hover:border-slate-300 hover:text-slate-900 transition-colors">
-                  Sign up to track manually
+                  Log in
                 </button>
               </Link>
             </div>

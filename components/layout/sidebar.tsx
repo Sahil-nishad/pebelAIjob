@@ -9,6 +9,7 @@ import {
   Bell,
   Settings,
   Sparkles,
+  Puzzle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -17,6 +18,7 @@ const navItems = [
   { icon: ClipboardList, label: 'Applications', href: '/applications' },
   { icon: Bot, label: 'AI Coach', href: '/coach' },
   { icon: Bell, label: 'Reminders', href: '/reminders' },
+  { icon: Puzzle, label: 'Extension', href: '/extension' },
 ]
 
 export function Sidebar() {
