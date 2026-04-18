@@ -69,11 +69,7 @@ export const metadata: Metadata = {
   },
 
   icons: {
-    icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
-    ],
     apple: "/icon.svg",
-    shortcut: "/icon.svg",
   },
 
   verification: {
