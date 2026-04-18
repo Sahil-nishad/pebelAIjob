@@ -37,10 +37,14 @@ export async function requireAuth(req?: NextRequest) {
     // ── Normal web session: read JWT directly from the request cookies ──────────
     // Using getToken(req) instead of getServerSession() to avoid compatibility
     // issues with Next.js 15/16 App Router where cookies() must be awaited.
+    // cookieName must match the forced name in nextauth.ts — getToken otherwise
+    // defaults to __Secure-next-auth.session-token in production (HTTPS) and
+    // would never find the cookie.
     try {
       const token = await getToken({
         req,
         secret: process.env.NEXTAUTH_SECRET!,
+        cookieName: 'next-auth.session-token',
       })
       if (token?.dbId) {
         const supabase = getSupabaseServer()
