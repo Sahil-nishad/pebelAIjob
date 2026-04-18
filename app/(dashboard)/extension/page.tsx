@@ -1,6 +1,6 @@
 'use client'
 
-import { Download, Puzzle, MousePointer2, Shield, Check, ArrowRight, Chrome, Zap, Bell, Bot } from 'lucide-react'
+import { Download, Puzzle, MousePointer2, Shield, Check, ArrowRight, Zap, Bell, Bot } from 'lucide-react'
 
 const steps = [
   {
