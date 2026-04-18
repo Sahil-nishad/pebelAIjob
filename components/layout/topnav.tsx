@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Bell, Search, X } from 'lucide-react'
 import { useUser } from '@/hooks/useUser'
 import { useState } from 'react'
+import Image from 'next/image'
 
 export function TopNav() {
   const { user, profile } = useUser()
@@ -29,11 +30,8 @@ export function TopNav() {
     <header className="fixed top-0 right-0 left-0 md:left-[244px] z-30 h-16 md:h-24 flex items-center justify-between bg-[#FBFBFB] border-b border-slate-200/60 md:border-none px-4 md:px-8">
 
       {/* Mobile: Logo */}
-      <Link href="/dashboard" className="flex items-center gap-2 md:hidden">
-        <div className="w-7 h-7 rounded-lg bg-[#0A6A47] flex items-center justify-center">
-          <span className="text-white text-[13px] font-bold">P</span>
-        </div>
-        <span className="text-[16px] font-bold text-[#13211B] tracking-tight">PebelAI</span>
+      <Link href="/dashboard" className="md:hidden">
+        <Image src="/pebelai-logo.png" alt="PebelAI" width={110} height={38} className="object-contain" priority />
       </Link>
 
       {/* Desktop: Search bar */}

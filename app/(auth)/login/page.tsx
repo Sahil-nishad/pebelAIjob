@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Bot, BarChart3, LayoutGrid, Loader2 } from 'lucide-react'
 import { signIn } from 'next-auth/react'
 
@@ -80,7 +81,9 @@ function LoginForm() {
 
         {/* Top — logo */}
         <div className="relative z-10">
-          <p className="text-[11px] font-bold text-emerald-500/70 tracking-[0.18em] uppercase mb-16">PebelAI</p>
+          <div className="mb-16">
+            <Image src="/pebelai-logo.png" alt="PebelAI" width={150} height={52} className="object-contain brightness-0 invert" />
+          </div>
 
           <h1 className="text-[38px] font-bold text-white leading-[1.15] tracking-[-0.025em] mb-10 font-[family-name:var(--font-heading)]">
             Land your<br />dream job,<br />organized.
@@ -117,7 +120,9 @@ function LoginForm() {
         <div className="w-full max-w-[380px]">
 
           {/* Mobile logo */}
-          <p className="lg:hidden text-[11px] font-bold text-emerald-600 tracking-[0.18em] uppercase mb-8">PebelAI</p>
+          <div className="lg:hidden mb-8">
+            <Image src="/pebelai-logo.png" alt="PebelAI" width={130} height={44} className="object-contain" />
+          </div>
 
           <h2 className="text-[26px] font-bold text-slate-900 mb-1 tracking-tight font-[family-name:var(--font-heading)]">
             Welcome back

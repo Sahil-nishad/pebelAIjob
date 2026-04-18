@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-white px-6 py-12">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-2.5 mb-10">
-          <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-10 w-auto max-w-[180px]" />
+          <Image src="/pebelai-logo.png" alt="PebelAI" width={420} height={120} className="h-10 w-auto max-w-[180px]" />
         </div>
 
         {sent ? (

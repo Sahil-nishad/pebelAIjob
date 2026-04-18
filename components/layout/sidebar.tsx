@@ -8,9 +8,9 @@ import {
   Bot,
   Bell,
   Settings,
-  Sparkles,
   Puzzle,
 } from 'lucide-react'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -27,20 +27,10 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 bottom-0 z-40 hidden w-[244px] flex-col border-r border-slate-200/60 bg-[#FBFBFB] md:flex">
 
       {/* Logo */}
-      <div className="flex h-24 shrink-0 flex-col justify-center px-6">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#0A6A47] flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-[family-name:var(--font-heading)] text-[18px] font-bold tracking-tight text-[#13211B] leading-none">
-              PebelAI
-            </span>
-            <span className="text-[9px] font-bold text-slate-400 tracking-widest mt-1 uppercase">
-              The Digital Curator
-            </span>
-          </div>
-        </div>
+      <div className="flex h-24 shrink-0 items-center px-5">
+        <Link href="/dashboard">
+          <Image src="/pebelai-logo.png" alt="PebelAI" width={140} height={48} className="object-contain" priority />
+        </Link>
       </div>
 
       {/* Nav */}
