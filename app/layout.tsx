@@ -1,20 +1,7 @@
 import type { Metadata } from "next";
-import { Sora, Nunito_Sans } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { SessionProvider } from "@/components/session-provider";
 import "./globals.css";
-
-const sora = Sora({
-  subsets: ["latin"],
-  weight: ["300", "400", "600", "700"],
-  variable: "--font-sora",
-});
-
-const nunito = Nunito_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-nunito",
-});
 
 const BASE_URL = "https://pebelai.com"
 
@@ -82,7 +69,9 @@ export const metadata: Metadata = {
   },
 
   icons: {
-    icon: "/icon.svg",
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
     apple: "/icon.svg",
     shortcut: "/icon.svg",
   },
@@ -126,7 +115,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${sora.variable} ${nunito.variable} h-full`}>
+    <html lang="en" className="h-full">
       <head>
         <script
           type="application/ld+json"

@@ -1,11 +1,29 @@
-<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-  <!-- Bottom stone: dark green, large -->
-  <ellipse cx="16" cy="26" rx="13" ry="5" fill="#1a6b45"/>
-  <ellipse cx="16" cy="24.5" rx="13" ry="5.5" fill="#1f7a4f"/>
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PebelAi">
+  <defs>
+    <radialGradient id="b" cx="42%" cy="32%" r="62%">
+      <stop offset="0%" stop-color="#2a7d53"/>
+      <stop offset="100%" stop-color="#155232"/>
+    </radialGradient>
+    <radialGradient id="m" cx="40%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#d2d8d4"/>
+      <stop offset="100%" stop-color="#a6aeaa"/>
+    </radialGradient>
+    <radialGradient id="t" cx="40%" cy="28%" r="65%">
+      <stop offset="0%" stop-color="#78837e"/>
+      <stop offset="100%" stop-color="#48524e"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Bottom stone: dark green -->
+  <ellipse cx="16" cy="26.5" rx="13.5" ry="4.5" fill="#0c3820" opacity="0.2"/>
+  <ellipse cx="16" cy="24.5" rx="13.5" ry="5" fill="url(#b)"/>
+  <ellipse cx="16" cy="22.5" rx="12" ry="3.5" fill="#217a4a" opacity="0.3"/>
+
   <!-- Middle stone: light gray -->
-  <ellipse cx="16" cy="17" rx="10" ry="4" fill="#b0b8b4"/>
-  <ellipse cx="16" cy="15.5" rx="10" ry="4.5" fill="#c8d0cc"/>
+  <ellipse cx="16" cy="16.5" rx="9.5" ry="3.8" fill="url(#m)"/>
+  <ellipse cx="16" cy="15" rx="8.5" ry="2.8" fill="#cdd4d0" opacity="0.4"/>
+
   <!-- Top stone: dark gray -->
-  <ellipse cx="16" cy="9" rx="7" ry="3" fill="#5a6460"/>
-  <ellipse cx="16" cy="7.5" rx="7" ry="3.5" fill="#6e7a75"/>
+  <ellipse cx="16" cy="9.5" rx="6" ry="2.8" fill="url(#t)"/>
+  <ellipse cx="16" cy="8.2" rx="5" ry="2" fill="#788178" opacity="0.4"/>
 </svg>

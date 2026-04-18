@@ -29,7 +29,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex h-24 shrink-0 items-center px-5">
         <Link href="/dashboard">
-          <Image src="/pebelai-logo.png" alt="PebelAI" width={140} height={48} className="object-contain" priority />
+          <Image src="/pebelai-logo.svg" alt="PebelAI" width={160} height={50} className="object-contain" priority />
         </Link>
       </div>
 

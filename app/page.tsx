@@ -32,7 +32,7 @@ function Navbar() {
     <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-[0_1px_0_rgba(15,23,42,0.08)]' : 'bg-white/80 backdrop-blur-xl border-b border-slate-100'}`}>
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/pebelai-logo.png" alt="PebelAI" width={150} height={52} className="h-8 w-auto object-contain" />
+          <Image src="/pebelai-logo.svg" alt="PebelAI" width={150} height={47} className="h-8 w-auto object-contain" />
         </Link>
         <div className="hidden md:flex items-center gap-8">
           {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['#extension', 'Extension'], ['#why-pebelai', 'Why PebelAI']].map(([href, label]) => (
