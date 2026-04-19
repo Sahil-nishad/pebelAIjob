@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import {
   Send, Plus, Brain, Code, BarChart3, DollarSign, Target,
   HelpCircle, Clock, Trash2, Sparkles, ArrowRight, Briefcase,
+  Download, FileText, Loader2,
 } from 'lucide-react'
 import { authFetch } from '@/lib/api'
 import toast from 'react-hot-toast'
@@ -65,6 +66,7 @@ export default function CoachPage() {
   const [jobDescription, setJobDescription] = useState('')
   const [appContext, setAppContext]     = useState<{ company: string; role: string } | null>(null)
   const [autoStartPending, setAutoStartPending] = useState(false)
+  const [generatingQA, setGeneratingQA] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -183,6 +185,44 @@ export default function CoachPage() {
       const msgs = (data.messages || []).filter((m: { role: string }) => m.role !== 'system').map((m: { role: string; content: string }) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
       setMessages(msgs); setHasSession(true)
     } catch { toast.error('Failed to load session') }
+  }
+
+  const handleDownloadSession = async () => {
+    const { downloadSessionPdf } = await import('@/lib/coachPdf')
+    const ok = downloadSessionPdf(messages, {
+      company: company,
+      role: role,
+      sessionType: selectedType || 'general',
+    })
+    if (!ok) toast.error('No Q&A pairs to export yet. Answer at least one question first.')
+    else toast.success('Session PDF downloaded!')
+  }
+
+  const handleDownloadSectorQA = async () => {
+    if (!selectedType) { toast.error('Select a focus area first.'); return }
+    setGeneratingQA(true)
+    try {
+      const res = await authFetch('/api/coach/generate-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company, role, sessionType: selectedType }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.questions?.length) throw new Error(data.error || 'Failed')
+
+      const { downloadQAPdf } = await import('@/lib/coachPdf')
+      const sectorLabel = sessionTypes.find(s => s.type === selectedType)?.label || selectedType
+      downloadQAPdf(data.questions, {
+        title:    `${sectorLabel} Interview — 10 Questions & Answers`,
+        subtitle: `${company ? `${company} · ` : ''}${role ? `${role} · ` : ''}AI-Generated Practice Guide`,
+        filename: `pebelai-${selectedType}-questions.pdf`,
+      })
+      toast.success('Questions PDF downloaded!')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to generate questions')
+    } finally {
+      setGeneratingQA(false)
+    }
   }
 
   return (
@@ -320,6 +360,20 @@ export default function CoachPage() {
                   {isTyping || autoStartPending ? 'Initializing…' : 'Initialize Session'}
                   {!isTyping && !autoStartPending && <ArrowRight className="w-4 h-4" />}
                 </button>
+
+                {/* Download 10 Q&A PDF */}
+                {selectedType && (
+                  <button
+                    onClick={handleDownloadSectorQA}
+                    disabled={generatingQA}
+                    className="w-full mt-3 py-2.5 rounded-xl border-2 border-dashed border-stone-200 text-stone-500 text-[13px] font-semibold flex items-center justify-center gap-2 hover:border-emerald-400 hover:text-emerald-700 hover:bg-emerald-50/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {generatingQA
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating PDF…</>
+                      : <><FileText className="w-4 h-4" /> Download 10 {sessionTypes.find(s => s.type === selectedType)?.label} Q&amp;A as PDF</>
+                    }
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -344,6 +398,13 @@ export default function CoachPage() {
                 </span>
                 <button onClick={() => deleteSession(sessionId || '')} disabled={!sessionId} className="p-2 rounded-xl hover:bg-red-50 hover:text-red-500 text-stone-300 transition-colors">
                   <Trash2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleDownloadSession}
+                  title="Download session as PDF"
+                  className="p-2 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 text-stone-400 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
                 </button>
                 <button onClick={resetComposer} className="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-semibold transition-colors">End</button>
                 <button onClick={resetComposer} className="px-3 py-2 rounded-xl bg-gradient-to-r from-[#005344] to-[#006d5b] text-white text-xs font-semibold flex items-center gap-1.5 hover:opacity-90 transition-opacity">
