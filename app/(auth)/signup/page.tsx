@@ -102,10 +102,10 @@ function SignupForm() {
         </div>
 
         <div className="relative z-10 flex items-center justify-between">
-          <p className="text-[10px] text-white/25 font-semibold tracking-widest uppercase">Powered by AI</p>
+          <p className="text-[10px] text-white/25 font-semibold tracking-widest uppercase">Powered by Dune AI</p>
           <div className="flex items-center gap-4">
-            {['Twitter', 'Terms', 'Privacy'].map(l => (
-              <span key={l} className="text-[10px] text-white/25 hover:text-white/50 cursor-pointer transition-colors tracking-wide">{l}</span>
+            {[['Twitter', 'https://twitter.com'], ['Terms', '/terms'], ['Privacy', '/privacy']].map(([l, href]) => (
+              <a key={l} href={href} className="text-[10px] text-white/25 hover:text-white/50 transition-colors tracking-wide">{l}</a>
             ))}
           </div>
         </div>
