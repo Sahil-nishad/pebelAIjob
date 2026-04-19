@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   Send, Plus, Brain, Code, BarChart3, DollarSign, Target,
-  HelpCircle, Clock, Trash2, ArrowRight, Briefcase,
+  HelpCircle, Clock, Trash2, Sparkles, ArrowRight, Briefcase,
   Download, FileText, Loader2,
 } from 'lucide-react'
 import { authFetch } from '@/lib/api'
