@@ -13,27 +13,20 @@ const GRAY   = '#6b7472'
 const LIGHT  = '#f0f4f2'
 
 function addLogo(doc: jsPDF) {
-  // Stones stacked vertically, centered at stoneX — total height ~12mm
   const stoneX = 20
   const topY   = 10
 
-  // Top stone: dark gray (smallest)
-  doc.setFillColor('#4a5450')
-  doc.ellipse(stoneX, topY, 3.8, 1.5, 'F')
-  doc.setFillColor('#78837e')
-  doc.ellipse(stoneX, topY - 0.3, 3.8, 1.5, 'F')
+  // Top stone: light green (smallest)
+  doc.setFillColor('#6db88a')
+  doc.ellipse(stoneX, topY, 3.8, 1.8, 'F')
 
-  // Middle stone: light gray
-  doc.setFillColor('#9ea5a1')
-  doc.ellipse(stoneX, topY + 3.2, 5.8, 1.9, 'F')
-  doc.setFillColor('#c4ccc8')
-  doc.ellipse(stoneX, topY + 2.9, 5.8, 1.9, 'F')
+  // Middle stone: mid green
+  doc.setFillColor('#2d8a52')
+  doc.ellipse(stoneX, topY + 3.8, 5.8, 2.2, 'F')
 
   // Bottom stone: dark green (largest)
-  doc.setFillColor('#104a2a')
-  doc.ellipse(stoneX, topY + 7.2, 8, 2.5, 'F')
-  doc.setFillColor('#1e7045')
-  doc.ellipse(stoneX, topY + 6.9, 8, 2.5, 'F')
+  doc.setFillColor('#1a6b3f')
+  doc.ellipse(stoneX, topY + 8.2, 8, 2.8, 'F')
 
   // "PebelAi" text — vertically centered against stone stack
   doc.setFont('helvetica', 'bold')

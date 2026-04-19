@@ -1,60 +1,32 @@
-<svg viewBox="0 0 320 78" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PebelAi">
-  <defs>
-    <!-- Bottom stone: dark green -->
-    <radialGradient id="stoneBot" cx="45%" cy="35%" r="60%">
-      <stop offset="0%" stop-color="#2a7d53"/>
-      <stop offset="100%" stop-color="#165535"/>
-    </radialGradient>
-    <!-- Middle stone: light gray -->
-    <radialGradient id="stoneMid" cx="40%" cy="30%" r="65%">
-      <stop offset="0%" stop-color="#d4d9d6"/>
-      <stop offset="100%" stop-color="#a8b0ac"/>
-    </radialGradient>
-    <!-- Top stone: dark gray -->
-    <radialGradient id="stoneTop" cx="40%" cy="30%" r="65%">
-      <stop offset="0%" stop-color="#7a8580"/>
-      <stop offset="100%" stop-color="#4a5450"/>
-    </radialGradient>
-  </defs>
+<svg viewBox="0 0 278 72" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PebelAi">
+  <!-- Bottom stone -->
+  <ellipse fill="rgba(0,0,0,0.07)" cx="40" cy="58" rx="36" ry="8"/>
+  <ellipse fill="#1a6b3f" cx="40" cy="52" rx="34" ry="13"/>
 
-  <!-- ── Stacked stones ── -->
+  <!-- Mid stone -->
+  <ellipse fill="rgba(0,0,0,0.07)" cx="40" cy="35" rx="24" ry="5"/>
+  <ellipse fill="#2d8a52" cx="40" cy="30" rx="23" ry="10"/>
 
-  <!-- Bottom stone shadow -->
-  <ellipse cx="33" cy="67" rx="30" ry="6" fill="#0d3d22" opacity="0.18"/>
+  <!-- Top stone -->
+  <ellipse fill="rgba(0,0,0,0.07)" cx="40" cy="16" rx="14" ry="4"/>
+  <ellipse fill="#6db88a" cx="40" cy="12" rx="14" ry="7"/>
 
-  <!-- Bottom stone: dark green, widest -->
-  <ellipse cx="33" cy="62" rx="30" ry="9.5" fill="url(#stoneBot)"/>
-  <ellipse cx="33" cy="59" rx="30" ry="8" fill="url(#stoneBot)"/>
-  <ellipse cx="33" cy="57.5" rx="28" ry="6" fill="#1e7045" opacity="0.35"/>
+  <!-- Vertical divider -->
+  <line x1="92" y1="8" x2="92" y2="66" stroke="#d8d4ce" stroke-width="0.8"/>
 
-  <!-- Middle stone: light gray -->
-  <ellipse cx="32" cy="46" rx="21" ry="7.5" fill="url(#stoneMid)"/>
-  <ellipse cx="32" cy="44" rx="21" ry="6.5" fill="url(#stoneMid)"/>
-  <ellipse cx="32" cy="42.5" rx="19" ry="4.5" fill="#cdd4d0" opacity="0.5"/>
+  <!-- Wordmark -->
+  <text x="106" y="43"
+        font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="36"
+        font-weight="300"
+        letter-spacing="0.5"
+        fill="#2c2c2c">PebelAi</text>
 
-  <!-- Top stone: dark gray -->
-  <ellipse cx="31" cy="33" rx="13.5" ry="5.5" fill="url(#stoneTop)"/>
-  <ellipse cx="31" cy="31.5" rx="13.5" ry="5" fill="url(#stoneTop)"/>
-  <ellipse cx="31" cy="30" rx="11.5" ry="3" fill="#7a8580" opacity="0.45"/>
-
-  <!-- ── Text ── -->
-
-  <!-- "PebelAi" -->
-  <text
-    x="76" y="52"
-    font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-    font-size="34"
-    font-weight="700"
-    letter-spacing="-0.5"
-    fill="#363e3b"
-  >PebelAi</text>
-
-  <!-- Tagline: "Apply. Track. Get Hired." -->
-  <text
-    x="78" y="65"
-    font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
-    font-size="11"
-    font-weight="500"
-    fill="#7a8480"
-  >Apply. Track. <tspan fill="#1a6b42" font-weight="600">Get Hired.</tspan></text>
+  <!-- Tagline -->
+  <text x="108" y="58"
+        font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="10.5"
+        letter-spacing="0.5">
+    <tspan fill="#6b6b6b">Apply. Track. </tspan><tspan fill="#2d8a52" font-style="italic" font-weight="500">Get Hired.</tspan>
+  </text>
 </svg>

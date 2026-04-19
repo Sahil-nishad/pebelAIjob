@@ -82,7 +82,7 @@ function LoginForm() {
         {/* Top — logo */}
         <div className="relative z-10">
           <div className="mb-16">
-            <Image src="/pebelai-logo.svg" alt="PebelAI" width={150} height={52} className="object-contain brightness-0 invert" />
+            <Image src="/pebelai-logo.svg" alt="PebelAI" width={150} height={39} className="object-contain brightness-0 invert" />
           </div>
 
           <h1 className="text-[38px] font-bold text-white leading-[1.15] tracking-[-0.025em] mb-10 font-[family-name:var(--font-heading)]">
@@ -121,7 +121,7 @@ function LoginForm() {
 
           {/* Mobile logo */}
           <div className="lg:hidden mb-8">
-            <Image src="/pebelai-logo.svg" alt="PebelAI" width={130} height={44} className="object-contain" />
+            <Image src="/pebelai-logo.svg" alt="PebelAI" width={130} height={34} className="object-contain" />
           </div>
 
           <h2 className="text-[26px] font-bold text-slate-900 mb-1 tracking-tight font-[family-name:var(--font-heading)]">

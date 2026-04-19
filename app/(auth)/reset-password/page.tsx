@@ -129,7 +129,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-white px-6 py-12">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-2.5 mb-10">
-          <Image src="/pebelai-logo.svg" alt="PebelAI" width={420} height={120} className="h-10 w-auto max-w-[180px]" />
+          <Image src="/pebelai-logo.svg" alt="PebelAI" width={180} height={47} className="h-10 w-auto max-w-[180px]" />
         </div>
         <Suspense fallback={<div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500/35 border-t-emerald-600 mx-auto" />}>
           <ResetPasswordForm />

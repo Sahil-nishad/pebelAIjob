@@ -31,7 +31,7 @@ export function TopNav() {
 
       {/* Mobile: Logo */}
       <Link href="/dashboard" className="md:hidden">
-        <Image src="/pebelai-logo.svg" alt="PebelAI" width={130} height={42} className="object-contain" priority />
+        <Image src="/pebelai-logo.svg" alt="PebelAI" width={130} height={34} className="object-contain" priority />
       </Link>
 
       {/* Desktop: Search bar */}
