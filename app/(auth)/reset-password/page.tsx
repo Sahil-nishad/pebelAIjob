@@ -4,7 +4,7 @@ import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Lock } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -15,6 +15,8 @@ function ResetPasswordForm() {
 
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
@@ -90,28 +92,32 @@ function ResetPasswordForm() {
               <Input
                 id="password"
                 label="New Password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder="Min 8 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="new-password"
               />
-              <Lock className="absolute right-3 top-[38px] w-4 h-4 text-slate-400 pointer-events-none" />
+              <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-[38px] text-slate-400 hover:text-slate-600 transition-colors">
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
 
             <div className="relative">
               <Input
                 id="confirm"
                 label="Confirm Password"
-                type="password"
+                type={showConfirm ? 'text' : 'password'}
                 placeholder="Repeat password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 required
                 autoComplete="new-password"
               />
-              <Lock className="absolute right-3 top-[38px] w-4 h-4 text-slate-400 pointer-events-none" />
+              <button type="button" onClick={() => setShowConfirm(v => !v)} className="absolute right-3 top-[38px] text-slate-400 hover:text-slate-600 transition-colors">
+                {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
 
             <Button type="submit" variant="primary" size="lg" loading={loading} className="w-full">

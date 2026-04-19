@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LayoutDashboard, MessageSquare, Bell, BarChart3, Loader2 } from 'lucide-react'
+import { LayoutDashboard, MessageSquare, Bell, BarChart3, Loader2, Eye, EyeOff } from 'lucide-react'
 import { signIn } from 'next-auth/react'
 
 const jobTypes = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Any']
@@ -23,6 +23,7 @@ function SignupForm() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [jobType, setJobType] = useState('Full-time')
   const [experience, setExperience] = useState('Mid')
   const [error, setError] = useState('')
@@ -154,15 +155,20 @@ function SignupForm() {
             </div>
             <div>
               <label className="block text-[12px] font-medium text-slate-600 mb-1.5">Password</label>
-              <input
-                type="password"
-                placeholder="Min 8 characters"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                autoComplete="new-password"
-                className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-[14px] text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Min 8 characters"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                  className="w-full h-10 px-3 pr-10 rounded-lg border border-slate-200 bg-white text-[14px] text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
+                />
+                <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <div>
