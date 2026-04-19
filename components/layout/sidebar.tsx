@@ -11,57 +11,18 @@ import {
   Puzzle,
 } from 'lucide-react'
 import Image from 'next/image'
-import { GlowMenu, type GlowMenuItem } from '@/components/ui/glow-menu'
+import { cn } from '@/lib/utils'
 
-const navItems: GlowMenuItem[] = [
-  {
-    icon: LayoutDashboard,
-    label: 'Overview',
-    href: '/dashboard',
-    gradient: 'radial-gradient(circle, rgba(10,106,71,0.18) 0%, rgba(10,106,71,0.07) 50%, rgba(10,106,71,0) 100%)',
-    iconColor: 'text-emerald-600',
-  },
-  {
-    icon: ClipboardList,
-    label: 'Applications',
-    href: '/applications',
-    gradient: 'radial-gradient(circle, rgba(20,184,166,0.18) 0%, rgba(20,184,166,0.07) 50%, rgba(20,184,166,0) 100%)',
-    iconColor: 'text-teal-500',
-  },
-  {
-    icon: Bot,
-    label: 'AI Coach',
-    href: '/coach',
-    gradient: 'radial-gradient(circle, rgba(139,92,246,0.18) 0%, rgba(139,92,246,0.07) 50%, rgba(139,92,246,0) 100%)',
-    iconColor: 'text-violet-500',
-  },
-  {
-    icon: Bell,
-    label: 'Reminders',
-    href: '/reminders',
-    gradient: 'radial-gradient(circle, rgba(245,158,11,0.18) 0%, rgba(245,158,11,0.07) 50%, rgba(245,158,11,0) 100%)',
-    iconColor: 'text-amber-500',
-  },
-  {
-    icon: Puzzle,
-    label: 'Extension',
-    href: '/extension',
-    gradient: 'radial-gradient(circle, rgba(59,130,246,0.18) 0%, rgba(59,130,246,0.07) 50%, rgba(59,130,246,0) 100%)',
-    iconColor: 'text-blue-500',
-  },
+const navItems = [
+  { icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
+  { icon: ClipboardList, label: 'Applications', href: '/applications' },
+  { icon: Bot, label: 'AI Coach', href: '/coach' },
+  { icon: Bell, label: 'Reminders', href: '/reminders' },
+  { icon: Puzzle, label: 'Extension', href: '/extension' },
 ]
-
-const settingsItem: GlowMenuItem = {
-  icon: Settings,
-  label: 'Settings',
-  href: '/settings',
-  gradient: 'radial-gradient(circle, rgba(100,116,139,0.18) 0%, rgba(100,116,139,0.07) 50%, rgba(100,116,139,0) 100%)',
-  iconColor: 'text-slate-500',
-}
 
 export function Sidebar() {
   const pathname = usePathname()
-
   return (
     <aside className="fixed left-0 top-0 bottom-0 z-40 hidden w-[244px] flex-col border-r border-slate-200/60 bg-[#FBFBFB] md:flex">
 
@@ -72,17 +33,40 @@ export function Sidebar() {
         </Link>
       </div>
 
-      {/* Main Nav */}
-      <nav className="flex-1 px-3 py-2">
-        <GlowMenu items={navItems} activeHref={pathname} />
-      </nav>
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-2 space-y-1">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'relative flex items-center gap-3 rounded-lg px-4 py-3 text-[14px] font-semibold transition-all duration-150',
+                isActive
+                  ? 'bg-[#0A6A47] text-white shadow-lg shadow-emerald-900/10'
+                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+              )}
+            >
+              <item.icon className={cn('h-[18px] w-[18px] shrink-0', isActive ? 'text-white' : 'text-slate-400')} />
+              <span>{item.label}</span>
+            </Link>
+          )
+        })}
 
-      {/* Settings pinned at bottom */}
-      <div className="px-3 pb-5">
-        <div className="border-t border-slate-100 pt-3">
-          <GlowMenu items={[settingsItem]} activeHref={pathname} />
-        </div>
-      </div>
+        <Link
+          href="/settings"
+          className={cn(
+            'flex items-center gap-3 rounded-lg px-4 py-3 text-[14px] font-semibold transition-all duration-150',
+            pathname === '/settings'
+              ? 'bg-[#0A6A47] text-white'
+              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+          )}
+        >
+          <Settings className={cn('h-[18px] w-[18px] shrink-0', pathname === '/settings' ? 'text-white' : 'text-slate-400')} />
+          Settings
+        </Link>
+      </nav>
 
     </aside>
   )
