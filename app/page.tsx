@@ -685,7 +685,6 @@ export default function LandingPage() {
                   Get early access — free <ArrowRight className="w-4 h-4" />
                 </button>
               </Link>
-              <p className="text-[11px] text-white/30 text-center">No credit card. No commitment.</p>
             </div>
           </div>
         </div>
@@ -716,11 +715,6 @@ export default function LandingPage() {
                   Log in
                 </button>
               </Link>
-            </div>
-            <div className="flex items-center justify-center gap-6 mt-6 text-[12px] text-slate-400">
-              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#16a34a]" /> Free forever plan</span>
-              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#16a34a]" /> AI-powered</span>
-              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#16a34a]" /> No credit card</span>
             </div>
           </motion.div>
         </div>

@@ -122,7 +122,7 @@ function SignupForm() {
           <h2 className="text-[26px] font-bold text-slate-900 mb-1 tracking-tight font-[family-name:var(--font-heading)]">
             Create your account
           </h2>
-          <p className="text-[14px] text-slate-400 mb-8">Free forever. No credit card needed.</p>
+          <p className="text-[14px] text-slate-400 mb-8">Start tracking your job search today.</p>
 
           {error && (
             <div className="mb-5 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-[13px] text-red-600">{error}</div>
