@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   Send, Plus, Brain, Code, BarChart3, DollarSign, Target,
-  HelpCircle, Clock, Trash2, Sparkles, ArrowRight, Briefcase,
+  HelpCircle, Clock, Trash2, ArrowRight, Briefcase,
   Download, FileText, Loader2,
 } from 'lucide-react'
 import { authFetch } from '@/lib/api'
@@ -266,14 +266,11 @@ export default function CoachPage() {
             <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
 
               {/* Hero */}
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-3 bg-emerald-50 text-emerald-800 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-emerald-100">
-                  <Sparkles className="w-3 h-3" /> Curated AI Coaching
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-bold font-[family-name:var(--font-heading)] tracking-tight text-slate-900 mb-1.5 leading-tight">
-                  Sharpen Your Story.
+              <div className="text-center mb-8">
+                <h2 className="text-[2.6rem] sm:text-5xl font-black tracking-[-0.03em] text-slate-950 mb-3 leading-none">
+                  AI Coach
                 </h2>
-                <p className="text-slate-400 text-sm max-w-md mx-auto leading-relaxed">
+                <p className="text-slate-500 text-[15px] max-w-md mx-auto leading-relaxed font-medium">
                   Simulates a high-fidelity interview experience tailored to your target role.
                 </p>
               </div>
