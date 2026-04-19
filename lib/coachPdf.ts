@@ -13,64 +13,69 @@ const GRAY   = '#6b7472'
 const LIGHT  = '#f0f4f2'
 
 function addLogo(doc: jsPDF) {
-  const x = 14
-  const y = 10
+  // Stones stacked vertically, centered at stoneX — total height ~12mm
+  const stoneX = 20
+  const topY   = 10
 
-  // Bottom stone: dark green ellipse
-  doc.setFillColor('#155233')
-  doc.ellipse(x + 10, y + 11, 10, 3.2, 'F')
-  doc.setFillColor('#1e7045')
-  doc.ellipse(x + 10, y + 10, 10, 3.5, 'F')
-
-  // Middle stone: light gray ellipse
-  doc.setFillColor('#a8b0ac')
-  doc.ellipse(x + 10, y + 5.5, 7.5, 2.8, 'F')
-  doc.setFillColor('#c8d0cc')
-  doc.ellipse(x + 10, y + 4.8, 7.5, 2.8, 'F')
-
-  // Top stone: dark gray ellipse
+  // Top stone: dark gray (smallest)
   doc.setFillColor('#4a5450')
-  doc.ellipse(x + 10, y + 1.2, 4.8, 2, 'F')
-  doc.setFillColor('#7a8580')
-  doc.ellipse(x + 10, y + 0.5, 4.8, 2, 'F')
+  doc.ellipse(stoneX, topY, 3.8, 1.5, 'F')
+  doc.setFillColor('#78837e')
+  doc.ellipse(stoneX, topY - 0.3, 3.8, 1.5, 'F')
 
-  // "PebelAi" text
+  // Middle stone: light gray
+  doc.setFillColor('#9ea5a1')
+  doc.ellipse(stoneX, topY + 3.2, 5.8, 1.9, 'F')
+  doc.setFillColor('#c4ccc8')
+  doc.ellipse(stoneX, topY + 2.9, 5.8, 1.9, 'F')
+
+  // Bottom stone: dark green (largest)
+  doc.setFillColor('#104a2a')
+  doc.ellipse(stoneX, topY + 7.2, 8, 2.5, 'F')
+  doc.setFillColor('#1e7045')
+  doc.ellipse(stoneX, topY + 6.9, 8, 2.5, 'F')
+
+  // "PebelAi" text — vertically centered against stone stack
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(15)
+  doc.setFontSize(16)
   doc.setTextColor(DARK)
-  doc.text('PebelAi', x + 23, y + 8)
+  doc.text('PebelAi', 32, topY + 6)
 
-  // Tagline
+  // Tagline — positioned below "PebelAi" with breathing room
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(6.5)
+  doc.setFontSize(7)
   doc.setTextColor(GRAY)
-  doc.text('Apply. Track. Get Hired.', x + 23.5, y + 12.5)
+  doc.text('Apply. Track. ', 32, topY + 10)
+  const applyW = doc.getTextWidth('Apply. Track. ')
+  doc.setTextColor(GREEN)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Get Hired.', 32 + applyW, topY + 10)
 }
 
 function addHeaderBar(doc: jsPDF, title: string, subtitle: string) {
   const pageW = doc.internal.pageSize.getWidth()
 
-  // Thin green line under logo area
+  // Thin green line well below logo + tagline
   doc.setDrawColor(GREEN)
   doc.setLineWidth(0.4)
-  doc.line(14, 22, pageW - 14, 22)
+  doc.line(14, 26, pageW - 14, 26)
 
   // Title
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(17)
+  doc.setFontSize(16)
   doc.setTextColor(DARK)
-  doc.text(title, 14, 33)
+  doc.text(title, 14, 37)
 
   // Subtitle
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   doc.setTextColor(GRAY)
-  doc.text(subtitle, 14, 40)
+  doc.text(subtitle, 14, 44)
 
   // Generated date
   const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
   doc.setFontSize(8)
-  doc.text(`Generated: ${date}`, pageW - 14, 40, { align: 'right' })
+  doc.text(`Generated: ${date}`, pageW - 14, 44, { align: 'right' })
 }
 
 function addFooter(doc: jsPDF, pageNum: number, total: number) {
@@ -103,7 +108,7 @@ export function downloadQAPdf(
   const marginL = 14
   const marginR = 14
   const textW   = pageW - marginL - marginR
-  let y = 48
+  let y = 54
 
   // ── Page 1 header ──────────────────────────────────────────────────────────
   addLogo(doc)
@@ -127,8 +132,8 @@ export function downloadQAPdf(
       addLogo(doc)
       doc.setDrawColor(GREEN)
       doc.setLineWidth(0.4)
-      doc.line(marginL, 22, pageW - marginR, 22)
-      y = 30
+      doc.line(marginL, 26, pageW - marginR, 26)
+      y = 34
     }
 
     // Question number badge
