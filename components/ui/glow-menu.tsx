@@ -43,7 +43,7 @@ const glowVariants = {
 }
 
 const sharedTransition = {
-  type: "spring",
+  type: "spring" as const,
   stiffness: 100,
   damping: 20,
   duration: 0.5,
