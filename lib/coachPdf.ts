@@ -179,9 +179,9 @@ export function downloadSessionPdf(
   messages: { role: 'user' | 'assistant'; content: string }[],
   meta: { company: string; role: string; sessionType: string }
 ) {
-  // Pair up: assistant (question) → user (answer), skip intro message
+  // Pair up: assistant (question) → user (answer)
   const pairs: QAPair[] = []
-  const filtered = messages.filter(m => m.role !== 'system')
+  const filtered = messages
 
   for (let i = 0; i < filtered.length - 1; i++) {
     const curr = filtered[i]
