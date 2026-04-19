@@ -279,43 +279,43 @@ export default function CoachPage() {
               <div className="bg-white p-5 sm:p-7 rounded-2xl shadow-sm ring-1 ring-black/5">
 
                 {/* Inputs */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-7 mb-7">
                   {[
                     { label: 'Company', value: company, setter: setCompany, placeholder: 'e.g. Stripe' },
                     { label: 'Role Title', value: role, setter: setRole, placeholder: 'e.g. Senior Designer' },
                   ].map(({ label, value, setter, placeholder }) => (
                     <div key={label}>
-                      <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">{label}</label>
+                      <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-[0.15em] mb-2.5">{label}</label>
                       <input
                         value={value}
                         onChange={e => setter(e.target.value)}
                         placeholder={placeholder}
-                        className="w-full border-b-2 border-stone-100 focus:border-emerald-700 bg-transparent pb-2 text-[17px] font-bold text-slate-900 placeholder:text-stone-200 transition-colors focus:outline-none"
+                        className="w-full border-b-2 border-slate-200 focus:border-emerald-600 bg-transparent pb-2.5 text-[18px] font-semibold text-slate-900 placeholder:text-slate-300 transition-colors focus:outline-none"
                       />
                     </div>
                   ))}
                 </div>
 
                 {/* Session Type */}
-                <div className="mb-5">
-                  <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3">Select Focus Area</label>
-                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                <div className="mb-6">
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-[0.15em] mb-3.5">Select Focus Area</label>
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2.5">
                     {sessionTypes.map(st => (
                       <button
                         key={st.type}
                         type="button"
                         onClick={() => setSelectedType(st.type)}
-                        className={`p-3 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer ${
+                        className={`p-3.5 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer ${
                           selectedType === st.type
-                            ? 'border-emerald-700 bg-white shadow-sm'
-                            : 'border-transparent bg-[#f3f4f5] hover:bg-stone-200/70'
+                            ? 'border-emerald-600 bg-white shadow-md'
+                            : 'border-transparent bg-slate-50 hover:bg-slate-100'
                         }`}
                       >
-                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center mb-2 ${typeColor[st.type]}`}>
-                          <st.icon className="w-3.5 h-3.5" />
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center mb-2.5 ${typeColor[st.type]}`}>
+                          <st.icon className="w-4 h-4" />
                         </div>
-                        <div className="font-bold text-[11px] text-stone-800 leading-tight">{st.label}</div>
-                        <div className="text-[9px] text-stone-400 mt-0.5 leading-tight hidden sm:block">{st.desc}</div>
+                        <div className="font-bold text-[12px] text-slate-800 leading-tight">{st.label}</div>
+                        <div className="text-[10px] text-slate-400 mt-1 leading-tight hidden sm:block">{st.desc}</div>
                       </button>
                     ))}
                   </div>
