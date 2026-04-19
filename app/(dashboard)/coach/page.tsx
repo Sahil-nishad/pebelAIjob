@@ -214,7 +214,7 @@ export default function CoachPage() {
       const sectorLabel = sessionTypes.find(s => s.type === selectedType)?.label || selectedType
       downloadQAPdf(data.questions, {
         title:    `${sectorLabel} Interview — 10 Questions & Answers`,
-        subtitle: `${company ? `${company} · ` : ''}${role ? `${role} · ` : ''}AI-Generated Practice Guide`,
+        subtitle: `${company ? `${company} · ` : ''}${role ? `${role} · ` : ''}Practice Guide`,
         filename: `pebelai-${selectedType}-questions.pdf`,
       })
       toast.success('Questions PDF downloaded!')

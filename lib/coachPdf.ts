@@ -48,27 +48,19 @@ function addLogo(doc: jsPDF) {
 function addHeaderBar(doc: jsPDF, title: string, subtitle: string) {
   const pageW = doc.internal.pageSize.getWidth()
 
-  // Thin green line well below logo + tagline
   doc.setDrawColor(GREEN)
   doc.setLineWidth(0.4)
   doc.line(14, 26, pageW - 14, 26)
 
-  // Title
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(16)
   doc.setTextColor(DARK)
   doc.text(title, 14, 37)
 
-  // Subtitle
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   doc.setTextColor(GRAY)
   doc.text(subtitle, 14, 44)
-
-  // Generated date
-  const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-  doc.setFontSize(8)
-  doc.text(`Generated: ${date}`, pageW - 14, 44, { align: 'right' })
 }
 
 function addFooter(doc: jsPDF, pageNum: number, total: number) {
@@ -110,10 +102,16 @@ export function downloadQAPdf(
   let pageNum = 1
   const estimatedTotal = Math.ceil(pairs.length / 2) + 1
 
+  const LINE_H = 5.5  // mm per line at ~9.5–10pt
+
   pairs.forEach((pair, i) => {
-    const qLines  = wrapText(doc, pair.question, marginL, textW, 10)
-    const aLines  = wrapText(doc, pair.answer,   marginL, textW, 9.5)
-    const blockH  = 8 + qLines.length * 5 + 4 + aLines.length * 5 + 10
+    // Question wraps in the space AFTER the badge (badge = 10mm wide)
+    const qLines  = wrapText(doc, pair.question, marginL, textW - 11, 10)
+    // Answer wraps within box padding (3mm each side)
+    const aLines  = wrapText(doc, pair.answer,   marginL, textW - 6,  9.5)
+    const qH      = Math.max(10, qLines.length * LINE_H + 4)
+    const aBoxH   = aLines.length * LINE_H + 14  // 10mm top (label) + 4mm bottom padding
+    const blockH  = qH + aBoxH + 8
 
     // Page break
     if (y + blockH > pageH - 20) {
@@ -121,7 +119,6 @@ export function downloadQAPdf(
       doc.addPage()
       pageNum++
 
-      // Compact logo on continuation pages
       addLogo(doc)
       doc.setDrawColor(GREEN)
       doc.setLineWidth(0.4)
@@ -137,16 +134,16 @@ export function downloadQAPdf(
     doc.setTextColor('#ffffff')
     doc.text(`Q${i + 1}`, marginL + 4, y + 3.8, { align: 'center' })
 
-    // Question text
+    // Question text — starts after badge
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10)
     doc.setTextColor(DARK)
-    doc.text(qLines, marginL + 10, y + 4)
-    y += Math.max(8, qLines.length * 5 + 1)
+    doc.text(qLines, marginL + 11, y + 4)
+    y += qH
 
-    // Answer label
+    // Answer box — height accounts for label + all lines + bottom padding
     doc.setFillColor(LIGHT)
-    doc.roundedRect(marginL, y, textW, aLines.length * 5 + 6, 2, 2, 'F')
+    doc.roundedRect(marginL, y, textW, aBoxH, 2, 2, 'F')
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(7.5)
     doc.setTextColor(GREEN)
@@ -156,7 +153,7 @@ export function downloadQAPdf(
     doc.setFontSize(9.5)
     doc.setTextColor('#3d4442')
     doc.text(aLines, marginL + 3, y + 10)
-    y += aLines.length * 5 + 10
+    y += aBoxH
 
     // Divider between Q&A blocks
     if (i < pairs.length - 1) {
