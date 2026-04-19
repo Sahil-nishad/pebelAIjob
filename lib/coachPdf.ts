@@ -102,23 +102,30 @@ export function downloadQAPdf(
   let pageNum = 1
   const estimatedTotal = Math.ceil(pairs.length / 2) + 1
 
-  const LINE_H = 5.5  // mm per line at ~9.5–10pt
+  const Q_LINE_H = 5.5   // mm per line for bold 10pt question
+  const A_LINE_H = 5.2   // mm per line for normal 9.5pt answer
+  const BADGE_W  = 11    // badge width + gap before question text
+  const qTextW   = textW - BADGE_W  // question wraps in remaining width
 
   pairs.forEach((pair, i) => {
-    // Question wraps in the space AFTER the badge (badge = 10mm wide)
-    const qLines  = wrapText(doc, pair.question, marginL, textW - 11, 10)
-    // Answer wraps within box padding (3mm each side)
-    const aLines  = wrapText(doc, pair.answer,   marginL, textW - 6,  9.5)
-    const qH      = Math.max(10, qLines.length * LINE_H + 4)
-    const aBoxH   = aLines.length * LINE_H + 14  // 10mm top (label) + 4mm bottom padding
-    const blockH  = qH + aBoxH + 8
+    // Set correct font BEFORE splitTextToSize so metrics match render
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    const qLines = doc.splitTextToSize(pair.question, qTextW)
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9.5)
+    const aLines = doc.splitTextToSize(pair.answer, textW)
+
+    const qH     = Math.max(10, qLines.length * Q_LINE_H + 4)
+    const aH     = 5 + aLines.length * A_LINE_H + 4  // label(5) + lines + bottom gap
+    const blockH = qH + aH + 8
 
     // Page break
     if (y + blockH > pageH - 20) {
       addFooter(doc, pageNum, estimatedTotal)
       doc.addPage()
       pageNum++
-
       addLogo(doc)
       doc.setDrawColor(GREEN)
       doc.setLineWidth(0.4)
@@ -134,33 +141,32 @@ export function downloadQAPdf(
     doc.setTextColor('#ffffff')
     doc.text(`Q${i + 1}`, marginL + 4, y + 3.8, { align: 'center' })
 
-    // Question text — starts after badge
+    // Question text — offset by BADGE_W so it stays within right margin
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(10)
     doc.setTextColor(DARK)
-    doc.text(qLines, marginL + 11, y + 4)
+    doc.text(qLines, marginL + BADGE_W, y + 4)
     y += qH
 
-    // Answer box — height accounts for label + all lines + bottom padding
-    doc.setFillColor(LIGHT)
-    doc.roundedRect(marginL, y, textW, aBoxH, 2, 2, 'F')
+    // Answer label (no background box)
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(7.5)
     doc.setTextColor(GREEN)
-    doc.text('IDEAL ANSWER', marginL + 3, y + 4.5)
+    doc.text('IDEAL ANSWER', marginL, y + 4)
 
+    // Answer text
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(9.5)
     doc.setTextColor('#3d4442')
-    doc.text(aLines, marginL + 3, y + 10)
-    y += aBoxH
+    doc.text(aLines, marginL, y + 9)
+    y += aH
 
-    // Divider between Q&A blocks
+    // Divider
     if (i < pairs.length - 1) {
       doc.setDrawColor('#e2e8e5')
       doc.setLineWidth(0.2)
-      doc.line(marginL, y, pageW - marginR, y)
-      y += 6
+      doc.line(marginL, y + 2, pageW - marginR, y + 2)
+      y += 8
     }
   })
 
