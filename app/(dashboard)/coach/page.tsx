@@ -115,8 +115,13 @@ export default function CoachPage() {
   }, [])
 
   useEffect(() => {
-    if (hasSession) { timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000) }
-    else { if (timerRef.current) clearInterval(timerRef.current); setElapsedSeconds(0) }
+    if (hasSession) {
+      window.scrollTo({ top: 0, behavior: 'instant' })
+      timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000)
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current)
+      setElapsedSeconds(0)
+    }
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [hasSession])
 
