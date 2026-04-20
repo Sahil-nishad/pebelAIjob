@@ -9,11 +9,7 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/callback/google`,
-        },
-      },
+      allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
       name: 'credentials',
@@ -46,22 +42,31 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === 'google') {
-        const supabase = getSupabaseServer()
-        const { data: existing } = await supabase
-          .from('users')
-          .select('id')
-          .eq('email', user.email!)
-          .maybeSingle()
-
-        if (existing) {
-          user.id = existing.id
-        } else {
-          const { data: created } = await supabase
+        try {
+          const supabase = getSupabaseServer()
+          const { data: existing } = await supabase
             .from('users')
-            .insert({ email: user.email, name: user.name })
             .select('id')
-            .single()
-          if (created) user.id = created.id
+            .eq('email', user.email!)
+            .maybeSingle()
+
+          if (existing) {
+            user.id = existing.id
+          } else {
+            const { data: created, error } = await supabase
+              .from('users')
+              .insert({ email: user.email, name: user.name })
+              .select('id')
+              .single()
+            if (error) {
+              console.error('[nextauth] Failed to create user in DB:', error.message)
+              // Still allow sign-in — user record may already exist or will be created later
+            }
+            if (created) user.id = created.id
+          }
+        } catch (err) {
+          console.error('[nextauth] signIn callback error:', err)
+          // Don't block sign-in for DB errors
         }
       }
       return true
@@ -84,16 +89,4 @@ export const authOptions: NextAuthOptions = {
   },
 
   secret: process.env.NEXTAUTH_SECRET,
-
-  cookies: {
-    sessionToken: {
-      name: 'next-auth.session-token',
-      options: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax' as const,
-        path: '/',
-      },
-    },
-  },
 }
