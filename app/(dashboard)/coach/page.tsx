@@ -231,7 +231,7 @@ export default function CoachPage() {
   }
 
   return (
-    <div className="flex -m-4 md:-mx-6 md:-mb-8 lg:-mx-8 lg:-mb-8 min-h-[calc(100vh-4rem)] animate-fade-up">
+    <div className={`flex -m-4 md:-mx-6 md:-mb-8 lg:-mx-8 lg:-mb-8 animate-fade-up ${hasSession ? 'h-[calc(100vh-8.5rem)] md:h-[calc(100vh-6.5rem)] lg:h-[calc(100vh-8rem)] overflow-hidden' : 'min-h-[calc(100vh-4rem)]'}`}>
 
       {/* ── Session History Sidebar ── */}
       <aside className="hidden xl:flex w-72 flex-shrink-0 flex-col bg-[#f3f4f5] overflow-hidden">
