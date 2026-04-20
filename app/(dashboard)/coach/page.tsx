@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import {
   Send, Plus, Brain, Code, BarChart3, DollarSign, Target,
   HelpCircle, Clock, Trash2, Sparkles, ArrowRight, Briefcase,
-  Download, FileText, Loader2,
+  Download, FileText, Loader2, History, X,
 } from 'lucide-react'
 import { authFetch } from '@/lib/api'
 import toast from 'react-hot-toast'
@@ -67,6 +67,7 @@ export default function CoachPage() {
   const [appContext, setAppContext]     = useState<{ company: string; role: string } | null>(null)
   const [autoStartPending, setAutoStartPending] = useState(false)
   const [generatingQA, setGeneratingQA] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -231,38 +232,48 @@ export default function CoachPage() {
   }
 
   return (
-    <div className={`flex -m-4 md:-mx-6 md:-mb-8 lg:-mx-8 lg:-mb-8 animate-fade-up ${hasSession ? 'h-[calc(100vh-8.5rem)] md:h-[calc(100vh-6.5rem)] lg:h-[calc(100vh-8rem)] overflow-hidden' : 'min-h-[calc(100vh-4rem)]'}`}>
+    <div className={`-m-4 md:-mx-6 md:-mb-8 lg:-mx-8 lg:-mb-8 animate-fade-up ${hasSession ? 'h-[calc(100vh-8.5rem)] md:h-[calc(100vh-0.5rem)] lg:h-[calc(100vh-2rem)] overflow-hidden flex flex-col' : 'min-h-[calc(100vh-4rem)]'}`}>
 
-      {/* ── Session History Sidebar ── */}
-      <aside className="hidden xl:flex w-72 flex-shrink-0 flex-col bg-[#f3f4f5] overflow-hidden">
-        <div className="flex items-center justify-between px-7 pt-8 pb-5">
-          <h2 className="text-[10px] font-black uppercase tracking-widest text-stone-400">History</h2>
-          <span className="text-[10px] bg-stone-200 px-2 py-0.5 rounded-full font-bold text-stone-500">{sessions.length}</span>
-        </div>
-        <div className="flex-1 overflow-y-auto px-5 pb-8 space-y-2.5">
-          {sessions.length === 0 && <p className="text-center text-xs text-stone-400 py-10">No sessions yet</p>}
-          {sessions.map(session => (
-            <div
-              key={session.id}
-              className={`group p-4 bg-white rounded-2xl hover:shadow-md transition-all duration-200 cursor-pointer border-2 ${sessionId === session.id ? 'border-emerald-600' : 'border-transparent hover:border-emerald-100'}`}
-            >
-              <div className="flex items-start justify-between mb-2">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${typeColor[session.session_type as SessionType] || 'text-slate-600 bg-slate-100'}`}>
-                  {session.session_type}
-                </span>
-                <button onClick={e => { e.stopPropagation(); deleteSession(session.id) }} className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:text-red-500 text-stone-300 transition-all">
-                  <Trash2 className="w-3 h-3" />
-                </button>
+      {/* ── History Drawer ── */}
+      {historyOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm" onClick={() => setHistoryOpen(false)} />
+          <div className="fixed right-0 top-0 bottom-0 z-50 w-80 bg-white shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-stone-100">
+              <div className="flex items-center gap-2">
+                <h2 className="text-[11px] font-black uppercase tracking-widest text-stone-400">History</h2>
+                <span className="text-[10px] bg-stone-200 px-2 py-0.5 rounded-full font-bold text-stone-500">{sessions.length}</span>
               </div>
-              <button onClick={() => loadSession(session)} className="w-full text-left">
-                <p className="font-bold text-sm text-stone-800 group-hover:text-emerald-900 transition-colors">{session.company}</p>
-                <p className="text-xs text-stone-500 truncate mt-0.5">{session.role}</p>
-                <p className="text-[10px] text-stone-400 mt-2.5">{new Date(session.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+              <button onClick={() => setHistoryOpen(false)} className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-400 transition-colors">
+                <X className="w-4 h-4" />
               </button>
             </div>
-          ))}
-        </div>
-      </aside>
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2.5">
+              {sessions.length === 0 && <p className="text-center text-xs text-stone-400 py-10">No sessions yet</p>}
+              {sessions.map(session => (
+                <div
+                  key={session.id}
+                  className={`group p-4 bg-white rounded-2xl hover:shadow-md transition-all duration-200 cursor-pointer border-2 ${sessionId === session.id ? 'border-emerald-600' : 'border-stone-100 hover:border-emerald-100'}`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${typeColor[session.session_type as SessionType] || 'text-slate-600 bg-slate-100'}`}>
+                      {session.session_type}
+                    </span>
+                    <button onClick={e => { e.stopPropagation(); deleteSession(session.id) }} className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:text-red-500 text-stone-300 transition-all">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <button onClick={() => { loadSession(session); setHistoryOpen(false) }} className="w-full text-left">
+                    <p className="font-bold text-sm text-stone-800 group-hover:text-emerald-900 transition-colors">{session.company}</p>
+                    <p className="text-xs text-stone-500 truncate mt-0.5">{session.role}</p>
+                    <p className="text-[10px] text-stone-400 mt-2.5">{new Date(session.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ── Main Area ── */}
       <main className="flex-1 flex flex-col bg-[#f8f9fa] overflow-hidden min-w-0">
@@ -271,7 +282,15 @@ export default function CoachPage() {
             <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
 
               {/* Hero */}
-              <div className="text-center mb-8">
+              <div className="relative text-center mb-8">
+                <button
+                  onClick={() => setHistoryOpen(true)}
+                  className="absolute right-0 top-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-200 bg-white text-stone-500 text-[12px] font-semibold hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50 transition-all"
+                >
+                  <History className="w-3.5 h-3.5" />
+                  History
+                  {sessions.length > 0 && <span className="bg-stone-100 text-stone-500 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{sessions.length}</span>}
+                </button>
                 <h2 className="text-[2.6rem] sm:text-5xl font-black tracking-[-0.03em] text-slate-950 mb-3 leading-none">
                   AI Coach
                 </h2>
@@ -407,6 +426,14 @@ export default function CoachPage() {
                   className="p-2 rounded-xl hover:bg-emerald-50 hover:text-emerald-700 text-stone-400 transition-colors"
                 >
                   <Download className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setHistoryOpen(true)}
+                  className="p-2 rounded-xl hover:bg-stone-100 text-stone-400 hover:text-stone-600 transition-colors relative"
+                  title="History"
+                >
+                  <History className="w-4 h-4" />
+                  {sessions.length > 0 && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full" />}
                 </button>
                 <button onClick={resetComposer} className="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-semibold transition-colors">End</button>
                 <button onClick={resetComposer} className="px-3 py-2 rounded-xl bg-gradient-to-r from-[#005344] to-[#006d5b] text-white text-xs font-semibold flex items-center gap-1.5 hover:opacity-90 transition-opacity">

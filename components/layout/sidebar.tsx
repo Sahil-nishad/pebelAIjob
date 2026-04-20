@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import { useUser } from '@/hooks/useUser'
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
@@ -23,6 +24,12 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { user, profile } = useUser()
+
+  const displayName = profile?.name || user?.email?.split('@')[0] || 'User'
+  const displayRole = profile?.job_type || 'Job Seeker'
+  const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+
   return (
     <aside className="fixed left-0 top-0 bottom-0 z-40 hidden w-[244px] flex-col border-r border-slate-200/60 bg-[#FBFBFB] md:flex">
 
@@ -67,6 +74,20 @@ export function Sidebar() {
           Settings
         </Link>
       </nav>
+
+      {/* Profile — bottom of sidebar */}
+      <Link
+        href="/settings"
+        className="flex items-center gap-3 mx-3 mb-4 p-3 rounded-xl hover:bg-slate-100 transition-colors border-t border-slate-200/60 pt-4"
+      >
+        <div className="w-9 h-9 rounded-xl bg-[#E8F0EB] flex items-center justify-center text-[#0A6A47] font-bold text-[12px] shrink-0">
+          {initials}
+        </div>
+        <div className="min-w-0">
+          <p className="text-[13px] font-bold text-[#13211B] leading-none truncate">{displayName}</p>
+          <p className="text-[11px] text-slate-400 mt-1">{displayRole}</p>
+        </div>
+      </Link>
 
     </aside>
   )

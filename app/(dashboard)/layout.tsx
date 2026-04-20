@@ -31,7 +31,7 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
       <ExtensionBridge />
       <Sidebar />
       <TopNav />
-      <main className="md:ml-[244px] mt-16 md:mt-24 pb-24 md:pb-8 p-4 md:p-6 lg:p-12">
+      <main className="md:ml-[244px] mt-16 md:mt-0 pb-24 md:pb-8 p-4 md:p-6 lg:p-8">
         {children}
       </main>
       <MobileNav />
