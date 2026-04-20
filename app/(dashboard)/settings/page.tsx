@@ -315,6 +315,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Security row */}
+      {activeTab !== 'security' && (
       <div className="mx-5 mt-2 border-t border-slate-100">
         <button
           onClick={() => setActiveTab('security')}
@@ -330,8 +331,74 @@ export default function SettingsPage() {
           <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
         </button>
       </div>
+      )}
+
+      {/* Mobile Security View */}
+      {activeTab === 'security' && (
+        <div className="px-5 mt-2">
+          <button onClick={() => setActiveTab('profile')} className="flex items-center gap-2 text-[13px] text-slate-500 mb-5 mt-2">
+            <ChevronRight className="w-4 h-4 rotate-180" /> Back
+          </button>
+
+          <p className="text-[16px] font-bold text-slate-900 mb-4">Security &amp; Data</p>
+
+          {/* Export */}
+          <div className="bg-slate-50 rounded-2xl p-4 mb-3 flex items-center justify-between">
+            <div>
+              <p className="text-[14px] font-bold text-slate-900">Export All Data</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Download everything as JSON.</p>
+            </div>
+            <button
+              onClick={exportData}
+              disabled={exporting}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-[12px] font-medium text-slate-600 bg-white disabled:opacity-50"
+            >
+              {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+              Export
+            </button>
+          </div>
+
+          {/* Delete apps */}
+          <div className="bg-red-50 rounded-2xl p-4 mb-3 border border-red-100 flex items-center justify-between">
+            <div>
+              <p className="text-[14px] font-bold text-red-600">Delete All Applications</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Cannot be undone.</p>
+            </div>
+            <button
+              onClick={deleteAllApps}
+              disabled={deletingApps}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-red-200 text-[12px] font-semibold text-red-600 bg-white disabled:opacity-50"
+            >
+              {deletingApps ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+              Delete
+            </button>
+          </div>
+
+          {/* Delete account */}
+          <div className="bg-red-50 rounded-2xl p-4 border border-red-100">
+            <p className="text-[14px] font-bold text-red-600 mb-1">Delete Account</p>
+            <p className="text-[11px] text-slate-400 mb-3">Type <strong>DELETE MY ACCOUNT</strong> to confirm.</p>
+            <Input
+              id="deleteConfirmMobile"
+              placeholder="DELETE MY ACCOUNT"
+              value={deleteConfirm}
+              onChange={e => setDeleteConfirm(e.target.value)}
+              className="mb-3"
+            />
+            <button
+              onClick={deleteAccount}
+              disabled={deleteConfirm !== 'DELETE MY ACCOUNT' || deletingAccount}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-600 text-white text-[13px] font-bold disabled:opacity-40"
+            >
+              {deletingAccount ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+              Delete Account
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Sign out */}
+      {activeTab !== 'security' && (
       <div className="mx-5 border-t border-slate-100">
         <button
           onClick={signOut}
@@ -341,8 +408,10 @@ export default function SettingsPage() {
           <span className="text-[14px] font-medium text-red-500">Sign out</span>
         </button>
       </div>
+      )}
 
-      {/* Save button — sits in normal flow above mobile nav */}
+      {/* Save button — only on profile view */}
+      {activeTab !== 'security' && (
       <div className="px-5 py-4 border-t border-slate-100">
         <button
           onClick={saveProfile}
@@ -353,6 +422,7 @@ export default function SettingsPage() {
           Save Changes
         </button>
       </div>
+      )}
     </div>
 
     {/* ════════════════════════════════════════════════════════════════
