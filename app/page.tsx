@@ -755,8 +755,8 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between pt-6 border-t border-slate-100 gap-3">
             <p className="text-[12px] text-slate-400">© {new Date().getFullYear()} PebelAI · Powered by DuneAI</p>
             <div className="flex items-center gap-5">
-              {['Privacy', 'Terms'].map(l => (
-                <a key={l} href="#" className="text-[12px] text-slate-400 hover:text-slate-600 transition-colors">{l}</a>
+              {[['Privacy', '/privacy'], ['Terms', '/terms']].map(([l, href]) => (
+                <a key={l} href={href} className="text-[12px] text-slate-400 hover:text-slate-600 transition-colors">{l}</a>
               ))}
             </div>
           </div>
