@@ -53,16 +53,19 @@ export const authOptions: NextAuthOptions = {
           if (existing) {
             user.id = existing.id
           } else {
-            const { data: created, error } = await supabase
+            // upsert handles race conditions and duplicate emails gracefully
+            const { data: upserted, error } = await supabase
               .from('users')
-              .insert({ email: user.email, name: user.name })
+              .upsert(
+                { email: user.email, name: user.name },
+                { onConflict: 'email', ignoreDuplicates: false }
+              )
               .select('id')
               .single()
             if (error) {
-              console.error('[nextauth] Failed to create user in DB:', error.message)
-              // Still allow sign-in — user record may already exist or will be created later
+              console.error('[nextauth] Failed to upsert user in DB:', error.message)
             }
-            if (created) user.id = created.id
+            if (upserted) user.id = upserted.id
           }
         } catch (err) {
           console.error('[nextauth] signIn callback error:', err)
@@ -74,6 +77,18 @@ export const authOptions: NextAuthOptions = {
 
     async jwt({ token, user }) {
       if (user) token.dbId = user.id
+      // Fallback: if dbId is missing (e.g. DB insert failed at sign-in), resolve from email
+      if (!token.dbId && token.email) {
+        try {
+          const supabase = getSupabaseServer()
+          const { data } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', token.email)
+            .maybeSingle()
+          if (data?.id) token.dbId = data.id
+        } catch (_) {}
+      }
       return token
     },
 

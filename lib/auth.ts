@@ -11,8 +11,12 @@ export async function requireAuth(req?: NextRequest) {
       if (bearerToken) {
         try {
           // Spoof the bearer token as the NextAuth session cookie so getToken can decrypt it
+          // Use __Secure- prefix (production default) and plain name as fallback
+          const cookieName = process.env.NODE_ENV === 'production'
+            ? `__Secure-next-auth.session-token`
+            : `next-auth.session-token`
           const cookieReq = new NextRequest('https://pebelai.com/', {
-            headers: { cookie: `next-auth.session-token=${bearerToken}` },
+            headers: { cookie: `${cookieName}=${bearerToken}` },
           })
           const decoded = await getToken({
             req: cookieReq,
@@ -35,16 +39,14 @@ export async function requireAuth(req?: NextRequest) {
     }
 
     // ── Normal web session: read JWT directly from the request cookies ──────────
-    // Using getToken(req) instead of getServerSession() to avoid compatibility
-    // issues with Next.js 15/16 App Router where cookies() must be awaited.
-    // cookieName must match the forced name in nextauth.ts — getToken otherwise
-    // defaults to __Secure-next-auth.session-token in production (HTTPS) and
-    // would never find the cookie.
+    // Do NOT specify cookieName — let getToken auto-detect based on HTTPS/HTTP:
+    //   production (HTTPS) → __Secure-next-auth.session-token
+    //   development (HTTP) → next-auth.session-token
+    // This must match whatever NextAuth sets (no custom cookies override in nextauth.ts).
     try {
       const token = await getToken({
         req,
         secret: process.env.NEXTAUTH_SECRET!,
-        cookieName: 'next-auth.session-token',
       })
       if (token?.dbId) {
         const supabase = getSupabaseServer()
