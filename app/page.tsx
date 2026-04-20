@@ -40,8 +40,12 @@ function Navbar() {
           ))}
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/login" className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors hidden sm:block">
-            Log in
+          <Link
+            href="/login"
+            className="relative text-[13px] font-medium text-slate-600 hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-lg overflow-hidden transition-all duration-300 hover:text-[#16a34a] group"
+          >
+            <span className="absolute inset-0 rounded-lg bg-emerald-50 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out" />
+            <span className="relative">Log in</span>
           </Link>
           <Link href="/signup">
             <button className="h-8 px-4 rounded-lg bg-[#16a34a] text-white text-[13px] font-medium hover:bg-[#15803d] transition-colors">
@@ -264,12 +268,6 @@ export default function LandingPage() {
               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               className="space-y-6"
             >
-              {/* Positioning badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
-                <Zap className="w-3 h-3 text-[#16a34a]" />
-                <span className="text-[11px] font-semibold text-[#16a34a] tracking-wide">Built for high-volume job applicants</span>
-              </div>
-
               <h1 className="text-[42px] md:text-[52px] lg:text-[54px] font-bold leading-[1.08] tracking-[-0.03em] text-slate-900 font-[family-name:var(--font-heading)]">
                 Apply anywhere.<br />
                 Track automatically.<br />
