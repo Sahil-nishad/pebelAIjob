@@ -284,8 +284,9 @@ export default function LandingPage() {
                   </button>
                 </Link>
                 <Link href="/login">
-                  <button className="flex items-center gap-2 h-11 px-5 text-[14px] text-slate-500 hover:text-slate-900 transition-colors border border-slate-200 rounded-xl hover:border-slate-300">
-                    Log in
+                  <button className="relative flex items-center gap-2 h-11 px-5 text-[14px] font-medium text-slate-600 border border-slate-200 rounded-xl overflow-hidden transition-all duration-300 hover:text-[#16a34a] hover:border-emerald-200 group">
+                    <span className="absolute inset-0 bg-emerald-50 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300 ease-out rounded-xl" />
+                    <span className="relative">Log in</span>
                   </button>
                 </Link>
               </div>
