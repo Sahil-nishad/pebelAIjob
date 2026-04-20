@@ -47,6 +47,9 @@ export async function requireAuth(req?: NextRequest) {
       const token = await getToken({
         req,
         secret: process.env.NEXTAUTH_SECRET!,
+        // Explicitly declare secure cookie mode so this works even if NEXTAUTH_URL
+        // is not set in the Vercel env — production is always HTTPS
+        secureCookie: process.env.NODE_ENV === 'production',
       })
       if (token?.dbId) {
         const supabase = getSupabaseServer()

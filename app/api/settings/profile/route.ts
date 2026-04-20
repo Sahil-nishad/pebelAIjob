@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabase
     .from('users')
-    .select('id, email, name, phone, title, location, linkedin, job_type, experience_level, salary_min, salary_max, target_roles, target_companies, email_digest, follow_up_days, interview_prep_days, created_at')
+    .select('*')
     .eq('id', user.id)
     .single()
 
