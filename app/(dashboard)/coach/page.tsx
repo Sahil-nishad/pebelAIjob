@@ -425,7 +425,7 @@ export default function CoachPage() {
                     </div>
                   )}
                   <div className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${msg.role === 'user' ? 'bg-gradient-to-br from-[#005344] to-[#006d5b] text-white' : 'bg-white border border-stone-100 text-stone-800 shadow-sm'}`}>
-                    <div className="whitespace-normal [&_p]:m-0 [&_p+p]:mt-2 [&_ul]:m-0 [&_ul]:pl-5 [&_ul]:space-y-1" dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }} />
+                    <div className="whitespace-normal select-text cursor-text [&_p]:m-0 [&_p+p]:mt-2 [&_ul]:m-0 [&_ul]:pl-5 [&_ul]:space-y-1" dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }} />
                   </div>
                 </motion.div>
               ))}
