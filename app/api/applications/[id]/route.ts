@@ -24,7 +24,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { user, supabase } = auth
   const { id } = await params
-  const body = await req.json()
+  let body: Record<string, unknown>
+  try { body = await req.json() }
+  catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }) }
 
   const { data, error } = await supabase
     .from('applications')

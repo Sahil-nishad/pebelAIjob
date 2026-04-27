@@ -9,7 +9,10 @@ export async function POST(req: NextRequest) {
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 
-  const { sessionId, message: rawMessage } = await req.json()
+  let reqBody: { sessionId?: unknown; message?: unknown }
+  try { reqBody = await req.json() }
+  catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }) }
+  const { sessionId, message: rawMessage } = reqBody
   const message = String(rawMessage ?? '').trim().slice(0, 2000)
 
   // Fast-path: block prompt injection attempts without hitting the LLM

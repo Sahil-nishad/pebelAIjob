@@ -54,10 +54,22 @@ function buildHtml(firstName: string, resetUrl: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const { email } = await req.json()
+  let body: { email?: string }
+  try { body = await req.json() }
+  catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }) }
+
+  const { email } = body
 
   if (!email) {
     return NextResponse.json({ error: 'Email is required.' }, { status: 400 })
+  }
+
+  // Check SMTP config before doing any DB work — fail fast
+  const smtpUser = process.env.SMTP_USER?.trim()
+  const smtpPass = process.env.SMTP_PASS?.trim()
+  if (!smtpUser || !smtpPass) {
+    console.error('[forgot-password] SMTP not configured — SMTP_USER or SMTP_PASS is missing from env vars')
+    return NextResponse.json({ error: 'Email service not configured.' }, { status: 500 })
   }
 
   const supabase = getSupabaseServer()
@@ -88,18 +100,11 @@ export async function POST(req: NextRequest) {
 
   if (tokenError) {
     console.error('[forgot-password] Token insert error:', tokenError)
+    return NextResponse.json({ error: 'Failed to create reset token. Please try again.' }, { status: 500 })
   }
 
   const resetUrl = `${APP_URL}/reset-password?token=${token}`
   const firstName = user.name?.split(' ')[0] || 'there'
-
-  const smtpUser = process.env.SMTP_USER?.trim()
-  const smtpPass = process.env.SMTP_PASS?.trim()
-
-  if (!smtpUser || !smtpPass) {
-    console.error('[forgot-password] SMTP not configured — SMTP_USER or SMTP_PASS is missing from env vars')
-    return NextResponse.json({ error: 'Email service not configured.' }, { status: 500 })
-  }
 
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST?.trim() || 'smtp.gmail.com',

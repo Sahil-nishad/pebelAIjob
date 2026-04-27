@@ -7,13 +7,22 @@ export async function POST(req: NextRequest) {
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 
-  const { resumeText, jobDescription, applicationId } = await req.json()
+  let body: { resumeText?: string; jobDescription?: string; applicationId?: string }
+  try { body = await req.json() }
+  catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }) }
+  const { resumeText, jobDescription, applicationId } = body
 
-  const response = await groq.chat.completions.create({
-    model: MODEL,
-    messages: [{
-      role: 'system',
-      content: `Analyze this resume against the job description. Return ONLY valid JSON (no markdown):
+  if (!resumeText || !jobDescription) {
+    return NextResponse.json({ error: 'resumeText and jobDescription are required.' }, { status: 400 })
+  }
+
+  let response
+  try {
+    response = await groq.chat.completions.create({
+      model: MODEL,
+      messages: [{
+        role: 'system',
+        content: `Analyze this resume against the job description. Return ONLY valid JSON (no markdown):
 {
   "score": 73,
   "summary": "one sentence verdict",
@@ -31,15 +40,19 @@ export async function POST(req: NextRequest) {
 
 Resume: ${resumeText}
 Job Description: ${jobDescription}`,
-    }],
-    temperature: 0.3,
-  })
+      }],
+      temperature: 0.3,
+    })
+  } catch (err) {
+    console.error('[resume/analyze] Groq API error:', err)
+    return NextResponse.json({ error: 'AI service is temporarily unavailable. Please try again in a moment.' }, { status: 503 })
+  }
 
   let analysis
   try {
     analysis = JSON.parse(response.choices[0].message.content || '{}')
   } catch {
-    return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to parse AI response.' }, { status: 500 })
   }
 
   const { data, error } = await supabase

@@ -123,10 +123,8 @@ export default function ResumePage() {
       if (data.error) throw new Error(data.error)
       setAnalysis(data.analysis)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Analysis failed'
+      const msg = err instanceof Error ? err.message : 'Analysis failed. Please try again.'
       toast.error(msg)
-      // Fallback to mock so the UI is still usable
-      setAnalysis(mockAnalysis)
     } finally {
       setAnalyzing(false)
     }

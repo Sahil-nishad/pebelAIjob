@@ -3,7 +3,10 @@ import bcrypt from 'bcryptjs'
 import { getSupabaseServer } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
-  const { name, email, password, job_type, experience_level } = await req.json()
+  let body: { name?: string; email?: string; password?: string; job_type?: string; experience_level?: string }
+  try { body = await req.json() }
+  catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }) }
+  const { name, email, password, job_type, experience_level } = body
 
   if (!email || !password || !name) {
     return NextResponse.json({ error: 'Name, email and password are required.' }, { status: 400 })

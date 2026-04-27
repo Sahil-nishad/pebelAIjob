@@ -89,12 +89,18 @@ export default function ApplicationDetailPage() {
     if (notesTimer.current) clearTimeout(notesTimer.current)
     notesTimer.current = setTimeout(async () => {
       setSavingNotes(true)
-      await authFetch(`/api/applications/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes }),
-      })
-      setSavingNotes(false)
+      try {
+        const res = await authFetch(`/api/applications/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes }),
+        })
+        if (!res.ok) toast.error('Notes failed to save')
+      } catch {
+        toast.error('Notes failed to save')
+      } finally {
+        setSavingNotes(false)
+      }
     }, 1500)
     return () => { if (notesTimer.current) clearTimeout(notesTimer.current) }
   }, [notes, app, id])

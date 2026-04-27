@@ -14,5 +14,7 @@ export const config = {
     '/reminders/:path*',
     '/resume/:path*',
     '/settings/:path*',
+    '/admin/:path*',
+    '/admin',
   ],
 }

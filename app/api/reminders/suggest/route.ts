@@ -7,7 +7,10 @@ export async function POST(req: NextRequest) {
   if (!auth) return unauthorized()
   void auth
 
-  const { company, role, appliedDate } = await req.json()
+  let body: { company?: unknown; role?: unknown; appliedDate?: unknown }
+  try { body = await req.json() }
+  catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }) }
+  const { company, role, appliedDate } = body
 
   const response = await groq.chat.completions.create({
     model: MODEL,

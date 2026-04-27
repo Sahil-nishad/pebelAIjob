@@ -23,7 +23,9 @@ export async function PATCH(req: NextRequest) {
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 
-  const body = await req.json()
+  let body: Record<string, unknown>
+  try { body = await req.json() }
+  catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }) }
 
   const {
     name, phone, title, linkedin, location,

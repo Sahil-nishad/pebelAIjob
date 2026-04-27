@@ -12,6 +12,6 @@ export async function GET(req: NextRequest) {
     .eq('user_id', user.id)
     .order('applied_date', { ascending: false })
 
-  if (error) return unauthorized()
+  if (error) return new Response(JSON.stringify({ error: 'Failed to load applications.' }), { status: 500 })
   return new Response(JSON.stringify(data), { status: 200 })
 }

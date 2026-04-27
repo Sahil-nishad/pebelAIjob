@@ -3,7 +3,11 @@ import bcrypt from 'bcryptjs'
 import { getSupabaseServer } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
-  const { token, password } = await req.json()
+  let body: { token?: string; password?: string }
+  try { body = await req.json() }
+  catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }) }
+
+  const { token, password } = body
 
   if (!token || !password) {
     return NextResponse.json({ error: 'Token and password are required.' }, { status: 400 })
@@ -35,10 +39,15 @@ export async function POST(req: NextRequest) {
 
   const password_hash = await bcrypt.hash(password, 12)
 
-  await supabase
+  const { error: updateError } = await supabase
     .from('users')
     .update({ password_hash })
     .eq('id', resetToken.user_id)
+
+  if (updateError) {
+    console.error('[reset-password] Failed to update password:', updateError)
+    return NextResponse.json({ error: 'Failed to reset password. Please try again.' }, { status: 500 })
+  }
 
   await supabase
     .from('password_reset_tokens')

@@ -9,7 +9,10 @@ export async function POST(req: NextRequest) {
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 
-  const { company: rawCompany, role: rawRole, sessionType: rawSessionType, jobDescription: rawJobDescription } = await req.json()
+  let reqBody: { company?: unknown; role?: unknown; sessionType?: unknown; jobDescription?: unknown }
+  try { reqBody = await req.json() }
+  catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }) }
+  const { company: rawCompany, role: rawRole, sessionType: rawSessionType, jobDescription: rawJobDescription } = reqBody
 
   // Sanitize user-controlled strings before injecting into LLM prompts
   const sanitize = (s: unknown, max: number) =>
