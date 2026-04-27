@@ -48,7 +48,9 @@ function LoginForm() {
 
   useEffect(() => {
     const errorCode = searchParams.get('error')
-    if (errorCode) setError(getOAuthErrorMessage(errorCode))
+    const hint = searchParams.get('hint')
+    if (hint === 'exists') setError('An account with this email already exists. Sign in below.')
+    else if (errorCode) setError(getOAuthErrorMessage(errorCode))
   }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {

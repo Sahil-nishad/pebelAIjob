@@ -49,6 +49,10 @@ function SignupForm() {
     const data = await res.json()
 
     if (!res.ok) {
+      if (res.status === 409) {
+        router.push('/login?hint=exists')
+        return
+      }
       setError(data.error || 'Signup failed.')
       setLoading(false)
       return
