@@ -11,7 +11,10 @@ export async function GET(req: NextRequest) {
     .select('status, applied_date')
     .eq('user_id', user.id)
 
-  if (error || !apps) return new Response(JSON.stringify({ total: 0, interviews: 0, offerRate: 0, responseRate: 0 }), { status: 200 })
+  if (error || !apps) {
+    console.error('[applications/stats] Failed to load stats:', error)
+    return new Response(JSON.stringify({ error: 'Failed to load application stats.' }), { status: 500 })
+  }
 
   const total = apps.length
   const interviews = apps.filter((a) => ['phone_screen', 'interviewing'].includes(a.status)).length

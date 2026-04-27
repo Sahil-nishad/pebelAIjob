@@ -116,12 +116,17 @@ Start by briefly introducing yourself, then ask the first question in a friendly
     return NextResponse.json({ session: fallbackSession, questions, introMessage: assistantMessage })
   }
 
-  await supabase
+  const { error: updateError } = await supabase
     .from('coach_sessions')
     .update({
       messages: [systemMessage, { role: 'assistant' as const, content: assistantMessage }],
     })
     .eq('id', session.id)
+
+  if (updateError) {
+    console.error('[coach/start] Failed to persist intro message:', updateError)
+    return NextResponse.json({ error: 'Failed to start coach session. Please try again.' }, { status: 500 })
+  }
 
   return NextResponse.json({ session, questions, introMessage: assistantMessage })
 }

@@ -101,10 +101,11 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  const status = errors.length === 0 ? 200 : totalSent > 0 ? 207 : 500
   return NextResponse.json({
     sent: totalSent,
     total_users: Object.keys(byUser).length,
     total_reminders: reminders.length,
     errors: errors.length > 0 ? errors : undefined,
-  })
+  }, { status })
 }

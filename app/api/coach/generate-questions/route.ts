@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, unauthorized } from '@/lib/auth'
 import { groq, MODEL } from '@/lib/groq'
+import { getClientIp, rateLimit, readJsonObject } from '@/lib/api-validation'
 
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req)
   if (!auth) return unauthorized()
 
-  const { company: rawCompany, role: rawRole, sessionType: rawSessionType } = await req.json()
+  const body = await readJsonObject(req)
+  if (body.error) return body.error
+
+  if (!rateLimit(`coach-questions:${getClientIp(req)}`, 30, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
+  }
+
+  const { company: rawCompany, role: rawRole, sessionType: rawSessionType } = body.data
 
   const sanitize = (s: unknown, max: number) =>
     String(s ?? '').replace(/[`<>]/g, '').trim().slice(0, max)

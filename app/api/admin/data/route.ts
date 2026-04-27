@@ -21,6 +21,12 @@ export async function GET(req: NextRequest) {
       supabase.from('activity_log').select('id, user_id, event_type, created_at').order('created_at', { ascending: false }).limit(200),
     ])
 
+  const failedQuery = [users, applications, coachSessions, reminders, resumeAnalyses, activityLog].find((result) => result.error)
+  if (failedQuery?.error) {
+    console.error('[admin/data] Failed to load admin data:', failedQuery.error)
+    return NextResponse.json({ error: 'Failed to load admin data.' }, { status: 500 })
+  }
+
   return NextResponse.json({
     users: users.data ?? [],
     applications: applications.data ?? [],

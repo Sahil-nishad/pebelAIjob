@@ -6,12 +6,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, unauthorized } from '@/lib/auth'
 import { sendReminderEmail } from '@/lib/email'
 import type { Reminder } from '@/types'
+import { getClientIp, rateLimit } from '@/lib/api-validation'
 
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req)
   if (!auth) return unauthorized()
   const { user } = auth
   if (!user.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  if (!rateLimit(`email-test:${getClientIp(req)}:${user.id}`, 3, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many test emails. Please try again later.' }, { status: 429 })
+  }
 
   const fakeReminder: Reminder = {
     id: 'test-id',
@@ -39,6 +44,6 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[email/test]', msg)
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to send test email.' }, { status: 500 })
   }
 }

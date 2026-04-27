@@ -46,7 +46,7 @@ export default function AboutPage() {
               We created a single place where every application is tracked, every interview is practiced with an AI coach tailored to the exact company and role, and every follow-up is never missed.
             </p>
             <p>
-              PebelAI is built by <strong className="text-slate-800">Dune AI</strong> — a small team passionate about using AI to make real, meaningful improvements in people's lives. We believe the right preparation is the difference between an offer and rejection.
+              PebelAI is built by <strong className="text-slate-800">Dune AI</strong> — a small team passionate about using AI to make real, meaningful improvements in people&apos;s lives. We believe the right preparation is the difference between an offer and rejection.
             </p>
           </div>
         </section>

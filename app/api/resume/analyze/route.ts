@@ -16,6 +16,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'resumeText and jobDescription are required.' }, { status: 400 })
   }
 
+  if (resumeText.length > 50_000 || jobDescription.length > 25_000) {
+    return NextResponse.json({ error: 'Resume or job description is too large.' }, { status: 413 })
+  }
+
+  if (applicationId) {
+    const { data: app, error: appError } = await supabase
+      .from('applications')
+      .select('id')
+      .eq('id', applicationId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (appError || !app) {
+      return NextResponse.json({ error: 'Application not found.' }, { status: 404 })
+    }
+  }
+
   let response
   try {
     response = await groq.chat.completions.create({

@@ -1,22 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, unauthorized } from '@/lib/auth'
+import { normalizeNotificationSettings, readJsonObject } from '@/lib/api-validation'
 
 export async function PATCH(req: NextRequest) {
   const auth = await requireAuth(req)
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 
-  const body = await req.json()
-  const { email_digest, follow_up_days, interview_prep_days } = body
+  const body = await readJsonObject(req)
+  if (body.error) return body.error
+
+  const settings = normalizeNotificationSettings(body.data)
+  if (settings.error) return settings.error
 
   const { error } = await supabase
     .from('users')
     .upsert({
       id: user.id,
       email: user.email,
-      email_digest: email_digest ?? 'daily',
-      follow_up_days: follow_up_days ?? 7,
-      interview_prep_days: interview_prep_days ?? 2,
+      ...settings.data,
     })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })

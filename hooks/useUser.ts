@@ -16,7 +16,7 @@ export function useUser() {
         .then((data) => setProfile(data))
         .catch(() => {})
     } else if (status === 'unauthenticated') {
-      setProfile(null)
+      queueMicrotask(() => setProfile(null))
     }
   }, [status])
 

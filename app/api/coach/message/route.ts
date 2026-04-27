@@ -85,13 +85,18 @@ REPLY FORMAT:
   const updatedMessages = [...allMessages, { role: 'assistant', content: assistantMessage }]
 
   if (session) {
-    await supabase
+    const { error: updateError } = await supabase
       .from('coach_sessions')
       .update({
         messages: updatedMessages,
         question_count: (session.question_count || 0) + 1,
       })
       .eq('id', sessionId)
+
+    if (updateError) {
+      console.error('[coach/message] Failed to persist session message:', updateError)
+      return NextResponse.json({ error: 'Failed to save coach message. Please try again.' }, { status: 500 })
+    }
   } else {
     updateCoachSession(sessionId, user.id, {
       messages: updatedMessages,

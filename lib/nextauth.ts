@@ -21,11 +21,16 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null
 
         const supabase = getSupabaseServer()
-        const { data: user } = await supabase
+        const { data: user, error } = await supabase
           .from('users')
           .select('id, email, name, password_hash')
           .eq('email', credentials.email.toLowerCase().trim())
           .maybeSingle()
+
+        if (error) {
+          console.error('[nextauth] Credentials lookup failed:', error.message)
+          return null
+        }
 
         if (!user?.password_hash) return null
 
@@ -40,14 +45,19 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: 'jwt' },
 
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
+        if (!user.email) return false
+
+        const googleProfile = profile as { email_verified?: boolean } | undefined
+        if (googleProfile?.email_verified === false) return false
+
         try {
           const supabase = getSupabaseServer()
           const { data: existing } = await supabase
             .from('users')
             .select('id')
-            .eq('email', user.email!)
+            .eq('email', user.email)
             .maybeSingle()
 
           if (existing) {
@@ -64,12 +74,14 @@ export const authOptions: NextAuthOptions = {
               .single()
             if (error) {
               console.error('[nextauth] Failed to upsert user in DB:', error.message)
+              return false
             }
-            if (upserted) user.id = upserted.id
+            if (!upserted) return false
+            user.id = upserted.id
           }
         } catch (err) {
           console.error('[nextauth] signIn callback error:', err)
-          // Don't block sign-in for DB errors
+          return false
         }
       }
       return true

@@ -26,13 +26,11 @@ export default function DashboardPage() {
   const { applications, loading: appsLoading } = useApplications()
   const { user, profile } = useUser()
   const [reminders, setReminders] = useState<Reminder[]>([])
-  const [showExtBanner, setShowExtBanner] = useState(false)
+  const [showExtBanner, setShowExtBanner] = useState(() =>
+    typeof window !== 'undefined' && !localStorage.getItem('ext_banner_dismissed')
+  )
 
   const userName = profile?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
-
-  useEffect(() => {
-    if (!localStorage.getItem('ext_banner_dismissed')) setShowExtBanner(true)
-  }, [])
 
   function dismissExtBanner() {
     localStorage.setItem('ext_banner_dismissed', '1')

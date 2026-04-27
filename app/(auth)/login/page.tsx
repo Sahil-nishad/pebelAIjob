@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -45,13 +45,11 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-
-  useEffect(() => {
-    const errorCode = searchParams.get('error')
-    const hint = searchParams.get('hint')
-    if (hint === 'exists') setError('An account with this email already exists. Sign in below.')
-    else if (errorCode) setError(getOAuthErrorMessage(errorCode))
-  }, [searchParams])
+  const routeError =
+    searchParams.get('hint') === 'exists'
+      ? 'An account with this email already exists. Sign in below.'
+      : getOAuthErrorMessage(searchParams.get('error'))
+  const visibleError = error || routeError
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -134,9 +132,9 @@ function LoginForm() {
             Sign in to your curated workspace
           </p>
 
-          {error && (
+          {visibleError && (
             <div className="mb-5 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-[13px] text-red-600">
-              {error}
+              {visibleError}
             </div>
           )}
 

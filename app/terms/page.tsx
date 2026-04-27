@@ -69,7 +69,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-slate-900 mb-3">7. Disclaimer of Warranties</h2>
-            <p>PebelAI is provided "as is" without warranties of any kind. We do not guarantee that the service will be uninterrupted, error-free, or that AI responses will be accurate or complete. Use of AI coaching does not guarantee employment outcomes.</p>
+            <p>PebelAI is provided &quot;as is&quot; without warranties of any kind. We do not guarantee that the service will be uninterrupted, error-free, or that AI responses will be accurate or complete. Use of AI coaching does not guarantee employment outcomes.</p>
           </section>
 
           <section>

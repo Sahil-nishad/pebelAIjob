@@ -17,7 +17,8 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     if (!isMissingTableError(error, 'coach_sessions')) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+      console.error('[coach/sessions] Failed to load sessions:', error)
+      return NextResponse.json({ error: 'Failed to load coach sessions.' }, { status: 500 })
     }
     return NextResponse.json(listCoachSessions(user.id))
   }

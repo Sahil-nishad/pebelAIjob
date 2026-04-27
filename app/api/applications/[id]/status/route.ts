@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, unauthorized } from '@/lib/auth'
+import { normalizeApplicationInput, readJsonObject } from '@/lib/api-validation'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(req)
@@ -7,10 +8,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { user, supabase } = auth
   const { id } = await params
-  let body: { status?: string }
-  try { body = await req.json() }
-  catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }) }
-  const { status } = body
+  const body = await readJsonObject(req)
+  if (body.error) return body.error
+
+  const normalized = normalizeApplicationInput({ status: body.data.status }, true)
+  if (normalized.error) return normalized.error
+  const status = normalized.data.status
 
   const { data, error } = await supabase
     .from('applications')
@@ -22,12 +25,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   if (error) return new NextResponse(JSON.stringify({ error: error.message }), { status: 400 })
 
-  await supabase.from('activity_log').insert({
+  const { error: activityError } = await supabase.from('activity_log').insert({
     user_id: user.id,
     application_id: id,
     event_type: 'stage_change',
     event_data: { new_status: status },
   })
+  if (activityError) console.error('[applications/status] Activity log insert failed:', activityError)
 
   return new Response(JSON.stringify(data), { status: 200 })
 }

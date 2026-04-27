@@ -1,19 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { getSupabaseServer } from '@/lib/supabase'
+import { getClientIp, rateLimit, readJsonObject } from '@/lib/api-validation'
+
+const jobTypes = new Set(['Full-time', 'Part-time', 'Internship', 'Freelance', 'Any'])
+const experienceLevels = new Set(['Entry', 'Mid', 'Senior', 'Executive'])
 
 export async function POST(req: NextRequest) {
-  let body: { name?: string; email?: string; password?: string; job_type?: string; experience_level?: string }
-  try { body = await req.json() }
-  catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }) }
-  const { name, email, password, job_type, experience_level } = body
+  const parsed = await readJsonObject(req)
+  if (parsed.error) return parsed.error
+
+  const name = typeof parsed.data.name === 'string' ? parsed.data.name.trim() : ''
+  const email = typeof parsed.data.email === 'string' ? parsed.data.email.toLowerCase().trim() : ''
+  const password = typeof parsed.data.password === 'string' ? parsed.data.password : ''
+  const job_type = typeof parsed.data.job_type === 'string' ? parsed.data.job_type : ''
+  const experience_level = typeof parsed.data.experience_level === 'string' ? parsed.data.experience_level : ''
 
   if (!email || !password || !name) {
     return NextResponse.json({ error: 'Name, email and password are required.' }, { status: 400 })
   }
 
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 })
+  }
+
   if (password.length < 8) {
     return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 })
+  }
+
+  if (job_type && !jobTypes.has(job_type)) {
+    return NextResponse.json({ error: 'Invalid job type.' }, { status: 400 })
+  }
+
+  if (experience_level && !experienceLevels.has(experience_level)) {
+    return NextResponse.json({ error: 'Invalid experience level.' }, { status: 400 })
+  }
+
+  if (!rateLimit(`signup:${getClientIp(req)}:${email}`, 5, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many signup attempts. Please try again later.' }, { status: 429 })
   }
 
   const supabase = getSupabaseServer()
@@ -21,7 +45,7 @@ export async function POST(req: NextRequest) {
   const { data: existing } = await supabase
     .from('users')
     .select('id')
-    .eq('email', email.toLowerCase().trim())
+    .eq('email', email)
     .maybeSingle()
 
   if (existing) {
@@ -31,7 +55,7 @@ export async function POST(req: NextRequest) {
   const password_hash = await bcrypt.hash(password, 12)
 
   const { error } = await supabase.from('users').insert({
-    email: email.toLowerCase().trim(),
+    email,
     name,
     password_hash,
     job_type: job_type || null,
@@ -39,6 +63,9 @@ export async function POST(req: NextRequest) {
   })
 
   if (error) {
+    if (error.code === '23505') {
+      return NextResponse.json({ error: 'An account with this email already exists.' }, { status: 409 })
+    }
     return NextResponse.json({ error: 'Failed to create account. Please try again.' }, { status: 500 })
   }
 

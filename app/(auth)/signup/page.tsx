@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -29,11 +29,7 @@ function SignupForm() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
-
-  useEffect(() => {
-    const errorCode = searchParams.get('error')
-    if (errorCode) setError('Google sign-in failed. Please try again.')
-  }, [searchParams])
+  const visibleError = error || (searchParams.get('error') ? 'Google sign-in failed. Please try again.' : '')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -129,8 +125,8 @@ function SignupForm() {
           </h2>
           <p className="text-[14px] text-slate-400 mb-8">Start tracking your job search today.</p>
 
-          {error && (
-            <div className="mb-5 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-[13px] text-red-600">{error}</div>
+          {visibleError && (
+            <div className="mb-5 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-[13px] text-red-600">{visibleError}</div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
