@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   let reqBody: { sessionId?: string; message?: unknown }
   try { reqBody = await req.json() }
   catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }) }
-  const { sessionId, message: rawMessage } = reqBody
+  const { sessionId = '', message: rawMessage } = reqBody
   const message = String(rawMessage ?? '').trim().slice(0, 2000)
 
   // Fast-path: block prompt injection attempts without hitting the LLM
