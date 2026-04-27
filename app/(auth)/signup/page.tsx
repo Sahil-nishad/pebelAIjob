@@ -56,8 +56,8 @@ function SignupForm() {
 
     const result = await signIn('credentials', { email, password, redirect: false })
     if (result?.error) {
-      setError('Account created but sign-in failed. Please log in.')
-      router.push('/login')
+      setError('Account created! Auto sign-in failed — please sign in below.')
+      setLoading(false)
     } else {
       router.push('/dashboard')
     }
@@ -165,7 +165,7 @@ function SignupForm() {
                   autoComplete="new-password"
                   className="w-full h-10 px-3 pr-10 rounded-lg border border-slate-200 bg-white text-[14px] text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
                 />
-                <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
@@ -205,6 +205,12 @@ function SignupForm() {
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Free Account'}
             </button>
+            <p className="text-center text-[11px] text-slate-400 mt-2">
+              By creating an account you agree to our{' '}
+              <Link href="/terms" className="underline hover:text-slate-500 transition-colors">Terms</Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="underline hover:text-slate-500 transition-colors">Privacy Policy</Link>.
+            </p>
           </form>
 
           <div className="flex items-center gap-3 my-5">
@@ -241,9 +247,17 @@ function SignupForm() {
   )
 }
 
+function AuthLoadingShell() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-white">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500/30 border-t-emerald-600" />
+    </div>
+  )
+}
+
 export default function SignupPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<AuthLoadingShell />}>
       <SignupForm />
     </Suspense>
   )

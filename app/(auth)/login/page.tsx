@@ -173,7 +173,7 @@ function LoginForm() {
                   autoComplete="current-password"
                   className="w-full h-10 px-3 pr-10 rounded-lg border border-slate-200 bg-white text-[14px] text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
                 />
-                <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
@@ -230,9 +230,17 @@ function LoginForm() {
   )
 }
 
+function AuthLoadingShell() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-white">
+      <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500/30 border-t-emerald-600" />
+    </div>
+  )
+}
+
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<AuthLoadingShell />}>
       <LoginForm />
     </Suspense>
   )
