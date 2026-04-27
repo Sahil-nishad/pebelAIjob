@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 
-  let reqBody: { sessionId?: unknown; message?: unknown }
+  let reqBody: { sessionId?: string; message?: unknown }
   try { reqBody = await req.json() }
   catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }) }
   const { sessionId, message: rawMessage } = reqBody
