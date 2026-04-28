@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Trash2, Send, CheckCircle2, Loader2,
   LogOut, Pencil, ChevronRight, Sparkles, BadgeCheck,
-  User, Settings, Bell, ShieldAlert, Lock,
+  User, Settings, Bell, ShieldAlert, Lock, KeyRound, Eye, EyeOff,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -22,15 +22,16 @@ const navItems = [
 
 // ── Minimal profile field ────────────────────────────────────────────────────
 function Field({
-  label, value, onChange, disabled, type = 'text', placeholder,
+  label, value, onChange, disabled, type = 'text', placeholder, id,
 }: {
   label: string; value: string; onChange?: (v: string) => void
-  disabled?: boolean; type?: string; placeholder?: string
+  disabled?: boolean; type?: string; placeholder?: string; id?: string
 }) {
   return (
     <div>
       <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-1.5">{label}</p>
       <input
+        id={id}
         type={type}
         value={value}
         placeholder={placeholder}
@@ -214,7 +215,13 @@ export default function SettingsPage() {
   }
 
   // ── Security / Danger ────────────────────────────────────────────────────
-  const [deletingApps, setDeletingApps] = useState(false)
+  const [deletingApps,    setDeletingApps]    = useState(false)
+  const [currentPw,       setCurrentPw]       = useState('')
+  const [newPw,           setNewPw]           = useState('')
+  const [confirmPw,       setConfirmPw]       = useState('')
+  const [showCurrentPw,   setShowCurrentPw]   = useState(false)
+  const [showNewPw,       setShowNewPw]       = useState(false)
+  const [savingPw,        setSavingPw]        = useState(false)
 
   async function deleteAllApps() {
     if (!confirm('Delete ALL applications? This cannot be undone.')) return
@@ -224,6 +231,39 @@ export default function SettingsPage() {
       if (!res.ok) throw new Error()
       toast.success('All applications deleted')
     } catch { toast.error('Failed to delete applications') } finally { setDeletingApps(false) }
+  }
+
+  async function changePassword() {
+    if (newPw !== confirmPw) { toast.error('Passwords do not match'); return }
+    if (newPw.length < 8) { toast.error('Password must be at least 8 characters'); return }
+    setSavingPw(true)
+    try {
+      const res = await authFetch('/api/settings/change-password', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword: currentPw || undefined, newPassword: newPw }),
+      })
+      const d = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(d?.error || 'Failed')
+      toast.success('Password updated!')
+      setCurrentPw(''); setNewPw(''); setConfirmPw('')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update password')
+    } finally { setSavingPw(false) }
+  }
+
+  function handleOptimizeNow() {
+    const fieldMap: Record<string, string> = {
+      'professional title': 'field-title',
+      'LinkedIn URL': 'field-linkedin',
+      'phone number': 'field-phone',
+      'location': 'field-location',
+    }
+    if (missing.length > 0) {
+      const el = document.getElementById(fieldMap[missing[0]]) as HTMLInputElement | null
+      el?.focus()
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
   }
 
   const toggleJobType = (type: string) =>
@@ -313,6 +353,33 @@ export default function SettingsPage() {
           </button>
 
           <p className="text-[16px] font-bold text-slate-900 mb-4">Security &amp; Data</p>
+
+          {/* Change Password mobile */}
+          <div className="bg-white rounded-2xl p-4 mb-3 border border-slate-100">
+            <div className="flex items-center gap-2 mb-3">
+              <KeyRound className="w-4 h-4 text-[#0A6A47]" />
+              <p className="text-[14px] font-bold text-slate-900">Change Password</p>
+            </div>
+            <div className="space-y-2.5">
+              <div className="relative">
+                <input type={showCurrentPw ? 'text' : 'password'} value={currentPw} onChange={e => setCurrentPw(e.target.value)} placeholder="Current password" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-[13px] focus:outline-none focus:border-[#0A6A47] pr-9" />
+                <button type="button" onClick={() => setShowCurrentPw(p => !p)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                  {showCurrentPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+              <div className="relative">
+                <input type={showNewPw ? 'text' : 'password'} value={newPw} onChange={e => setNewPw(e.target.value)} placeholder="New password (min. 8 chars)" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-[13px] focus:outline-none focus:border-[#0A6A47] pr-9" />
+                <button type="button" onClick={() => setShowNewPw(p => !p)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
+                  {showNewPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+              <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} placeholder="Confirm new password" className="w-full border border-slate-200 rounded-xl px-3 py-2 text-[13px] focus:outline-none focus:border-[#0A6A47]" />
+            </div>
+            <button onClick={changePassword} disabled={!newPw || !confirmPw || savingPw} className="w-full mt-3 flex items-center justify-center gap-2 bg-[#0A6A47] text-white text-[13px] font-bold py-2.5 rounded-xl disabled:opacity-50">
+              {savingPw ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+              Update Password
+            </button>
+          </div>
 
           {/* Delete apps */}
           <div className="bg-red-50 rounded-2xl p-4 border border-red-100 flex items-center justify-between">
@@ -461,17 +528,17 @@ export default function SettingsPage() {
                   </div>
                   {/* Row 2 */}
                   <div className="py-4 border-b border-slate-100">
-                    <Field label="Phone Number" value={phone} onChange={setPhone} placeholder="+1 (555) 000-0000" />
+                    <Field id="field-phone" label="Phone Number" value={phone} onChange={setPhone} placeholder="+1 (555) 000-0000" />
                   </div>
                   <div className="py-4 border-b border-slate-100">
-                    <Field label="Professional Title" value={title} onChange={setTitle} placeholder="e.g. Software Engineer" />
+                    <Field id="field-title" label="Professional Title" value={title} onChange={setTitle} placeholder="e.g. Software Engineer" />
                   </div>
                   {/* Row 3 */}
                   <div className="py-4">
-                    <Field label="LinkedIn URL" value={linkedin} onChange={setLinkedin} placeholder="linkedin.com/in/you" />
+                    <Field id="field-linkedin" label="LinkedIn URL" value={linkedin} onChange={setLinkedin} placeholder="linkedin.com/in/you" />
                   </div>
                   <div className="py-4">
-                    <Field label="Location" value={location} onChange={setLocation} placeholder="San Francisco, CA" />
+                    <Field id="field-location" label="Location" value={location} onChange={setLocation} placeholder="San Francisco, CA" />
                   </div>
                 </div>
 
@@ -510,7 +577,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <button
-                  onClick={() => { /* scroll to missing field */ }}
+                  onClick={handleOptimizeNow}
                   className="shrink-0 bg-[#0A6A47] hover:bg-[#085438] text-white text-[12px] font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer whitespace-nowrap"
                 >
                   Optimize Now
@@ -661,6 +728,63 @@ export default function SettingsPage() {
           {/* ── SECURITY TAB ── */}
           {activeTab === 'security' && (
             <div className="space-y-4">
+
+              {/* Change Password */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-9 h-9 rounded-xl bg-[#E8F5EE] flex items-center justify-center shrink-0">
+                    <KeyRound className="w-4 h-4 text-[#0A6A47]" />
+                  </div>
+                  <div>
+                    <p className="text-[14px] font-bold text-slate-900">Change Password</p>
+                    <p className="text-[12px] text-slate-400">Leave current password blank if you signed in with Google.</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="relative">
+                    <input
+                      type={showCurrentPw ? 'text' : 'password'}
+                      value={currentPw}
+                      onChange={e => setCurrentPw(e.target.value)}
+                      placeholder="Current password"
+                      className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-[13px] text-slate-900 focus:outline-none focus:border-[#0A6A47] pr-10"
+                    />
+                    <button type="button" onClick={() => setShowCurrentPw(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                      {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showNewPw ? 'text' : 'password'}
+                      value={newPw}
+                      onChange={e => setNewPw(e.target.value)}
+                      placeholder="New password (min. 8 characters)"
+                      className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-[13px] text-slate-900 focus:outline-none focus:border-[#0A6A47] pr-10"
+                    />
+                    <button type="button" onClick={() => setShowNewPw(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                      {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <input
+                    type="password"
+                    value={confirmPw}
+                    onChange={e => setConfirmPw(e.target.value)}
+                    placeholder="Confirm new password"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-[13px] text-slate-900 focus:outline-none focus:border-[#0A6A47]"
+                  />
+                </div>
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={changePassword}
+                    disabled={!newPw || !confirmPw || savingPw}
+                    className="flex items-center gap-2 bg-[#0A6A47] hover:bg-[#085438] text-white text-[13px] font-bold px-5 py-2.5 rounded-xl transition-colors cursor-pointer shadow-sm disabled:opacity-50"
+                  >
+                    {savingPw ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <KeyRound className="w-3.5 h-3.5" />}
+                    Update Password
+                  </button>
+                </div>
+              </div>
+
               {/* Delete apps */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-red-100 flex items-center justify-between">
                 <div>
