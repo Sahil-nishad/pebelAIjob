@@ -21,6 +21,8 @@ export async function requireAuth(req?: NextRequest) {
           const decoded = await getToken({
             req: cookieReq,
             secret: process.env.NEXTAUTH_SECRET!,
+            // Must match the cookie name we set above — __Secure- prefix in production
+            secureCookie: process.env.NODE_ENV === 'production',
           })
           if (decoded?.dbId) {
             const supabase = getSupabaseServer()

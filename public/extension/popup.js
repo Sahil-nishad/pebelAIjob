@@ -308,10 +308,27 @@ function updateToggleDesc(enabled) {
     : 'Auto-save is OFF — use manual save only';
 }
 
+async function findPebelTab() {
+  return new Promise((resolve) => {
+    chrome.tabs.query({ url: ['https://pebelai.com/*', 'https://www.pebelai.com/*'] }, (tabs) => {
+      resolve(tabs && tabs.length ? tabs[0] : null);
+    });
+  });
+}
+
 async function syncLoginFromPebelTab() {
-  const tab = await getActiveTab();
-  if (!tab || typeof tab.id !== 'number' || !String(tab.url || '').includes('pebelai.com')) {
-    setStatusMessage('Open pebelai.com in the active tab, then click Sync Login.', 'error');
+  // First try to sync via background cookie read (no pebelai.com tab needed)
+  await ensureAuthState();
+  if (state.authToken) {
+    setStatusMessage('Login synced automatically.', 'success');
+    setTimeout(() => setStatusMessage(''), 2000);
+    return;
+  }
+
+  // Find a pebelai.com tab (any tab, not necessarily active)
+  const tab = await findPebelTab();
+  if (!tab || typeof tab.id !== 'number') {
+    setStatusMessage('Open pebelai.com in any tab, then click Sync Login again.', 'error');
     return;
   }
 
@@ -334,9 +351,9 @@ async function syncLoginFromPebelTab() {
       return;
     }
 
-    setStatusMessage('Still not detected. Refresh pebelai.com and click Sync Login again.', 'error');
+    setStatusMessage('Not detected. Reload pebelai.com and try again.', 'error');
   } catch (_error) {
-    setStatusMessage('Sync failed. Refresh pebelai.com and try again.', 'error');
+    setStatusMessage('Sync failed. Reload pebelai.com and try again.', 'error');
   }
 }
 

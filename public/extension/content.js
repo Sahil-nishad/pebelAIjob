@@ -1,29 +1,46 @@
 const SITE_SELECTORS = {
   linkedin: {
-    // LinkedIn changes class names often — use multiple fallbacks
+    // LinkedIn changes class names frequently — ordered from most to least specific
     title: [
+      // 2025 layout
+      '[class*="job-details-jobs-unified-top-card"] h1',
+      '[class*="top-card-layout"] h1',
+      '[class*="jobs-unified-top-card"] h1',
+      // 2024 legacy
       '.job-details-jobs-unified-top-card__job-title h1',
       '.job-details-jobs-unified-top-card__job-title',
       'h1.t-24',
       'h1[class*="t-24"]',
-      '.jobs-unified-top-card h1',
-      '.job-view-layout h1'
+      '.job-view-layout h1',
+      // broad fallback
+      '.jobs-search__job-details h1',
+      'h1'
     ],
     company: [
+      // 2025 layout
+      '[class*="top-card-layout"] [class*="company"] a',
+      '[class*="top-card-layout"] [class*="company"]',
+      '[class*="jobs-unified-top-card"] [class*="company"] a',
+      // 2024 legacy
       '.job-details-jobs-unified-top-card__company-name a',
       '.job-details-jobs-unified-top-card__company-name',
       '.jobs-unified-top-card__company-name a',
       '.jobs-unified-top-card__company-name',
       'a[data-tracking-control-name*="topcard-org-name"]',
-      'a[data-tracking-control-name*="company"]'
+      'a[data-tracking-control-name*="company"]',
+      // attribute fallback
+      '[data-company-name]'
     ],
     location: [
+      '[class*="top-card-layout"] [class*="bullet"]',
+      '[class*="top-card-layout"] [class*="location"]',
       '.job-details-jobs-unified-top-card__bullet',
       '.job-details-jobs-unified-top-card__primary-description-container .t-black--light',
       '.jobs-unified-top-card__bullet',
       '.jobs-unified-top-card__workplace-type'
     ],
     salary: [
+      '[class*="top-card-layout"] [class*="salary"]',
       '.job-details-jobs-unified-top-card__job-insight span',
       '.compensation__salary-range',
       '.job-details-preferences-and-skills__pill span'
@@ -32,6 +49,7 @@ const SITE_SELECTORS = {
       '#job-details',
       '.jobs-description-content__text',
       '.jobs-description__content',
+      '[class*="jobs-description"] [class*="content"]',
       '.job-view-layout .description'
     ]
   },
@@ -131,33 +149,61 @@ const SITE_SELECTORS = {
     ]
   },
   naukri: {
+    // Naukri redesigned in 2024 — CSS modules with random suffixes, match by prefix
     title: [
-      '.jd-header-title',
-      'h1.jd-header-title',
+      'h1.styles_jd-header-title__rZwM1',
       '[class*="jd-header-title"]',
-      'h1[class*="title"]'
+      'h1[class*="title"]',
+      'h1[class*="jd-header"]',
+      'h1'
     ],
     company: [
-      '.jd-header-comp-name a',
+      'a[class*="jd-header-comp-name"]',
       '[class*="jd-header-comp-name"] a',
-      '.jd-header-comp-name',
-      '[class*="comp-name"] a'
+      '[class*="comp-name"] a',
+      '[class*="companyInfo"] a',
+      'a[class*="comp-name"]'
     ],
     location: [
+      '[class*="location"] span',
+      '[class*="loc"] span',
       '.locWdth',
-      '[class*="loc"]',
-      '[class*="location"]'
+      '[class*="locWdth"]',
+      'span[class*="location"]'
     ],
     salary: [
+      '[class*="salary-container"]',
+      '[class*="salary"] span',
       '.salary',
-      '[class*="salary"]',
-      '.sal-wrap'
+      '[class*="sal-wrap"]'
     ],
     description: [
-      '.job-desc',
-      '[class*="JDC"]',
       '[class*="dang-inner-html"]',
+      '[class*="job-desc"]',
+      '[class*="JDC"]',
+      '.job-desc',
       '.dang-inner-html'
+    ]
+  },
+  internshala: {
+    title: [
+      '.profile h1', '.profile-main-info h1',
+      'h1[class*="profile"]', 'h1[class*="title"]', 'h1'
+    ],
+    company: [
+      '.company-name a', '.company_name a', '[class*="company-name"] a',
+      '.ic-company-name a', 'a[class*="company"]'
+    ],
+    location: [
+      '.location_link', '[class*="location"] a',
+      '.ic-location span', '.location span'
+    ],
+    salary: [
+      '.salary', '[class*="salary"]', '.ic-16-money + span'
+    ],
+    description: [
+      '.internship_other_details_container', '.about-internship',
+      '[class*="about-internship"]', '[class*="job-description"]'
     ]
   },
   ziprecruiter: {
@@ -259,7 +305,17 @@ const APPLY_SELECTORS = {
     '#apply-button',
     'button[id*="apply" i]',
     'button[class*="apply" i]',
-    'a[class*="apply" i]'
+    'a[class*="apply" i]',
+    // 2024+ Naukri redesign
+    '[class*="apply-btn"]',
+    '[class*="applyBtn"]'
+  ],
+  internshala: [
+    '.apply_now_btn',
+    'button[class*="apply"]',
+    'a[class*="apply"]',
+    '#apply-now-btn',
+    '[data-gtm-track*="apply" i]'
   ]
 };
 
@@ -341,7 +397,7 @@ const JOB_SITE_PATTERNS = [
   { pattern: 'seek.com', site: 'generic' },
   { pattern: 'flexjobs.com', site: 'generic' },
   { pattern: 'hired.com', site: 'generic' },
-  { pattern: 'internshala.com', site: 'generic' }
+  { pattern: 'internshala.com', site: 'internshala' }
 ];
 
 // URL path/hostname patterns that are NEVER individual job listings
@@ -786,15 +842,22 @@ function findApplyIntentElement(target, site) {
     }
   }
 
-  // Fall back to text-based detection — use strict final-submit check to avoid
-  // matching intermediate "Next" / "Continue" / "Apply" buttons in multi-step forms.
+  // Fall back to text-based detection.
+  // Known portals (LinkedIn, Indeed, Naukri, etc.) have explicit selectors above,
+  // so a strict final-submit check is enough to catch any remaining cases without
+  // firing on "Next" / "Continue" steps in multi-step flows.
+  // Unknown / generic company career pages don't have multi-step flows in most cases,
+  // so we also accept "Apply", "Apply Now", "Quick Apply", etc. for those.
+  const isKnownPortal = Boolean(APPLY_SELECTORS[site]) && site !== 'generic';
   const clickable = target.closest('button,a,input[type="submit"],input[type="button"],div[role="button"]');
   if (!clickable) {
     return null;
   }
 
   const text = getElementActionText(clickable);
-  return isFinalSubmitText(text) ? clickable : null;
+  if (isFinalSubmitText(text)) return clickable;
+  if (!isKnownPortal && isApplyIntentText(text)) return clickable;
+  return null;
 }
 
 async function emitAutoSave(reason) {
@@ -1185,11 +1248,28 @@ function extractJobData() {
   }
 
   // Last-resort company: og:site_name if it's not a generic job portal name
-  if (!baseData.company_name && site) {
+  if (!baseData.company_name) {
     const ogSite = readMeta('meta[property="og:site_name"]') || '';
-    const isPortalName = /linkedin|indeed|glassdoor|naukri|monster|dice|ziprecruiter|wellfound|angel/i.test(ogSite);
+    const isPortalName = /linkedin|indeed|glassdoor|naukri|monster|dice|ziprecruiter|wellfound|angel|internshala/i.test(ogSite);
     if (ogSite && !isPortalName) {
       baseData.company_name = ogSite;
+    }
+  }
+
+  // Last-resort title: og:title stripped of company suffix
+  if (!baseData.job_title) {
+    const ogTitle = cleanJobTitle(readMeta('meta[property="og:title"]') || '');
+    if (ogTitle && !FAKE_JOB_TITLE_PATTERNS.some((p) => p.test(ogTitle))) {
+      // Strip " at Company" or " | Company" suffix if present
+      baseData.job_title = ogTitle.replace(/\s+(?:at|@)\s+.+$/i, '').replace(/\s*[|–—-]\s*.+$/, '').trim() || ogTitle;
+    }
+  }
+
+  // Last-resort description: og:description
+  if (!baseData.job_description) {
+    const ogDesc = readMeta('meta[property="og:description"]') || readMeta('meta[name="description"]') || '';
+    if (ogDesc.length > 40) {
+      baseData.job_description = ogDesc;
     }
   }
 
