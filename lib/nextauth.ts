@@ -89,8 +89,10 @@ export const authOptions: NextAuthOptions = {
 
     async jwt({ token, user }) {
       if (user) token.dbId = user.id
-      // Fallback: if dbId is missing (e.g. DB insert failed at sign-in), resolve from email
-      if (!token.dbId && token.email) {
+      // Resolve dbId if missing or not a valid UUID (e.g. Google numeric ID stored from an old session)
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      const dbIdIsUuid = UUID_RE.test(token.dbId as string)
+      if ((!token.dbId || !dbIdIsUuid) && token.email) {
         try {
           const supabase = getSupabaseServer()
           const { data } = await supabase
