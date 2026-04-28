@@ -1,50 +1,64 @@
 'use client'
 
-import { Download, Puzzle, MousePointer2, Shield, Check, ArrowRight, Zap, Bell, Bot } from 'lucide-react'
+import { Download, Puzzle, MousePointer2, Shield, Check, Zap, Bell, Bot, FolderOpen, ToggleRight, Chrome } from 'lucide-react'
 
 const steps = [
   {
     step: '01',
     icon: Download,
-    title: 'Open the Chrome Web Store',
-    desc: 'Click the "Add to Chrome" button below. This opens the PebelAI extension page in the Chrome Web Store.',
-    note: 'Works on Chrome, Brave, Edge — any Chromium browser.',
+    title: 'Download the extension',
+    desc: 'Click the "Download Extension" button above. A ZIP file called pebelai-extension.zip will be saved to your computer (usually in your Downloads folder).',
+    note: 'Works on Chrome, Brave, Edge — any Chromium-based browser.',
   },
   {
     step: '02',
-    icon: Puzzle,
-    title: 'Click "Add to Chrome"',
-    desc: 'Hit the blue "Add to Chrome" button on the Chrome Web Store page. A popup will appear asking for permissions — click "Add extension" to confirm.',
-    note: 'The extension only reads job listing pages — it cannot access any other sites.',
+    icon: FolderOpen,
+    title: 'Unzip the file',
+    desc: 'Find the downloaded ZIP file and extract it. Right-click → "Extract All" (Windows) or double-click (Mac). You\'ll get a folder called "extension" with the extension files inside.',
+    note: 'Keep the folder somewhere permanent — Chrome needs it to stay there.',
   },
   {
     step: '03',
-    icon: Shield,
-    title: 'Sign in to your PebelAI account',
-    desc: 'Click the PebelAI icon in your browser toolbar (top right). A small popup appears — log in with your PebelAI email and password to connect the extension to your dashboard.',
-    note: 'Pin the extension to your toolbar for quick access.',
+    icon: Chrome,
+    title: 'Open Chrome Extensions page',
+    desc: 'Open Chrome (or Brave/Edge) and go to the extensions page. You can type chrome://extensions in the address bar and press Enter.',
+    note: 'For Brave use brave://extensions — for Edge use edge://extensions.',
   },
   {
     step: '04',
-    icon: MousePointer2,
-    title: 'Browse any job site and click "Save"',
-    desc: 'Go to LinkedIn, Indeed, Naukri, Glassdoor, or any company careers page. When you find a role you want, click the PebelAI icon — the extension detects the job details and shows a one-click "Add to PebelAI" button.',
-    note: 'Company name, role title, and URL are captured automatically.',
+    icon: ToggleRight,
+    title: 'Enable Developer Mode',
+    desc: 'On the Extensions page, look for the "Developer mode" toggle in the top-right corner and turn it ON. This lets you install extensions from your computer.',
+    note: 'You\'ll see three new buttons appear after enabling it.',
   },
   {
     step: '05',
-    icon: Check,
-    title: 'Track, get reminded, and prep with AI',
-    desc: 'The saved job appears instantly in your Applications dashboard. From there you can update the status, set follow-up reminders, and start an AI coach session for that specific role.',
-    note: 'All your applications, managed in one place.',
+    icon: FolderOpen,
+    title: 'Load the extension',
+    desc: 'Click "Load unpacked" (the button that appears after enabling Developer mode). In the file picker that opens, navigate to and select the extracted extension folder.',
+    note: 'Select the folder itself — not a file inside it.',
+  },
+  {
+    step: '06',
+    icon: Shield,
+    title: 'Sign in to PebelAI',
+    desc: 'Click the PebelAI icon that now appears in your browser toolbar (top-right area). The extension popup opens — log in with your PebelAI email and password to connect it to your dashboard.',
+    note: 'Pin the extension for quick access: click the puzzle icon → pin PebelAI.',
+  },
+  {
+    step: '07',
+    icon: MousePointer2,
+    title: 'Browse jobs and save them',
+    desc: 'Go to LinkedIn, Indeed, Glassdoor, Naukri, or any company careers page. When you spot a role, click the PebelAI icon — the extension grabs the job details and adds it to your tracker.',
+    note: 'Company name, role title, location, and URL are captured automatically.',
   },
 ]
 
 const works = [
-  { icon: Zap, title: 'Detects job listings automatically', desc: 'The extension recognizes job pages on 50+ platforms and pre-fills the job details for you.' },
-  { icon: MousePointer2, title: 'One-click to save', desc: 'No copying, no pasting. Click the extension icon, confirm, and it\'s in your tracker.' },
-  { icon: Bell, title: 'Triggers smart reminders', desc: 'Saved jobs automatically get a follow-up reminder scheduled based on your preferences.' },
-  { icon: Bot, title: 'Ready for AI Coach', desc: 'Once saved, you can start an interview prep session for that role in one click from your dashboard.' },
+  { icon: Zap, title: 'Auto-detects job listings', desc: 'The extension recognizes job pages and pre-fills details for you — no copy-pasting needed.' },
+  { icon: MousePointer2, title: 'One-click to save', desc: 'Click the extension icon, confirm, and the job is instantly in your Applications tracker.' },
+  { icon: Bell, title: 'Triggers smart reminders', desc: 'Saved jobs can automatically get follow-up reminders scheduled based on your preferences.' },
+  { icon: Bot, title: 'Ready for AI Coach', desc: 'Once saved, start an interview prep session for that specific role in one click from your dashboard.' },
 ]
 
 export default function ExtensionPage() {
@@ -70,28 +84,35 @@ export default function ExtensionPage() {
       {/* Download CTA card */}
       <div className="rounded-2xl bg-[#0A6A47] p-7 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div>
-          <p className="text-[11px] text-emerald-300/70 font-semibold tracking-widest uppercase mb-1">Chrome Web Store</p>
+          <p className="text-[11px] text-emerald-300/70 font-semibold tracking-widest uppercase mb-1">Free · Local Install</p>
           <h2 className="text-[20px] font-bold text-white mb-1">PebelAI — Job Tracker Extension</h2>
-          <p className="text-[13px] text-white/60">Free · Works on Chrome, Brave, Edge</p>
+          <p className="text-[13px] text-white/60">Works on Chrome, Brave, Edge · No account needed to download</p>
         </div>
         <a
-          href="https://chromewebstore.google.com/detail/pebelai/YOUR_EXTENSION_ID"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/pebelai-extension.zip"
+          download="pebelai-extension.zip"
           className="shrink-0"
         >
           <button className="flex items-center gap-2.5 h-11 px-6 rounded-xl bg-white text-[#0A6A47] text-[14px] font-bold hover:bg-emerald-50 transition-colors shadow-sm whitespace-nowrap">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" fill="#4285F4" />
-              <circle cx="12" cy="12" r="4" fill="white" />
-              <path d="M12 8 L20.66 8" stroke="#EA4335" strokeWidth="2.5" />
-              <path d="M12 8 C9 8 6.34 9.5 4.77 11.83" stroke="#FBBC05" strokeWidth="2.5" />
-              <path d="M4.77 11.83 C6.34 14.17 9 15.67 12 15.67 C15 15.67 17.66 14.17 19.23 11.83" stroke="#34A853" strokeWidth="2.5" />
-            </svg>
-            Add to Chrome — Free
             <Download className="w-4 h-4" />
+            Download Extension
           </button>
         </a>
+      </div>
+
+      {/* Status dot legend */}
+      <div className="bg-white rounded-2xl shadow-sm p-5 mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <p className="text-[13px] font-bold text-slate-700 shrink-0">Extension status indicator:</p>
+        <div className="flex gap-5">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-[#0A6A47] shrink-0 shadow-sm" />
+            <span className="text-[13px] text-slate-600"><span className="font-bold text-slate-800">ON</span> — Logged in, extension active</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-slate-400 shrink-0 shadow-sm" />
+            <span className="text-[13px] text-slate-600"><span className="font-bold text-slate-800">OFF</span> — Not logged in</span>
+          </div>
+        </div>
       </div>
 
       {/* How it works */}
@@ -115,8 +136,8 @@ export default function ExtensionPage() {
 
       {/* Step by step */}
       <div className="bg-white rounded-2xl shadow-sm p-7 mb-6">
-        <h2 className="text-[17px] font-bold text-slate-900 mb-1">Step-by-step setup</h2>
-        <p className="text-[12px] text-slate-400 mb-7">Get started in under 2 minutes</p>
+        <h2 className="text-[17px] font-bold text-slate-900 mb-1">Step-by-step installation</h2>
+        <p className="text-[12px] text-slate-400 mb-7">Get set up in under 3 minutes</p>
 
         <div className="space-y-0">
           {steps.map((s, i) => (
@@ -132,7 +153,7 @@ export default function ExtensionPage() {
               </div>
 
               {/* Content */}
-              <div className={`pb-7 flex-1 min-w-0 ${i === steps.length - 1 ? '' : ''}`}>
+              <div className="pb-7 flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-[9px] font-bold text-slate-300 tracking-widest">{s.step}</span>
                   <h3 className="text-[14px] font-bold text-slate-900">{s.title}</h3>
@@ -167,6 +188,10 @@ export default function ExtensionPage() {
         <div className="space-y-5">
           {[
             {
+              q: 'Why isn\'t this on the Chrome Web Store?',
+              a: 'The extension is in early access — we\'re installing it manually for now so we can update it quickly. A Chrome Web Store listing is planned once it\'s stable.',
+            },
+            {
               q: 'Does the extension track my browsing?',
               a: 'No. The extension only activates on job listing pages and only when you click the icon. It does not monitor your general browsing activity.',
             },
@@ -175,12 +200,12 @@ export default function ExtensionPage() {
               a: 'You can still click the extension icon and fill in the details manually — company, role, and URL. It takes under 30 seconds.',
             },
             {
-              q: 'Do I need to be signed in to use the extension?',
-              a: 'Yes. You need a PebelAI account to save jobs. Sign up free at pebelai.com — no credit card needed.',
+              q: 'Will it work on Brave or Edge browsers?',
+              a: 'Yes. Any Chromium-based browser (Chrome, Brave, Edge, Arc) supports unpacked extensions via Developer mode.',
             },
             {
-              q: 'Will it work on Brave or Edge browsers?',
-              a: 'Yes. Any Chromium-based browser (Chrome, Brave, Edge, Arc) supports Chrome Web Store extensions.',
+              q: 'What does the ON / OFF badge on the icon mean?',
+              a: 'Green "ON" means you\'re logged in and the extension can save jobs. Grey "OFF" means you\'re not logged in — open the popup and sign in to activate it.',
             },
           ].map((faq) => (
             <div key={faq.q} className="border-b border-slate-100 last:border-0 pb-5 last:pb-0">
