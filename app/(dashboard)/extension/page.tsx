@@ -1,6 +1,6 @@
 'use client'
 
-import { Download, Puzzle, MousePointer2, Shield, Check, Zap, Bell, Bot, FolderOpen, ToggleRight, Chrome } from 'lucide-react'
+import { Download, Puzzle, MousePointer2, Shield, Check, Zap, Bell, Bot, FolderOpen, ToggleRight, Globe } from 'lucide-react'
 
 const steps = [
   {
@@ -19,7 +19,7 @@ const steps = [
   },
   {
     step: '03',
-    icon: Chrome,
+    icon: Globe,
     title: 'Open Chrome Extensions page',
     desc: 'Open Chrome (or Brave/Edge) and go to the extensions page. You can type chrome://extensions in the address bar and press Enter.',
     note: 'For Brave use brave://extensions — for Edge use edge://extensions.',
