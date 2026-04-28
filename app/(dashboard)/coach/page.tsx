@@ -237,8 +237,8 @@ export default function CoachPage() {
       {/* ── History Drawer ── */}
       {historyOpen && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm" onClick={() => setHistoryOpen(false)} />
-          <div className="fixed right-0 top-0 bottom-0 z-50 w-80 bg-white shadow-2xl flex flex-col">
+          <div className="fixed inset-0 z-40 bg-black/10 md:left-[244px] md:top-0 top-16" onClick={() => setHistoryOpen(false)} />
+          <div className="fixed right-0 top-16 md:top-0 bottom-0 z-50 w-80 bg-white shadow-2xl flex flex-col">
             <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-stone-100">
               <div className="flex items-center gap-2">
                 <h2 className="text-[11px] font-black uppercase tracking-widest text-stone-400">History</h2>
