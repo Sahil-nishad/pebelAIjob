@@ -54,30 +54,41 @@ export const authOptions: NextAuthOptions = {
 
         try {
           const supabase = getSupabaseServer()
-          const { data: existing } = await supabase
+          // Use limit(1) instead of maybeSingle() — avoids errors when duplicate rows exist
+          const { data: rows } = await supabase
             .from('users')
             .select('id')
             .eq('email', user.email)
-            .maybeSingle()
+            .limit(1)
+
+          const existing = rows?.[0] ?? null
 
           if (existing) {
             user.id = existing.id
           } else {
-            // upsert handles race conditions and duplicate emails gracefully
-            const { data: upserted, error } = await supabase
+            // Insert new user row (no upsert — email column has no unique constraint)
+            const { data: inserted, error: insertError } = await supabase
               .from('users')
-              .upsert(
-                { email: user.email, name: user.name },
-                { onConflict: 'email', ignoreDuplicates: false }
-              )
+              .insert({ email: user.email, name: user.name })
               .select('id')
               .single()
-            if (error) {
-              console.error('[nextauth] Failed to upsert user in DB:', error.message)
-              return false
+
+            if (insertError) {
+              // Race condition: another request may have just inserted the row
+              const { data: retry } = await supabase
+                .from('users')
+                .select('id')
+                .eq('email', user.email)
+                .limit(1)
+              const retryUser = retry?.[0] ?? null
+              if (!retryUser) {
+                console.error('[nextauth] Failed to create user:', insertError.message)
+                return false
+              }
+              user.id = retryUser.id
+            } else {
+              user.id = inserted.id
             }
-            if (!upserted) return false
-            user.id = upserted.id
           }
         } catch (err) {
           console.error('[nextauth] signIn callback error:', err)
