@@ -856,7 +856,7 @@ function findApplyIntentElement(target, site) {
 
   const text = getElementActionText(clickable);
   if (isFinalSubmitText(text)) return clickable;
-  if (!isKnownPortal && isApplyIntentText(text)) return clickable;
+  if (isApplyIntentText(text)) return clickable;
   return null;
 }
 
