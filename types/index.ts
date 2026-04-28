@@ -25,6 +25,7 @@ export type ApplicationSource =
   | 'company_site'
   | 'cold'
   | 'other'
+  | 'chrome_extension'
 
 export type ReminderType =
   | 'follow_up'

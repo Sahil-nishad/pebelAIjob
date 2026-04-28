@@ -1051,6 +1051,13 @@ function extractSalaryRange(text) {
     return { salary: '', salary_min: null, salary_max: null };
   }
 
+  // Skip experience ranges like "0-1 years", "2 Yrs", "0 to 1 year"
+  // unless a currency symbol or LPA/lakhs keyword is also present
+  if (/\b\d[\d\s]*(?:[-–to]+\s*)?\d*\s*(?:years?|yrs?)\b/i.test(source) &&
+      !/[$₹€£]|lpa|lakhs?|per\s+annum|ctc/i.test(source)) {
+    return { salary: '', salary_min: null, salary_max: null };
+  }
+
   const rangeMatch = source.match(/(?:\$|usd|inr|₹|€|£)?\s*([\d,.kK]+)\s*(?:-|to|–|—)\s*(?:\$|usd|inr|₹|€|£)?\s*([\d,.kK]+)/i);
   if (rangeMatch) {
     const salaryMin = parseSalaryValue(rangeMatch[1]);
@@ -1256,12 +1263,12 @@ function extractJobData() {
     }
   }
 
-  // Last-resort title: og:title stripped of company suffix
+  // Last-resort title: og:title (site suffixes already stripped by cleanJobTitle)
   if (!baseData.job_title) {
     const ogTitle = cleanJobTitle(readMeta('meta[property="og:title"]') || '');
     if (ogTitle && !FAKE_JOB_TITLE_PATTERNS.some((p) => p.test(ogTitle))) {
-      // Strip " at Company" or " | Company" suffix if present
-      baseData.job_title = ogTitle.replace(/\s+(?:at|@)\s+.+$/i, '').replace(/\s*[|–—-]\s*.+$/, '').trim() || ogTitle;
+      // Only strip " at Company" suffix — leave everything else intact
+      baseData.job_title = ogTitle.replace(/\s+(?:at|@)\s+[A-Z].+$/i, '').trim() || ogTitle;
     }
   }
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 
 const applicationStatuses = ['applied', 'phone_screen', 'interviewing', 'offer', 'rejected', 'ghosted'] as const
-const applicationSources = ['linkedin', 'indeed', 'referral', 'company_site', 'cold', 'other'] as const
+const applicationSources = ['linkedin', 'indeed', 'referral', 'company_site', 'cold', 'other', 'chrome_extension'] as const
 const reminderTypes = ['follow_up', 'thank_you', 'check_in', 'deadline', 'interview_prep'] as const
 const emailDigests = ['daily', 'weekly', 'instant', 'never'] as const
 const jobTypes = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Any'] as const
@@ -155,9 +155,12 @@ export function normalizeApplicationInput(body: ObjectBody, partial = false): Va
 
   for (const field of ['salary_min', 'salary_max'] as const) {
     if (field in body) {
-      const value = optionalNumber(body[field])
-      if (value === undefined) return { error: jsonError(`Invalid ${field}.`) }
-      updates[field] = value
+      // Values below 100 are likely noise (e.g. experience "0-1 years" parsed as 0/1)
+      const raw = body[field]
+      const num = raw == null || raw === '' ? null
+        : typeof raw === 'number' || typeof raw === 'string' ? Number(raw) : NaN
+      if (num !== null && !Number.isFinite(num)) return { error: jsonError(`Invalid ${field}.`) }
+      updates[field] = (num !== null && num < 100) ? null : (num === null ? null : Math.round(num))
     }
   }
 
