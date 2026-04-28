@@ -11,6 +11,8 @@
 }
 
 :root {
+  --font-sora: "Segoe UI", "Aptos", system-ui, -apple-system, sans-serif;
+  --font-nunito: "Segoe UI", "Aptos", system-ui, -apple-system, sans-serif;
   --bg-primary: #F7F5EF;
   --bg-secondary: #FFFFFF;
   --bg-tertiary: #EEF4EF;

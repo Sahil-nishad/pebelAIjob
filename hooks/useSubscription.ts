@@ -8,7 +8,7 @@ export function useSubscription() {
   const isPro = profile?.plan === 'pro'
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const checkLimit = (_feature: 'applications' | 'ai' | 'resume') => {
+  const checkLimit = (_feature: 'applications' | 'ai') => {
     if (isPro) return { allowed: true, reason: '' }
 
     return {

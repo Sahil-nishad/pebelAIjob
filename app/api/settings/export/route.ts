@@ -11,16 +11,15 @@ export async function GET(req: NextRequest) {
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 
-  const [profile, apps, reminders, sessions, resumeAnalyses, activityLog] = await Promise.all([
+  const [profile, apps, reminders, sessions, activityLog] = await Promise.all([
     supabase.from('users').select(PROFILE_COLUMNS).eq('id', user.id).single(),
     supabase.from('applications').select('*').eq('user_id', user.id),
     supabase.from('reminders').select('*').eq('user_id', user.id),
     supabase.from('coach_sessions').select('*').eq('user_id', user.id),
-    supabase.from('resume_analyses').select('*').eq('user_id', user.id),
     supabase.from('activity_log').select('*').eq('user_id', user.id),
   ])
 
-  const errors = [profile, apps, reminders, sessions, resumeAnalyses, activityLog].filter(
+  const errors = [profile, apps, reminders, sessions, activityLog].filter(
     (result) => result.error && !isMissingTableError(result.error, 'applications') && !isMissingTableError(result.error, 'coach_sessions')
   )
 
@@ -40,7 +39,6 @@ export async function GET(req: NextRequest) {
     coach_sessions: sessions.error && isMissingTableError(sessions.error, 'coach_sessions')
       ? listCoachSessions(user.id)
       : sessions.data || [],
-    resume_analyses: resumeAnalyses.data || [],
     activity_log: activityLog.data || [],
   }
 

@@ -11,7 +11,6 @@ export async function DELETE(req: NextRequest) {
 
   const deletions = [
     { table: 'reminders', query: supabase.from('reminders').delete().eq('user_id', user.id) },
-    { table: 'resume_analyses', query: supabase.from('resume_analyses').delete().eq('user_id', user.id) },
     { table: 'activity_log', query: supabase.from('activity_log').delete().eq('user_id', user.id) },
     { table: 'coach_sessions', query: supabase.from('coach_sessions').delete().eq('user_id', user.id) },
     { table: 'applications', query: supabase.from('applications').delete().eq('user_id', user.id) },

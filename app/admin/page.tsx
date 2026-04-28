@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Users, Briefcase, MessageSquare, Bell, FileText, Activity, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
+import { Users, Briefcase, MessageSquare, Bell, Activity, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 
 const ADMIN_EMAIL = 'sahilsahani13@gmail.com'
 
@@ -12,7 +12,6 @@ interface AdminData {
   applications: Record<string, unknown>[]
   coachSessions: Record<string, unknown>[]
   reminders: Record<string, unknown>[]
-  resumeAnalyses: Record<string, unknown>[]
   activityLog: Record<string, unknown>[]
 }
 
@@ -126,7 +125,6 @@ export default function AdminPage() {
     { label: 'Applications', value: data.applications.length, icon: Briefcase, color: 'bg-emerald-50 text-emerald-600' },
     { label: 'Coach Sessions', value: data.coachSessions.length, icon: MessageSquare, color: 'bg-purple-50 text-purple-600' },
     { label: 'Reminders', value: data.reminders.length, icon: Bell, color: 'bg-amber-50 text-amber-600' },
-    { label: 'Resume Analyses', value: data.resumeAnalyses.length, icon: FileText, color: 'bg-rose-50 text-rose-600' },
     { label: 'Activity Events', value: data.activityLog.length, icon: Activity, color: 'bg-slate-100 text-slate-600' },
   ]
 
@@ -194,14 +192,6 @@ export default function AdminPage() {
           <Table
             rows={data.reminders}
             cols={['ID', 'User ID', 'Title', 'Reminder Type', 'Due Date', 'Is Done', 'Created At']}
-          />
-        </Section>
-
-        {/* Resume Analyses */}
-        <Section icon={FileText} title="Resume Analyses" count={data.resumeAnalyses.length} color="bg-rose-50 text-rose-600">
-          <Table
-            rows={data.resumeAnalyses}
-            cols={['ID', 'User ID', 'Score', 'Created At']}
           />
         </Section>
 

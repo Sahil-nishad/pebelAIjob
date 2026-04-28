@@ -111,16 +111,6 @@ export interface CoachSession {
   created_at: string
 }
 
-export interface ResumeAnalysis {
-  id: string
-  user_id: string
-  application_id: string | null
-  resume_text: string
-  job_description: string
-  analysis: AnalysisResult
-  score: number
-  created_at: string
-}
 
 export interface AnalysisResult {
   score: number
