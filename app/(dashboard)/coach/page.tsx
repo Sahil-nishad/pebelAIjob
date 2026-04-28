@@ -282,15 +282,7 @@ export default function CoachPage() {
             <div className="max-w-2xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
 
               {/* Hero */}
-              <div className="relative text-center mb-8">
-                <button
-                  onClick={() => setHistoryOpen(true)}
-                  className="absolute right-0 top-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-200 bg-white text-stone-500 text-[12px] font-semibold hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50 transition-all"
-                >
-                  <History className="w-3.5 h-3.5" />
-                  History
-                  {sessions.length > 0 && <span className="bg-stone-100 text-stone-500 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{sessions.length}</span>}
-                </button>
+              <div className="text-center mb-8">
                 <h2 className="text-[2.6rem] sm:text-5xl font-black tracking-[-0.03em] text-slate-950 mb-3 leading-none">
                   AI Coach
                 </h2>
@@ -396,6 +388,46 @@ export default function CoachPage() {
                   </button>
                 )}
               </div>
+
+              {/* Past Sessions — below form card */}
+              {sessions.length > 0 && (
+                <div className="mt-6 mb-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-stone-400">Past Sessions</span>
+                    <button
+                      onClick={() => setHistoryOpen(true)}
+                      className="text-[12px] font-semibold text-emerald-700 hover:text-emerald-800 transition-colors"
+                    >
+                      View all ({sessions.length})
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {sessions.slice(0, 3).map(session => (
+                      <button
+                        key={session.id}
+                        onClick={() => loadSession(session)}
+                        className="w-full flex items-center gap-3 p-3.5 bg-white rounded-xl border border-stone-100 hover:border-emerald-200 hover:shadow-sm transition-all text-left group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center text-sm font-black text-stone-600 flex-shrink-0">
+                          {session.company.charAt(0)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-stone-800 group-hover:text-emerald-900 transition-colors truncate">{session.company}</p>
+                          <p className="text-xs text-stone-400 truncate">{session.role || 'No role specified'}</p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${typeColor[session.session_type as SessionType] || 'text-slate-600 bg-slate-100'}`}>
+                            {session.session_type}
+                          </span>
+                          <span className="text-[10px] text-stone-400">
+                            {new Date(session.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : (
