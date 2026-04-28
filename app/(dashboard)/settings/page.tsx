@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import {
-  Download, Trash2, Send, CheckCircle2, Loader2,
+  Trash2, Send, CheckCircle2, Loader2,
   LogOut, Pencil, ChevronRight, Sparkles, BadgeCheck,
   User, Settings, Bell, ShieldAlert, Lock,
 } from 'lucide-react'
@@ -214,24 +214,7 @@ export default function SettingsPage() {
   }
 
   // ── Security / Danger ────────────────────────────────────────────────────
-  const [deleteConfirm,   setDeleteConfirm]   = useState('')
-  const [deletingApps,    setDeletingApps]    = useState(false)
-  const [deletingAccount, setDeletingAccount] = useState(false)
-  const [exporting,       setExporting]       = useState(false)
-
-  async function exportData() {
-    setExporting(true)
-    try {
-      const res = await authFetch('/api/settings/export')
-      if (!res.ok) throw new Error()
-      const blob = await res.blob()
-      const url  = URL.createObjectURL(blob)
-      const a    = document.createElement('a')
-      a.href = url; a.download = `jobflow-export-${new Date().toISOString().slice(0, 10)}.json`
-      a.click(); URL.revokeObjectURL(url)
-      toast.success('Data exported!')
-    } catch { toast.error('Failed to export') } finally { setExporting(false) }
-  }
+  const [deletingApps, setDeletingApps] = useState(false)
 
   async function deleteAllApps() {
     if (!confirm('Delete ALL applications? This cannot be undone.')) return
@@ -241,17 +224,6 @@ export default function SettingsPage() {
       if (!res.ok) throw new Error()
       toast.success('All applications deleted')
     } catch { toast.error('Failed to delete applications') } finally { setDeletingApps(false) }
-  }
-
-  async function deleteAccount() {
-    if (!confirm('FINAL WARNING: This will permanently delete your account and all data.')) return
-    setDeletingAccount(true)
-    try {
-      const res = await authFetch('/api/settings/delete-account', { method: 'DELETE' })
-      if (!res.ok) throw new Error()
-      toast.success('Account deleted. Redirecting…')
-      window.location.href = '/login'
-    } catch { toast.error('Failed to delete account') } finally { setDeletingAccount(false) }
   }
 
   const toggleJobType = (type: string) =>
@@ -342,24 +314,8 @@ export default function SettingsPage() {
 
           <p className="text-[16px] font-bold text-slate-900 mb-4">Security &amp; Data</p>
 
-          {/* Export */}
-          <div className="bg-slate-50 rounded-2xl p-4 mb-3 flex items-center justify-between">
-            <div>
-              <p className="text-[14px] font-bold text-slate-900">Export All Data</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">Download everything as JSON.</p>
-            </div>
-            <button
-              onClick={exportData}
-              disabled={exporting}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-[12px] font-medium text-slate-600 bg-white disabled:opacity-50"
-            >
-              {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-              Export
-            </button>
-          </div>
-
           {/* Delete apps */}
-          <div className="bg-red-50 rounded-2xl p-4 mb-3 border border-red-100 flex items-center justify-between">
+          <div className="bg-red-50 rounded-2xl p-4 border border-red-100 flex items-center justify-between">
             <div>
               <p className="text-[14px] font-bold text-red-600">Delete All Applications</p>
               <p className="text-[11px] text-slate-400 mt-0.5">Cannot be undone.</p>
@@ -371,27 +327,6 @@ export default function SettingsPage() {
             >
               {deletingApps ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
               Delete
-            </button>
-          </div>
-
-          {/* Delete account */}
-          <div className="bg-red-50 rounded-2xl p-4 border border-red-100">
-            <p className="text-[14px] font-bold text-red-600 mb-1">Delete Account</p>
-            <p className="text-[11px] text-slate-400 mb-3">Type <strong>DELETE MY ACCOUNT</strong> to confirm.</p>
-            <Input
-              id="deleteConfirmMobile"
-              placeholder="DELETE MY ACCOUNT"
-              value={deleteConfirm}
-              onChange={e => setDeleteConfirm(e.target.value)}
-              className="mb-3"
-            />
-            <button
-              onClick={deleteAccount}
-              disabled={deleteConfirm !== 'DELETE MY ACCOUNT' || deletingAccount}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-600 text-white text-[13px] font-bold disabled:opacity-40"
-            >
-              {deletingAccount ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-              Delete Account
             </button>
           </div>
         </div>
@@ -723,25 +658,9 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* ── SECURITY TAB (Danger Zone + Export) ── */}
+          {/* ── SECURITY TAB ── */}
           {activeTab === 'security' && (
             <div className="space-y-4">
-              {/* Export */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm flex items-center justify-between">
-                <div>
-                  <p className="text-[14px] font-bold text-slate-900">Export All Data</p>
-                  <p className="text-[12px] text-slate-400 mt-0.5">Download everything as a JSON file.</p>
-                </div>
-                <button
-                  onClick={exportData}
-                  disabled={exporting}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-[13px] font-medium text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                  Export
-                </button>
-              </div>
-
               {/* Delete apps */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-red-100 flex items-center justify-between">
                 <div>
@@ -756,28 +675,6 @@ export default function SettingsPage() {
                   {deletingApps ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                   Delete
                 </button>
-              </div>
-
-              {/* Delete account */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-red-100">
-                <p className="text-[14px] font-bold text-red-600 mb-1">Delete Account</p>
-                <p className="text-[12px] text-slate-400 mb-4">Type <strong>DELETE MY ACCOUNT</strong> to confirm permanent deletion.</p>
-                <div className="flex gap-2">
-                  <Input
-                    id="deleteConfirm"
-                    placeholder='DELETE MY ACCOUNT'
-                    value={deleteConfirm}
-                    onChange={e => setDeleteConfirm(e.target.value)}
-                  />
-                  <button
-                    onClick={deleteAccount}
-                    disabled={deleteConfirm !== 'DELETE MY ACCOUNT' || deletingAccount}
-                    className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 text-white text-[13px] font-bold hover:bg-red-700 disabled:opacity-40 transition-colors cursor-pointer"
-                  >
-                    {deletingAccount ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                    Delete
-                  </button>
-                </div>
               </div>
             </div>
           )}
