@@ -3,6 +3,7 @@ import GoogleProvider from 'next-auth/providers/google'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { getSupabaseServer } from './supabase'
+import { hashToken } from './api-validation'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,11 +17,36 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
+        ott: { label: 'One-time token', type: 'text' },
       },
       async authorize(credentials) {
+        const supabase = getSupabaseServer()
+
+        // One-time token path: auto-login after email verification
+        if (credentials?.ott) {
+          const { data: ottRecord } = await supabase
+            .from('auto_login_tokens')
+            .select('user_id, expires_at')
+            .eq('token', hashToken(credentials.ott))
+            .maybeSingle()
+
+          if (!ottRecord || new Date(ottRecord.expires_at) < new Date()) return null
+
+          // Consume the token immediately
+          await supabase.from('auto_login_tokens').delete().eq('token', hashToken(credentials.ott))
+
+          const { data: user } = await supabase
+            .from('users')
+            .select('id, email, name')
+            .eq('id', ottRecord.user_id)
+            .maybeSingle()
+
+          return user ? { id: user.id, email: user.email, name: user.name } : null
+        }
+
+        // Normal email + password path
         if (!credentials?.email || !credentials?.password) return null
 
-        const supabase = getSupabaseServer()
         const { data: user, error } = await supabase
           .from('users')
           .select('id, email, name, password_hash, email_verified')

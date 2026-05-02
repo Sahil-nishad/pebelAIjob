@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -48,12 +48,28 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const ott = searchParams.get('ott') || ''
   const routeError =
     searchParams.get('hint') === 'exists'
       ? 'An account with this email already exists. Sign in below.'
       : getOAuthErrorMessage(searchParams.get('error'))
   const visibleError = error || routeError
   const verifiedSuccess = searchParams.get('verified') === '1'
+
+  // Auto-sign in using the one-time token issued after email verification
+  useEffect(() => {
+    if (!ott) return
+    setLoading(true)
+    signIn('credentials', { ott, redirect: false }).then((result) => {
+      if (result?.ok) {
+        router.push('/dashboard')
+      } else {
+        setLoading(false)
+        setError('Auto sign-in failed. Please enter your credentials below.')
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

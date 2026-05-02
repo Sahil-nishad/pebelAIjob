@@ -28,18 +28,18 @@ function buildVerificationHtml(firstName: string, verifyUrl: string) {
           </tr>
           <tr>
             <td style="background:#ffffff;border-radius:16px;border:1px solid #e2e8f0;padding:40px;">
-              <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0f172a;text-align:center;">Verify your email</h1>
+              <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0f172a;text-align:center;">Welcome to PebelAI, ${safe(firstName)}!</h1>
               <p style="margin:0 0 28px;font-size:15px;color:#64748b;line-height:1.6;text-align:center;">
-                Hi ${safe(firstName)}, welcome to PebelAI!<br/>Click the button below to activate your account.<br/>This link expires in <strong style="color:#0f172a;">24 hours</strong>.
+                You're one step away from your job tracker.<br/>Activate your account using the button below.<br/>This link is valid for <strong style="color:#0f172a;">24 hours</strong>.
               </p>
               <div style="text-align:center;margin-bottom:28px;">
                 <a href="${safe(verifyUrl)}" style="display:inline-block;background:linear-gradient(135deg,#059669,#10b981);color:#ffffff;font-size:15px;font-weight:600;padding:14px 36px;border-radius:10px;text-decoration:none;">
-                  Verify Email
+                  Activate my account
                 </a>
               </div>
               <div style="border-top:1px solid #f1f5f9;margin:0 0 24px;"></div>
               <p style="margin:0;font-size:13px;color:#94a3b8;text-align:center;">
-                Didn't create an account? You can safely ignore this email.
+                If you didn't create this account, no action is needed — just ignore this email.
               </p>
             </td>
           </tr>
@@ -131,9 +131,15 @@ export async function POST(req: NextRequest) {
       })
       await transporter.sendMail({
         from: process.env.SMTP_FROM_EMAIL?.trim() || `"PebelAI" <${smtpUser}>`,
+        replyTo: process.env.SMTP_FROM_EMAIL?.trim() || smtpUser,
         to: email,
-        subject: 'Verify your PebelAI email address',
-        text: `Hi ${firstName},\n\nVerify your email to activate your PebelAI account (expires in 24 hours):\n\n${verifyUrl}\n\nIf you didn't sign up, ignore this email.\n\n- PebelAI`,
+        subject: `${firstName}, activate your PebelAI account`,
+        headers: {
+          'X-Mailer': 'PebelAI',
+          Precedence: 'bulk',
+          'List-Unsubscribe': `<mailto:${smtpUser}?subject=unsubscribe>`,
+        },
+        text: `Hi ${firstName},\n\nThanks for signing up for PebelAI — your job search tracker.\n\nClick the link below to activate your account (expires in 24 hours):\n\n${verifyUrl}\n\nIf you didn't create this account, you can safely ignore this email.\n\n— The PebelAI Team`,
         html: buildVerificationHtml(firstName, verifyUrl),
       })
     } catch (err) {
