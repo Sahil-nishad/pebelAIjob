@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { LayoutDashboard, MessageSquare, Bell, BarChart3, Loader2, Eye, EyeOff } from 'lucide-react'
+import { signIn } from 'next-auth/react'
 
 
 const features = [
