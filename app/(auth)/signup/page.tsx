@@ -7,8 +7,6 @@ import Image from 'next/image'
 import { LayoutDashboard, MessageSquare, Bell, BarChart3, Loader2, Eye, EyeOff } from 'lucide-react'
 import { signIn } from 'next-auth/react'
 
-const jobTypes = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Any']
-const experienceLevels = ['Entry', 'Mid', 'Senior', 'Executive']
 
 const features = [
   { icon: LayoutDashboard, title: 'Kanban Tracking', desc: 'A streamlined system to manage every stage of your job search.' },
@@ -24,8 +22,6 @@ function SignupForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [jobType, setJobType] = useState('Full-time')
-  const [experience, setExperience] = useState('Mid')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -39,7 +35,7 @@ function SignupForm() {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, job_type: jobType, experience_level: experience }),
+      body: JSON.stringify({ name, email, password }),
     })
 
     const data = await res.json()
@@ -168,33 +164,6 @@ function SignupForm() {
                 <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[12px] font-medium text-slate-600 mb-1.5">Looking for</label>
-              <select
-                value={jobType}
-                onChange={e => setJobType(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-[14px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all cursor-pointer"
-              >
-                {jobTypes.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[12px] font-medium text-slate-600 mb-1.5">Experience level</label>
-              <div className="flex gap-2">
-                {experienceLevels.map(level => (
-                  <button
-                    key={level}
-                    type="button"
-                    onClick={() => setExperience(level)}
-                    className={`flex-1 py-2 rounded-lg text-[12px] font-semibold transition-all ${experience === level ? 'bg-[#16a34a] text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-                  >
-                    {level}
-                  </button>
-                ))}
               </div>
             </div>
 
