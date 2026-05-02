@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { LayoutDashboard, MessageSquare, Bell, BarChart3, Loader2, Eye, EyeOff } from 'lucide-react'
-import { signIn } from 'next-auth/react'
 
 
 const features = [
@@ -50,13 +49,7 @@ function SignupForm() {
       return
     }
 
-    const result = await signIn('credentials', { email, password, redirect: false })
-    if (result?.error) {
-      setError('Account created! Auto sign-in failed — please sign in below.')
-      setLoading(false)
-    } else {
-      router.push('/dashboard')
-    }
+    router.push(`/verify-email?email=${encodeURIComponent(email)}`)
   }
 
   async function handleGoogleSignIn() {

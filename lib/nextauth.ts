@@ -23,7 +23,7 @@ export const authOptions: NextAuthOptions = {
         const supabase = getSupabaseServer()
         const { data: user, error } = await supabase
           .from('users')
-          .select('id, email, name, password_hash')
+          .select('id, email, name, password_hash, email_verified')
           .eq('email', credentials.email.toLowerCase().trim())
           .maybeSingle()
 
@@ -36,6 +36,8 @@ export const authOptions: NextAuthOptions = {
 
         const valid = await bcrypt.compare(credentials.password, user.password_hash)
         if (!valid) return null
+
+        if (!user.email_verified) throw new Error('EmailNotVerified')
 
         return { id: user.id, email: user.email, name: user.name }
       },
@@ -69,7 +71,7 @@ export const authOptions: NextAuthOptions = {
             // Insert new user row (no upsert — email column has no unique constraint)
             const { data: inserted, error: insertError } = await supabase
               .from('users')
-              .insert({ email: user.email, name: user.name })
+              .insert({ email: user.email, name: user.name, email_verified: true })
               .select('id')
               .single()
 

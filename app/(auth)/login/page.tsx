@@ -32,6 +32,9 @@ function getOAuthErrorMessage(code: string | null): string {
     case 'OAuthAccountNotLinked': return 'This email is already registered. Sign in with your password instead.'
     case 'Callback': return 'Sign-in callback error. Please try again.'
     case 'AccessDenied': return 'Access denied. Please try again.'
+    case 'EmailNotVerified': return 'Please verify your email first. Check your inbox for the verification link.'
+    case 'InvalidVerificationLink': return 'Invalid or already used verification link. Please sign up again.'
+    case 'VerificationLinkExpired': return 'Verification link expired. Please sign up again to get a new one.'
     default: return code ? 'Sign-in failed. Please try again.' : ''
   }
 }
@@ -50,6 +53,7 @@ function LoginForm() {
       ? 'An account with this email already exists. Sign in below.'
       : getOAuthErrorMessage(searchParams.get('error'))
   const visibleError = error || routeError
+  const verifiedSuccess = searchParams.get('verified') === '1'
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -131,6 +135,12 @@ function LoginForm() {
           <p className="text-[14px] text-slate-400 mb-8">
             Sign in to your curated workspace
           </p>
+
+          {verifiedSuccess && (
+            <div className="mb-5 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-[13px] text-emerald-700 font-medium">
+              Email verified! You can now sign in.
+            </div>
+          )}
 
           {visibleError && (
             <div className="mb-5 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-[13px] text-red-600">
