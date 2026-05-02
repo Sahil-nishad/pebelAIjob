@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Sign In — Pebel AI',
-  description: 'Sign in to your Pebel AI workspace to track applications, practice interviews, and land your next job.',
+  title: 'Log in to PebelAI',
+  description: 'Log in to your PebelAI account to track job applications, practice interviews with AI, and manage your job search.',
   alternates: { canonical: 'https://www.pebelai.com/login' },
+  robots: { index: false, follow: true },
   openGraph: {
-    title: 'Sign In — Pebel AI',
-    description: 'Sign in to your Pebel AI workspace.',
+    title: 'Log in to PebelAI',
+    description: 'Log in to your PebelAI account.',
     url: 'https://www.pebelai.com/login',
   },
 }

@@ -2,14 +2,51 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 
+const BASE_URL = 'https://www.pebelai.com'
+
 export const metadata: Metadata = {
-  title: 'About PebelAI',
-  description: 'Learn about PebelAI — the AI-powered job tracker and interview coach built by Dune AI.',
+  title: 'About PebelAI — Built for Indian Job Seekers',
+  description:
+    'PebelAI is built by Sahil Nishad to help Indian job seekers track applications, prepare for interviews with AI, and never miss a follow-up. Free forever.',
+  alternates: { canonical: `${BASE_URL}/about` },
+  openGraph: {
+    title: 'About PebelAI — Built for Indian Job Seekers',
+    description: 'The story behind PebelAI — and the founder building it.',
+    url: `${BASE_URL}/about`,
+    type: 'profile',
+  },
+}
+
+const personJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  '@id': `${BASE_URL}/about#person`,
+  name: 'Sahil Nishad',
+  jobTitle: 'Founder, PebelAI',
+  description:
+    'Founder of PebelAI — an AI-powered job application tracker and interview coach for Indian job seekers.',
+  url: `${BASE_URL}/about`,
+  worksFor: { '@id': `${BASE_URL}/#org` },
+  sameAs: [
+    'https://github.com/Sahil-nishad',
+  ],
+  knowsAbout: ['Job Search', 'Interview Preparation', 'Resume Writing', 'AI', 'Software Engineering', 'Career Coaching'],
+}
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: BASE_URL },
+    { '@type': 'ListItem', position: 2, name: 'About', item: `${BASE_URL}/about` },
+  ],
 }
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {/* Nav */}
       <header className="border-b border-slate-100">
         <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
