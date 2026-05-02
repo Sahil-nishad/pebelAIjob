@@ -501,24 +501,13 @@ export default function LandingPage() {
               </div>
 
               {/* Download CTA */}
-              <a
-                href="https://chromewebstore.google.com/detail/pebelai/YOUR_EXTENSION_ID"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="/pebelai-extension.zip" download="pebelai-extension.zip">
                 <button className="flex items-center gap-2.5 h-12 px-7 rounded-xl bg-slate-900 text-white text-[14px] font-semibold hover:bg-slate-800 transition-colors shadow-sm">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" fill="#4285F4" />
-                    <circle cx="12" cy="12" r="4" fill="white" />
-                    <path d="M12 8 L20.66 8" stroke="#EA4335" strokeWidth="2.5" />
-                    <path d="M12 8 C9 8 6.34 9.5 4.77 11.83" stroke="#FBBC05" strokeWidth="2.5" />
-                    <path d="M4.77 11.83 C6.34 14.17 9 15.67 12 15.67 C15 15.67 17.66 14.17 19.23 11.83" stroke="#34A853" strokeWidth="2.5" />
-                  </svg>
-                  Add to Chrome — Free
                   <Download className="w-4 h-4" />
+                  Download Extension — Free
                 </button>
               </a>
-              <p className="text-[12px] text-slate-400 mt-3">Chrome Web Store · Reviewed by Google</p>
+              <p className="text-[12px] text-slate-400 mt-3">Free early access · Manual install · Works on Chrome, Brave, Edge</p>
             </motion.div>
 
             {/* Right — step by step */}
@@ -534,8 +523,8 @@ export default function LandingPage() {
               {[
                 {
                   step: '01',
-                  title: 'Install from Chrome Web Store',
-                  desc: 'Click "Add to Chrome" above. The extension installs in seconds — no sign-in required at this step.',
+                  title: 'Download & install the extension',
+                  desc: 'Click "Download Extension" above, unzip the file, then load it in Chrome via chrome://extensions → Developer mode → Load unpacked.',
                   icon: Download,
                 },
                 {
