@@ -232,7 +232,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h3 className="text-[15px] font-semibold text-slate-900">Activity Heatmap</h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">Each square = one day. Darker = more applications.</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Each square = one day · last 6 months · darker = more applications.</p>
               </div>
               {streakData && streakData.currentStreak > 0 && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 border border-orange-100 rounded-full">

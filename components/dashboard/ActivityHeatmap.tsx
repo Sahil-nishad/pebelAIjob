@@ -32,7 +32,7 @@ export function ActivityHeatmap({ days, total }: Props) {
     const endDate = new Date(today)
     endDate.setDate(today.getDate() + daysToSat)
 
-    const NUM_WEEKS = 20
+    const NUM_WEEKS = 26
     const startDate = new Date(endDate)
     startDate.setDate(endDate.getDate() - NUM_WEEKS * 7 + 1) // always a Sunday
 
@@ -147,7 +147,7 @@ export function ActivityHeatmap({ days, total }: Props) {
       {/* Footer */}
       <div className="flex items-center justify-between mt-4">
         <p className="text-[11px] text-slate-400">
-          <span className="font-semibold text-slate-600">{total}</span> applications in the last 20 weeks
+          <span className="font-semibold text-slate-600">{total}</span> applications in the last 6 months
         </p>
         <div className="flex items-center gap-1">
           <span className="text-[9px] text-slate-400 mr-0.5">Less</span>

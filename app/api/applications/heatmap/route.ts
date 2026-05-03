@@ -1,36 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth, unauthorized } from '@/lib/auth'
 
-function toDateStr(d: Date) {
-  return d.toISOString().slice(0, 10)
-}
-
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req)
   if (!auth) return unauthorized()
 
   const { user, supabase } = auth
 
+  // 26 weeks ≈ 6 months
   const since = new Date()
-  since.setDate(since.getDate() - 140) // 20 weeks
+  since.setDate(since.getDate() - 182)
+  const sinceStr = since.toISOString().slice(0, 10)
 
-  const { data: logs, error } = await supabase
-    .from('activity_log')
-    .select('created_at')
+  const { data: apps, error } = await supabase
+    .from('applications')
+    .select('applied_date')
     .eq('user_id', user.id)
-    .eq('event_type', 'applied')
-    .gte('created_at', since.toISOString())
+    .gte('applied_date', sinceStr)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const counts = new Map<string, number>()
-  for (const log of logs ?? []) {
-    const ds = toDateStr(new Date(log.created_at))
+  for (const app of apps ?? []) {
+    const ds = (app.applied_date as string).slice(0, 10)
     counts.set(ds, (counts.get(ds) ?? 0) + 1)
   }
 
   const days = Array.from(counts.entries()).map(([date, count]) => ({ date, count }))
-  const total = (logs ?? []).length
+  const total = (apps ?? []).length
 
   return NextResponse.json({ days, total })
 }
