@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
   Briefcase, Calendar, BarChart3, Plus, Clock,
-  CheckCircle2, Loader2, Send, Upload, Settings,
+  CheckCircle2, Loader2, Send, Settings,
   Bot, Bell, TrendingUp, ChevronRight, AlertCircle, X, Puzzle,
+  Flame, Zap, Target,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { statusConfig, cn } from '@/lib/utils'
@@ -14,6 +15,7 @@ import { useApplications } from '@/hooks/useApplications'
 import { useUser } from '@/hooks/useUser'
 import { authFetch } from '@/lib/api'
 import type { Reminder } from '@/types'
+import { ActivityHeatmap } from '@/components/dashboard/ActivityHeatmap'
 
 function greeting() {
   const h = new Date().getHours()
@@ -22,10 +24,56 @@ function greeting() {
   return 'Good evening'
 }
 
+type MsgItem = { icon: React.ElementType; iconColor: string; stat: string; body: string }
+
+function buildMotivation(p: {
+  total: number; interviews: number; streak: number; todayCount: number; weeklyCount: number
+}): MsgItem[] {
+  const msgs: MsgItem[] = []
+
+  if (p.total === 0) {
+    msgs.push({ icon: Target, iconColor: 'text-slate-400', stat: '0 applications', body: 'Your first application is one click away. Start building your pipeline today.' })
+  } else if (p.total < 10) {
+    msgs.push({ icon: TrendingUp, iconColor: 'text-emerald-500', stat: `${p.total} applications total`, body: 'Aim for 5 this week to build real momentum and start seeing responses.' })
+  } else if (p.total < 50) {
+    msgs.push({ icon: TrendingUp, iconColor: 'text-emerald-500', stat: `${p.total} applications submitted`, body: "Most candidates quit before 10. You're already in the active minority." })
+  } else {
+    msgs.push({ icon: TrendingUp, iconColor: 'text-emerald-500', stat: `${p.total} applications submitted`, body: "You're in the top tier of active job seekers. Volume like this gets results." })
+  }
+
+  if (p.streak >= 7) {
+    msgs.push({ icon: Zap, iconColor: 'text-amber-500', stat: `${p.streak}-day streak`, body: "You're outworking 90% of job seekers right now. Don't break the chain." })
+  } else if (p.streak >= 3) {
+    msgs.push({ icon: Zap, iconColor: 'text-amber-500', stat: `${p.streak}-day streak`, body: 'Consistency compounds — every day you apply increases your surface area for luck.' })
+  } else if (p.streak === 0 && p.todayCount === 0) {
+    msgs.push({ icon: Flame, iconColor: 'text-orange-400', stat: 'No streak yet', body: 'Apply to one job today to start your streak. Habits are built one day at a time.' })
+  }
+
+  if (p.weeklyCount > 0) {
+    const remaining = 5 - p.weeklyCount
+    if (remaining <= 0) {
+      msgs.push({ icon: CheckCircle2, iconColor: 'text-emerald-500', stat: `${p.weeklyCount} this week`, body: 'Weekly goal of 5 crushed! Keep the momentum going.' })
+    } else {
+      msgs.push({ icon: Calendar, iconColor: 'text-blue-400', stat: `${p.weeklyCount} this week`, body: `${remaining} more to hit your weekly goal of 5 applications.` })
+    }
+  }
+
+  if (p.interviews > 0) {
+    msgs.push({ icon: CheckCircle2, iconColor: 'text-emerald-500', stat: `${p.interviews} active interview${p.interviews > 1 ? 's' : ''}`, body: 'The hard work is converting into real opportunities. Keep the pipeline full.' })
+  }
+
+  return msgs.slice(0, 3)
+}
+
+type StreakData = { currentStreak: number; bestStreak: number; todayCount: number }
+type HeatmapData = { days: { date: string; count: number }[]; total: number }
+
 export default function DashboardPage() {
   const { applications, loading: appsLoading } = useApplications()
   const { user, profile } = useUser()
   const [reminders, setReminders] = useState<Reminder[]>([])
+  const [streakData, setStreakData] = useState<StreakData | null>(null)
+  const [heatmapData, setHeatmapData] = useState<HeatmapData>({ days: [], total: 0 })
   const [showExtBanner, setShowExtBanner] = useState(() =>
     typeof window !== 'undefined' && !localStorage.getItem('ext_banner_dismissed')
   )
@@ -42,38 +90,59 @@ export default function DashboardPage() {
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setReminders(d) })
       .catch(() => {})
+
+    authFetch('/api/applications/streak')
+      .then(r => r.json())
+      .then(setStreakData)
+      .catch(() => {})
+
+    authFetch('/api/applications/heatmap')
+      .then(r => r.json())
+      .then(d => { if (d.days) setHeatmapData(d) })
+      .catch(() => {})
   }, [])
 
-  // ── Real computed stats ──
-  const total       = applications.length
-  const interviews  = applications.filter(a => ['interviewing', 'phone_screen'].includes(a.status)).length
-  const offers      = applications.filter(a => a.status === 'offer').length
-  const nonApplied  = applications.filter(a => a.status !== 'applied').length
-  const offerRate   = total > 0 ? ((offers / total) * 100).toFixed(1) + '%' : '—'
+  // ── Stats ──
+  const total        = applications.length
+  const interviews   = applications.filter(a => ['interviewing', 'phone_screen'].includes(a.status)).length
+  const offers       = applications.filter(a => a.status === 'offer').length
+  const nonApplied   = applications.filter(a => a.status !== 'applied').length
+  const offerRate    = total > 0 ? ((offers / total) * 100).toFixed(1) + '%' : '—'
   const responseRate = total > 0 ? ((nonApplied / total) * 100).toFixed(0) + '%' : '—'
 
+  // Weekly count (Sun–today)
+  const now = new Date()
+  const startOfWeek = new Date(now)
+  startOfWeek.setDate(now.getDate() - now.getDay())
+  startOfWeek.setHours(0, 0, 0, 0)
+  const weeklyCount = applications.filter(a => new Date(a.applied_date) >= startOfWeek).length
+
+  const motivationMsgs = buildMotivation({
+    total, interviews,
+    streak: streakData?.currentStreak ?? 0,
+    todayCount: streakData?.todayCount ?? 0,
+    weeklyCount,
+  })
+
   const stats = [
-    { label: 'Applications', value: total || '—',    icon: Send,      sub: 'total submitted' },
-    { label: 'Interviews',   value: interviews || '—', icon: Briefcase, sub: 'active / in progress' },
-    { label: 'Offer Rate',   value: offerRate,         icon: TrendingUp,sub: 'of all applications' },
-    { label: 'Response Rate',value: responseRate,      icon: BarChart3, sub: 'have responded' },
+    { label: 'Applications', value: total || '—',      icon: Send,       sub: 'total submitted' },
+    { label: 'Interviews',   value: interviews || '—',  icon: Briefcase,  sub: 'active / in progress' },
+    { label: 'Offer Rate',   value: offerRate,          icon: TrendingUp, sub: 'of all applications' },
+    { label: 'Response Rate',value: responseRate,       icon: BarChart3,  sub: 'have responded' },
   ]
 
-  // ── Pipeline counts ──
   const pipeline = [
-    { label: 'Applied',      count: applications.filter(a => a.status === 'applied').length,      active: true },
-    { label: 'Phone Screen', count: applications.filter(a => a.status === 'phone_screen').length, active: true },
-    { label: 'Interviewing', count: applications.filter(a => a.status === 'interviewing').length, active: true },
-    { label: 'Offer',        count: applications.filter(a => a.status === 'offer').length,        active: false },
-    { label: 'Rejected',     count: applications.filter(a => a.status === 'rejected').length,     active: false },
+    { label: 'Applied',      count: applications.filter(a => a.status === 'applied').length },
+    { label: 'Phone Screen', count: applications.filter(a => a.status === 'phone_screen').length },
+    { label: 'Interviewing', count: applications.filter(a => a.status === 'interviewing').length },
+    { label: 'Offer',        count: applications.filter(a => a.status === 'offer').length },
+    { label: 'Rejected',     count: applications.filter(a => a.status === 'rejected').length },
   ]
 
-  // ── Recent applications (real) ──
   const recentApps = [...applications]
     .sort((a, b) => new Date(b.applied_date).getTime() - new Date(a.applied_date).getTime())
     .slice(0, 4)
 
-  // ── Upcoming reminders ──
   const upcomingReminders = reminders
     .filter(r => !r.is_done)
     .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
@@ -123,15 +192,10 @@ export default function DashboardPage() {
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-semibold text-slate-900">Auto-track jobs with our Chrome extension</p>
                 <p className="text-[12px] text-slate-500 mt-0.5">
-                  Apply on LinkedIn or any job site and JobFlow will save it automatically.{' '}
-                  <a
-                    href="https://chrome.google.com/webstore"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#0A6A47] font-semibold hover:underline"
-                  >
+                  Apply on LinkedIn or any job site and PebelAI will save it automatically.{' '}
+                  <Link href="/extension" className="text-[#0A6A47] font-semibold hover:underline">
                     Install free →
-                  </a>
+                  </Link>
                 </p>
               </div>
               <button onClick={dismissExtBanner} className="text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0 mt-0.5">
@@ -162,6 +226,23 @@ export default function DashboardPage() {
               </motion.div>
             ))}
           </div>
+
+          {/* Activity Heatmap */}
+          <Card className="p-6 border-none shadow-sm">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 className="text-[15px] font-semibold text-slate-900">Activity Heatmap</h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">Each square = one day. Darker = more applications.</p>
+              </div>
+              {streakData && streakData.currentStreak > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 border border-orange-100 rounded-full">
+                  <Flame className="w-3.5 h-3.5 text-orange-500" />
+                  <span className="text-[12px] font-bold text-orange-600">{streakData.currentStreak} day streak</span>
+                </div>
+              )}
+            </div>
+            <ActivityHeatmap days={heatmapData.days} total={heatmapData.total} />
+          </Card>
 
           {/* Pipeline */}
           <Card className="p-6 border-none shadow-sm">
@@ -247,6 +328,40 @@ export default function DashboardPage() {
 
         {/* ── Right column ── */}
         <div className="w-full lg:w-[300px] flex-shrink-0 space-y-5">
+
+          {/* Motivation Feed */}
+          <Card className="p-5 border-none shadow-sm bg-gradient-to-br from-white to-slate-50/60">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-6 h-6 rounded-lg bg-amber-50 flex items-center justify-center">
+                <Zap className="w-3.5 h-3.5 text-amber-500" />
+              </div>
+              <h3 className="text-[14px] font-semibold text-slate-900">Your Progress</h3>
+            </div>
+
+            <div className="space-y-0">
+              {motivationMsgs.map((msg, i) => (
+                <div key={i}>
+                  {i > 0 && <div className="border-t border-slate-100 my-3.5" />}
+                  <div className="flex gap-2.5">
+                    <div className="mt-0.5 flex-shrink-0">
+                      <msg.icon className={cn('w-3.5 h-3.5', msg.iconColor)} />
+                    </div>
+                    <div>
+                      <p className="text-[12px] font-bold text-slate-900 leading-snug">{msg.stat}</p>
+                      <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">{msg.body}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {streakData && streakData.bestStreak > 0 && (
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-[10px] text-slate-400">Best streak</span>
+                <span className="text-[11px] font-bold text-slate-600">{streakData.bestStreak} days</span>
+              </div>
+            )}
+          </Card>
 
           {/* Reminders */}
           <Card className="p-5 border-none shadow-sm">
