@@ -8,10 +8,9 @@ export type HeatmapDay = { date: string; count: number }
 interface Props {
   days: HeatmapDay[]
   total: number
+  dark?: boolean
 }
 
-// toISOString() converts to UTC — breaks for UTC+ timezones at midnight.
-// Use local calendar date components instead.
 function localDateStr(d: Date) {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -19,8 +18,15 @@ function localDateStr(d: Date) {
   return `${y}-${m}-${dd}`
 }
 
-function cellBg(count: number, isFuture: boolean) {
+function cellBg(count: number, isFuture: boolean, dark: boolean) {
   if (isFuture) return 'bg-transparent'
+  if (dark) {
+    if (count === 0) return 'bg-[#161b22]'
+    if (count === 1) return 'bg-[#0e4429]'
+    if (count <= 3) return 'bg-[#006d32]'
+    if (count <= 6) return 'bg-[#26a641]'
+    return 'bg-[#39d353]'
+  }
   if (count === 0) return 'bg-slate-100'
   if (count === 1) return 'bg-emerald-200'
   if (count <= 3) return 'bg-emerald-400'
@@ -29,12 +35,11 @@ function cellBg(count: number, isFuture: boolean) {
 }
 
 const NUM_WEEKS = 26
-const DOW_ORDER = [1, 2, 3, 4, 5, 6, 0] as const // Mon → Sun
+const DOW_ORDER = [1, 2, 3, 4, 5, 6, 0] as const
 
-export function ActivityHeatmap({ days, total }: Props) {
+export function ActivityHeatmap({ days, total, dark = false }: Props) {
   const { weeks, monthLabels } = useMemo(() => {
     const countMap = new Map(days.map(d => [d.date, d.count]))
-
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const todayStr = localDateStr(today)
@@ -42,27 +47,21 @@ export function ActivityHeatmap({ days, total }: Props) {
     const daysToSat = (6 - today.getDay() + 7) % 7
     const endDate = new Date(today)
     endDate.setDate(today.getDate() + daysToSat)
-
     const startDate = new Date(endDate)
-    startDate.setDate(endDate.getDate() - NUM_WEEKS * 7 + 1) // always a Sunday
+    startDate.setDate(endDate.getDate() - NUM_WEEKS * 7 + 1)
 
     type DayCell = {
       date: string; count: number; dow: number
       isFuture: boolean; isToday: boolean; monthDay: number; jsDate: Date
     }
-
     const allDays: DayCell[] = []
     const cur = new Date(startDate)
     for (let i = 0; i < NUM_WEEKS * 7; i++) {
       const ds = localDateStr(cur)
       allDays.push({
-        date: ds,
-        count: countMap.get(ds) ?? 0,
-        dow: cur.getDay(),
-        isFuture: cur > today,
-        isToday: ds === todayStr,
-        monthDay: cur.getDate(),
-        jsDate: new Date(cur),
+        date: ds, count: countMap.get(ds) ?? 0, dow: cur.getDay(),
+        isFuture: cur > today, isToday: ds === todayStr,
+        monthDay: cur.getDate(), jsDate: new Date(cur),
       })
       cur.setDate(cur.getDate() + 1)
     }
@@ -81,19 +80,15 @@ export function ActivityHeatmap({ days, total }: Props) {
         }
       }
     })
-
     return { weeks, monthLabels }
   }, [days])
 
+  const labelColor = dark ? 'text-[#768390]' : 'text-slate-400'
+  const dayLabelColor = dark ? 'text-[#768390]' : 'text-slate-300'
+  const todayRing = dark ? 'outline-emerald-400' : 'outline-[#0A6A47]'
+
   return (
     <div className="select-none w-full">
-      {/*
-        Single CSS grid layout matching GitHub's contribution graph:
-        - Column 0 = 24px for day-of-week labels
-        - Columns 1..N = 1fr each → cells fill the full card width
-        - Rows auto-flow: header row (month labels) then 7 cell rows
-        - aspect-ratio 1/1 on each cell keeps them square as they scale
-      */}
       <div
         style={{
           display: 'grid',
@@ -103,43 +98,32 @@ export function ActivityHeatmap({ days, total }: Props) {
           columnGap: 3,
         }}
       >
-        {/* ── Header row: corner spacer + month labels ── */}
+        {/* Month labels */}
         <div />
         {weeks.map((_, wi) => (
-          <div
-            key={wi}
-            className="text-[9px] font-semibold text-slate-400 overflow-visible whitespace-nowrap pb-1"
-          >
+          <div key={wi} className={cn('text-[9px] font-semibold overflow-visible whitespace-nowrap pb-1', labelColor)}>
             {monthLabels.find(m => m.wi === wi)?.label ?? ''}
           </div>
         ))}
 
-        {/* ── 7 day-of-week rows ── */}
+        {/* Day rows */}
         {DOW_ORDER.map(dow => (
           <Fragment key={dow}>
-            {/* Day label */}
-            <div className="flex items-center justify-end pr-1 text-[9px] font-medium text-slate-300">
+            <div className={cn('flex items-center justify-end pr-1 text-[9px] font-medium', dayLabelColor)}>
               {dow === 1 ? 'Mon' : dow === 3 ? 'Wed' : dow === 5 ? 'Fri' : ''}
             </div>
-
-            {/* Cells — 1fr wide, aspect-ratio keeps them square */}
             {weeks.map((week, wi) => {
               const day = week[dow]
-              const bg = cellBg(day.count, day.isFuture)
-              const fmtDate = day.jsDate.toLocaleDateString('en-US', {
-                month: 'short', day: 'numeric', year: 'numeric',
-              })
-              const tipText = day.isFuture
-                ? ''
-                : `${day.count} application${day.count !== 1 ? 's' : ''} · ${fmtDate}`
-
+              const bg = cellBg(day.count, day.isFuture, dark)
+              const fmtDate = day.jsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+              const tipText = day.isFuture ? '' : `${day.count} application${day.count !== 1 ? 's' : ''} · ${fmtDate}`
               return (
                 <div
                   key={wi}
                   className={cn(
                     'rounded-[2px] relative group/cell',
                     bg,
-                    day.isToday && !day.isFuture && 'outline outline-[1.5px] outline-offset-[1px] outline-[#0A6A47]',
+                    day.isToday && !day.isFuture && `outline outline-[1.5px] outline-offset-[1px] ${todayRing}`,
                     !day.isFuture && 'cursor-default',
                   )}
                   style={{ width: 13, height: 13 }}
@@ -159,21 +143,21 @@ export function ActivityHeatmap({ days, total }: Props) {
         ))}
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between mt-4">
-        <p className="text-[11px] text-slate-400">
-          <span className="font-semibold text-slate-600">{total}</span> applications in the last 6 months
-        </p>
-        <div className="flex items-center gap-1">
-          <span className="text-[9px] text-slate-400 mr-0.5">Less</span>
-          {(['bg-slate-100', 'bg-emerald-200', 'bg-emerald-400', 'bg-emerald-600', 'bg-[#0A6A47]'] as const).map(
-            (c, i) => (
+      {/* Footer — only shown in light mode */}
+      {!dark && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-[11px] text-slate-400">
+            <span className="font-semibold text-slate-600">{total}</span> applications in the last 6 months
+          </p>
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] text-slate-400 mr-0.5">Less</span>
+            {(['bg-slate-100', 'bg-emerald-200', 'bg-emerald-400', 'bg-emerald-600', 'bg-[#0A6A47]'] as const).map((c, i) => (
               <div key={i} className={cn('rounded-[2px] flex-shrink-0', c)} style={{ width: 11, height: 11 }} />
-            ),
-          )}
-          <span className="text-[9px] text-slate-400 ml-0.5">More</span>
+            ))}
+            <span className="text-[9px] text-slate-400 ml-0.5">More</span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

@@ -110,12 +110,27 @@ export default function DashboardPage() {
   const offerRate    = total > 0 ? ((offers / total) * 100).toFixed(1) + '%' : '—'
   const responseRate = total > 0 ? ((nonApplied / total) * 100).toFixed(0) + '%' : '—'
 
-  // Weekly count (Sun–today)
+  // Weekly count (Sun–today) + last-week for % change
   const now = new Date()
   const startOfWeek = new Date(now)
   startOfWeek.setDate(now.getDate() - now.getDay())
   startOfWeek.setHours(0, 0, 0, 0)
-  const weeklyCount = applications.filter(a => new Date(a.applied_date) >= startOfWeek).length
+  const startOfLastWeek = new Date(startOfWeek)
+  startOfLastWeek.setDate(startOfWeek.getDate() - 7)
+  const weeklyCount   = applications.filter(a => new Date(a.applied_date) >= startOfWeek).length
+  const lastWeekCount = applications.filter(a => {
+    const d = new Date(a.applied_date)
+    return d >= startOfLastWeek && d < startOfWeek
+  }).length
+  const weekChange = lastWeekCount > 0 ? Math.round(((weeklyCount - lastWeekCount) / lastWeekCount) * 100) : null
+
+  // Peak activity day
+  const dowCounts = [0, 0, 0, 0, 0, 0, 0]
+  applications.forEach(a => { dowCounts[new Date(a.applied_date).getDay()]++ })
+  const peakDow  = dowCounts.indexOf(Math.max(...dowCounts))
+  const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const peakDay  = total > 0 ? DAY_NAMES[peakDow] : '—'
+  const avgPerWeek = total > 0 ? (total / 26).toFixed(1) : '0'
 
   const motivationMsgs = buildMotivation({
     total, interviews,
@@ -227,62 +242,108 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Consistency Tracker + Your Progress side by side */}
-          <Card className="p-6 border-none shadow-sm">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h3 className="text-[15px] font-semibold text-slate-900">Consistency Tracker</h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">Each square = one day · last 6 months · darker = more applications.</p>
-              </div>
-              {streakData && streakData.currentStreak > 0 && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 border border-orange-100 rounded-full">
-                  <Flame className="w-3.5 h-3.5 text-orange-500" />
-                  <span className="text-[12px] font-bold text-orange-600">{streakData.currentStreak} day streak</span>
-                </div>
-              )}
-            </div>
+          {/* Consistency Tracker — dark card */}
+          <div className="rounded-2xl bg-[#111827] overflow-hidden shadow-lg">
+            <div className="flex">
 
-            {/* Body: heatmap left, progress right */}
-            <div className="flex items-start gap-6">
-              <div className="flex-1 min-w-0">
-                <ActivityHeatmap days={heatmapData.days} total={heatmapData.total} />
-              </div>
-
-              <div className="w-px bg-slate-100 self-stretch flex-shrink-0" />
-
-              <div className="w-[200px] flex-shrink-0">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-6 h-6 rounded-lg bg-amber-50 flex items-center justify-center">
-                    <Zap className="w-3.5 h-3.5 text-amber-500" />
+              {/* ── Left: heatmap ── */}
+              <div className="flex-1 min-w-0 p-6">
+                {/* Card header */}
+                <div className="flex items-start justify-between mb-5">
+                  <div>
+                    <h3 className="text-[15px] font-semibold text-white">Consistency Tracker</h3>
+                    <p className="text-[11px] text-[#768390] mt-0.5">Active monitoring of the last 6 months</p>
                   </div>
-                  <p className="text-[13px] font-semibold text-slate-900">Your Progress</p>
-                </div>
-                <div className="space-y-0">
-                  {motivationMsgs.map((msg, i) => (
-                    <div key={i}>
-                      {i > 0 && <div className="border-t border-slate-100 my-3" />}
-                      <div className="flex gap-2.5">
-                        <div className="mt-0.5 flex-shrink-0">
-                          <msg.icon className={cn('w-3.5 h-3.5', msg.iconColor)} />
-                        </div>
-                        <div>
-                          <p className="text-[12px] font-bold text-slate-900 leading-snug">{msg.stat}</p>
-                          <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">{msg.body}</p>
-                        </div>
-                      </div>
+                  {/* INTENSITY legend */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-[9px] font-bold tracking-[0.12em] text-[#768390] uppercase">Intensity</span>
+                    <div className="flex items-center gap-[3px]">
+                      {(['bg-[#161b22]', 'bg-[#0e4429]', 'bg-[#006d32]', 'bg-[#26a641]', 'bg-[#39d353]'] as const).map((c, i) => (
+                        <div key={i} className={cn('rounded-[2px]', c)} style={{ width: 11, height: 11 }} />
+                      ))}
                     </div>
-                  ))}
-                </div>
-                {streakData && streakData.bestStreak > 0 && (
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-400">Best streak</span>
-                    <span className="text-[11px] font-bold text-slate-600">{streakData.bestStreak} days</span>
                   </div>
-                )}
+                </div>
+
+                <ActivityHeatmap days={heatmapData.days} total={heatmapData.total} dark />
+
+                {/* Footer stats */}
+                <div className="border-t border-[#21262d] mt-5 pt-4 flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="text-[10px] font-bold tracking-[0.1em] text-[#768390] uppercase">
+                      Peak Activity: {peakDay}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#768390]" />
+                    <span className="text-[10px] font-bold tracking-[0.1em] text-[#768390] uppercase">
+                      Avg. {avgPerWeek} apps/week
+                    </span>
+                  </div>
+                </div>
               </div>
+
+              {/* Divider */}
+              <div className="w-px bg-[#21262d] flex-shrink-0" />
+
+              {/* ── Right: Your Progress ── */}
+              <div className="w-[230px] flex-shrink-0 p-6 flex flex-col">
+                <p className="text-[15px] font-semibold text-white">Your Progress</p>
+                <p className="text-[11px] text-[#768390] mt-0.5 mb-5">Real-time application throughput</p>
+
+                {/* Total + % change */}
+                <div className="mb-1">
+                  <div className="flex items-end gap-2">
+                    <p className="text-[38px] font-black text-white leading-none">{total}</p>
+                    {weekChange !== null && weekChange !== 0 && (
+                      <span className={cn(
+                        'text-[11px] font-bold px-2 py-0.5 rounded-full mb-1',
+                        weekChange > 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                      )}>
+                        {weekChange > 0 ? '+' : ''}{weekChange}%
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[13px] text-[#768390] mt-1">applications total</p>
+                  <p className="text-[11px] italic text-[#4d555f] mt-2 leading-relaxed">
+                    &quot;Consistency is the engine of success.&quot;
+                  </p>
+                </div>
+
+                {/* Weekly goal */}
+                <div className="mt-5 mb-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[13px] font-semibold text-white">{weeklyCount} this week</span>
+                    <span className="text-[11px] text-[#768390]">Goal: 5</span>
+                  </div>
+                  <div className="h-[5px] bg-[#21262d] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-400 rounded-full transition-all duration-700"
+                      style={{ width: `${Math.min(100, (weeklyCount / 5) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Active streak button */}
+                <div className="mt-auto flex items-center justify-between px-4 py-3.5 bg-emerald-500 rounded-xl">
+                  <div className="flex items-center gap-2.5">
+                    <Flame className="w-4 h-4 text-white flex-shrink-0" />
+                    <div>
+                      <p className="text-[8px] font-bold tracking-[0.12em] text-emerald-100 uppercase">Active Streak</p>
+                      <p className="text-[15px] font-black text-white leading-tight">
+                        {streakData?.currentStreak ?? 0} day{(streakData?.currentStreak ?? 0) !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="w-7 h-7 rounded-full bg-emerald-600/50 flex items-center justify-center">
+                    <Settings className="w-3.5 h-3.5 text-emerald-100" />
+                  </div>
+                </div>
+              </div>
+
             </div>
-          </Card>
+          </div>
 
           {/* Pipeline */}
           <Card className="p-6 border-none shadow-sm">
