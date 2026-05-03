@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, Fragment } from 'react'
 import { cn } from '@/lib/utils'
 
 export type HeatmapDay = { date: string; count: number }
@@ -8,6 +8,15 @@ export type HeatmapDay = { date: string; count: number }
 interface Props {
   days: HeatmapDay[]
   total: number
+}
+
+// toISOString() converts to UTC — breaks for UTC+ timezones at midnight.
+// Use local calendar date components instead.
+function localDateStr(d: Date) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${dd}`
 }
 
 function cellBg(count: number, isFuture: boolean) {
@@ -19,14 +28,8 @@ function cellBg(count: number, isFuture: boolean) {
   return 'bg-[#0A6A47]'
 }
 
-// Always use local calendar date (YYYY-MM-DD) — toISOString() converts to UTC
-// which breaks for UTC+ timezones where local midnight is the previous UTC day.
-function localDateStr(d: Date) {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${dd}`
-}
+const NUM_WEEKS = 26
+const DOW_ORDER = [1, 2, 3, 4, 5, 6, 0] as const // Mon → Sun
 
 export function ActivityHeatmap({ days, total }: Props) {
   const { weeks, monthLabels } = useMemo(() => {
@@ -36,12 +39,10 @@ export function ActivityHeatmap({ days, total }: Props) {
     today.setHours(0, 0, 0, 0)
     const todayStr = localDateStr(today)
 
-    // End on the coming Saturday so every column is a full Sun–Sat week
     const daysToSat = (6 - today.getDay() + 7) % 7
     const endDate = new Date(today)
     endDate.setDate(today.getDate() + daysToSat)
 
-    const NUM_WEEKS = 26
     const startDate = new Date(endDate)
     startDate.setDate(endDate.getDate() - NUM_WEEKS * 7 + 1) // always a Sunday
 
@@ -66,11 +67,9 @@ export function ActivityHeatmap({ days, total }: Props) {
       cur.setDate(cur.getDate() + 1)
     }
 
-    // Chunk into weeks (allDays[0] is always Sunday, so week[dow] === day with that dow)
     const weeks: DayCell[][] = []
     for (let i = 0; i < allDays.length; i += 7) weeks.push(allDays.slice(i, i + 7))
 
-    // One label per month at its first column appearance
     const seen = new Set<string>()
     const monthLabels: Array<{ label: string; wi: number }> = []
     weeks.forEach((week, wi) => {
@@ -87,33 +86,42 @@ export function ActivityHeatmap({ days, total }: Props) {
   }, [days])
 
   return (
-    <div className="select-none">
-      {/* Month labels row */}
-      <div className="flex gap-[3px] mb-1" style={{ paddingLeft: 28 }}>
+    <div className="select-none w-full">
+      {/*
+        Single CSS grid layout matching GitHub's contribution graph:
+        - Column 0 = 24px for day-of-week labels
+        - Columns 1..N = 1fr each → cells fill the full card width
+        - Rows auto-flow: header row (month labels) then 7 cell rows
+        - aspect-ratio 1/1 on each cell keeps them square as they scale
+      */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `24px repeat(${weeks.length}, 1fr)`,
+          rowGap: 3,
+          columnGap: 3,
+        }}
+      >
+        {/* ── Header row: corner spacer + month labels ── */}
+        <div />
         {weeks.map((_, wi) => (
           <div
             key={wi}
-            className="text-[9px] font-semibold text-slate-400 overflow-visible"
-            style={{ width: 11, flexShrink: 0 }}
+            className="text-[9px] font-semibold text-slate-400 overflow-visible whitespace-nowrap pb-1"
           >
             {monthLabels.find(m => m.wi === wi)?.label ?? ''}
           </div>
         ))}
-      </div>
 
-      {/* Grid: Mon → Sun rows */}
-      <div className="flex flex-col gap-[3px]">
-        {([1, 2, 3, 4, 5, 6, 0] as const).map(dow => (
-          <div key={dow} className="flex items-center gap-[3px]">
-            {/* Day-of-week label */}
-            <div
-              className="text-[9px] text-slate-300 font-medium text-right pr-1 flex-shrink-0"
-              style={{ width: 24 }}
-            >
+        {/* ── 7 day-of-week rows ── */}
+        {DOW_ORDER.map(dow => (
+          <Fragment key={dow}>
+            {/* Day label */}
+            <div className="flex items-center justify-end pr-1 text-[9px] font-medium text-slate-300">
               {dow === 1 ? 'Mon' : dow === 3 ? 'Wed' : dow === 5 ? 'Fri' : ''}
             </div>
 
-            {/* Cells */}
+            {/* Cells — 1fr wide, aspect-ratio keeps them square */}
             {weeks.map((week, wi) => {
               const day = week[dow]
               const bg = cellBg(day.count, day.isFuture)
@@ -127,19 +135,16 @@ export function ActivityHeatmap({ days, total }: Props) {
               return (
                 <div
                   key={wi}
-                  className="relative group/cell flex-shrink-0"
-                  style={{ width: 11, height: 11 }}
+                  className={cn(
+                    'rounded-[2px] relative group/cell',
+                    bg,
+                    day.isToday && !day.isFuture && 'outline outline-[1.5px] outline-offset-[1px] outline-[#0A6A47]',
+                    !day.isFuture && 'cursor-default',
+                  )}
+                  style={{ aspectRatio: '1 / 1' }}
                 >
-                  <div
-                    className={cn(
-                      'w-full h-full rounded-[2px] transition-transform duration-100',
-                      bg,
-                      day.isToday && !day.isFuture && 'outline outline-[1.5px] outline-offset-[1.5px] outline-[#0A6A47]',
-                      !day.isFuture && 'group-hover/cell:scale-125 cursor-default',
-                    )}
-                  />
                   {tipText && (
-                    <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 hidden group-hover/cell:block">
+                    <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-50 hidden group-hover/cell:block">
                       <div className="bg-slate-900 text-white text-[10px] font-medium px-2.5 py-1.5 rounded-lg shadow-xl whitespace-nowrap">
                         {tipText}
                       </div>
@@ -149,7 +154,7 @@ export function ActivityHeatmap({ days, total }: Props) {
                 </div>
               )
             })}
-          </div>
+          </Fragment>
         ))}
       </div>
 
