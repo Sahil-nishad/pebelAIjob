@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { PublicNav } from '@/components/public-nav'
 import { getAllPosts } from '@/lib/blog-data'
 
 const BASE_URL = 'https://www.pebelai.com'
@@ -48,22 +49,7 @@ export default function BlogIndexPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd) }}
       />
 
-      <header className="border-b border-slate-100 bg-white">
-        <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Link href="/" className="text-[18px] font-bold text-slate-900">PebelAI</Link>
-          <nav className="flex items-center gap-6 text-[13px] text-slate-600 font-medium">
-            <Link href="/extension" className="hover:text-[#0A6A47]">Extension</Link>
-            <Link href="/blog" className="text-[#0A6A47]">Blog</Link>
-            <Link href="/login" className="hover:text-[#0A6A47]">Log in</Link>
-            <Link
-              href="/signup"
-              className="px-4 py-2 rounded-lg bg-[#0A6A47] text-white hover:bg-[#085c3d] transition-colors"
-            >
-              Try free
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <PublicNav />
 
       <section className="max-w-5xl mx-auto px-6 py-16">
         <div className="mb-12">

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { PublicNav } from '@/components/public-nav'
 import { getAllPosts, getPostBySlug } from '@/lib/blog-data'
 
 const BASE_URL = 'https://www.pebelai.com'
@@ -103,20 +104,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       )}
 
-      <header className="border-b border-slate-100 bg-white">
-        <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Link href="/" className="text-[18px] font-bold text-slate-900">PebelAI</Link>
-          <nav className="flex items-center gap-6 text-[13px] text-slate-600 font-medium">
-            <Link href="/blog" className="hover:text-[#0A6A47]">All articles</Link>
-            <Link
-              href="/signup"
-              className="px-4 py-2 rounded-lg bg-[#0A6A47] text-white hover:bg-[#085c3d] transition-colors"
-            >
-              Try PebelAI free
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <PublicNav />
 
       <article className="max-w-3xl mx-auto px-6 py-16">
         <nav aria-label="Breadcrumb" className="mb-6 text-[12px] text-slate-400">

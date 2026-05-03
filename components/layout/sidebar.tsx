@@ -9,6 +9,7 @@ import {
   Bell,
   Settings,
   Puzzle,
+  BookOpen,
 } from 'lucide-react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
@@ -20,6 +21,7 @@ const navItems = [
   { icon: Bot, label: 'AI Coach', href: '/coach' },
   { icon: Bell, label: 'Reminders', href: '/reminders' },
   { icon: Puzzle, label: 'Extension', href: '/extension' },
+  { icon: BookOpen, label: 'Blog', href: '/blog' },
 ]
 
 export function Sidebar() {

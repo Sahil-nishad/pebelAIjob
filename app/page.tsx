@@ -35,9 +35,14 @@ function Navbar() {
           <Image src="/pebelai-logo.svg" alt="PebelAI" width={150} height={39} className="h-8 w-auto object-contain" />
         </Link>
         <div className="hidden md:flex items-center gap-8">
-          {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['#extension', 'Extension'], ['#why-pebelai', 'Why PebelAI']].map(([href, label]) => (
-            <a key={href} href={href} className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors">{label}</a>
-          ))}
+          {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['/extension', 'Extension'], ['/blog', 'Blog'], ['#why-pebelai', 'Why PebelAI']].map(([href, label]) => {
+            const isInternal = href.startsWith('/')
+            return isInternal ? (
+              <Link key={href} href={href} className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors">{label}</Link>
+            ) : (
+              <a key={href} href={href} className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors">{label}</a>
+            )
+          })}
         </div>
         <div className="flex items-center gap-3">
           <Link
@@ -725,7 +730,7 @@ export default function LandingPage() {
               <div>
                 <p className="text-[12px] font-semibold text-slate-900 mb-3">Product</p>
                 <div className="space-y-2">
-                  {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['#why-pebelai', 'Why PebelAI'], ['/signup', 'Get started']].map(([href, label]) => (
+                  {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['/extension', 'Extension'], ['/blog', 'Blog'], ['/signup', 'Get started']].map(([href, label]) => (
                     <a key={href} href={href} className="block text-[13px] text-slate-400 hover:text-slate-700 transition-colors">{label}</a>
                   ))}
                 </div>
