@@ -242,108 +242,102 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Consistency Tracker — dark card */}
-          <div className="rounded-2xl bg-[#111827] overflow-hidden shadow-lg">
-            <div className="flex">
+          {/* Consistency Tracker + Your Progress */}
+          <Card className="border-none shadow-sm overflow-hidden">
+            <div className="flex flex-col lg:flex-row">
 
               {/* ── Left: heatmap ── */}
               <div className="flex-1 min-w-0 p-6">
-                {/* Card header */}
                 <div className="flex items-start justify-between mb-5">
                   <div>
-                    <h3 className="text-[15px] font-semibold text-white">Consistency Tracker</h3>
-                    <p className="text-[11px] text-[#768390] mt-0.5">Active monitoring of the last 6 months</p>
+                    <h3 className="text-[15px] font-semibold text-slate-900">Consistency Tracker</h3>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Active monitoring of the last 6 months</p>
                   </div>
-                  {/* INTENSITY legend */}
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-[9px] font-bold tracking-[0.12em] text-[#768390] uppercase">Intensity</span>
+                    <span className="text-[9px] font-bold tracking-[0.12em] text-slate-400 uppercase hidden sm:inline">Intensity</span>
                     <div className="flex items-center gap-[3px]">
-                      {(['bg-[#161b22]', 'bg-[#0e4429]', 'bg-[#006d32]', 'bg-[#26a641]', 'bg-[#39d353]'] as const).map((c, i) => (
+                      {(['bg-slate-100', 'bg-emerald-200', 'bg-emerald-400', 'bg-emerald-600', 'bg-[#0A6A47]'] as const).map((c, i) => (
                         <div key={i} className={cn('rounded-[2px]', c)} style={{ width: 11, height: 11 }} />
                       ))}
                     </div>
                   </div>
                 </div>
 
-                <ActivityHeatmap days={heatmapData.days} total={heatmapData.total} dark />
+                {/* Heatmap — scrollable on mobile */}
+                <div className="overflow-x-auto pb-1">
+                  <ActivityHeatmap days={heatmapData.days} total={heatmapData.total} />
+                </div>
 
-                {/* Footer stats */}
-                <div className="border-t border-[#21262d] mt-5 pt-4 flex items-center gap-6">
+                <div className="border-t border-slate-100 mt-5 pt-4 flex flex-wrap items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    <span className="text-[10px] font-bold tracking-[0.1em] text-[#768390] uppercase">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#0A6A47]" />
+                    <span className="text-[10px] font-bold tracking-[0.1em] text-slate-400 uppercase">
                       Peak Activity: {peakDay}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#768390]" />
-                    <span className="text-[10px] font-bold tracking-[0.1em] text-[#768390] uppercase">
-                      Avg. {avgPerWeek} apps/week
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                    <span className="text-[10px] font-bold tracking-[0.1em] text-slate-400 uppercase">
+                      Avg. {avgPerWeek} apps / week
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Divider */}
-              <div className="w-px bg-[#21262d] flex-shrink-0" />
+              {/* Divider — horizontal on mobile, vertical on desktop */}
+              <div className="h-px bg-slate-100 mx-6 lg:hidden" />
+              <div className="hidden lg:block w-px bg-slate-100 self-stretch flex-shrink-0" />
 
               {/* ── Right: Your Progress ── */}
-              <div className="w-[230px] flex-shrink-0 p-6 flex flex-col">
-                <p className="text-[15px] font-semibold text-white">Your Progress</p>
-                <p className="text-[11px] text-[#768390] mt-0.5 mb-5">Real-time application throughput</p>
+              <div className="w-full lg:w-[220px] flex-shrink-0 p-6 flex flex-col">
+                <p className="text-[15px] font-semibold text-slate-900">Your Progress</p>
+                <p className="text-[11px] text-slate-400 mt-0.5 mb-5">Real-time application throughput</p>
 
                 {/* Total + % change */}
-                <div className="mb-1">
-                  <div className="flex items-end gap-2">
-                    <p className="text-[38px] font-black text-white leading-none">{total}</p>
-                    {weekChange !== null && weekChange !== 0 && (
-                      <span className={cn(
-                        'text-[11px] font-bold px-2 py-0.5 rounded-full mb-1',
-                        weekChange > 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
-                      )}>
-                        {weekChange > 0 ? '+' : ''}{weekChange}%
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[13px] text-[#768390] mt-1">applications total</p>
-                  <p className="text-[11px] italic text-[#4d555f] mt-2 leading-relaxed">
-                    &quot;Consistency is the engine of success.&quot;
-                  </p>
+                <div className="flex items-end gap-2 mb-1">
+                  <p className="text-[38px] font-black text-slate-900 leading-none">{total}</p>
+                  {weekChange !== null && weekChange !== 0 && (
+                    <span className={cn(
+                      'text-[11px] font-bold px-2 py-0.5 rounded-full mb-1',
+                      weekChange > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'
+                    )}>
+                      {weekChange > 0 ? '+' : ''}{weekChange}%
+                    </span>
+                  )}
                 </div>
+                <p className="text-[13px] text-slate-500">applications total</p>
+                <p className="text-[11px] italic text-slate-400 mt-2 leading-relaxed">
+                  &quot;Consistency is the engine of success.&quot;
+                </p>
 
                 {/* Weekly goal */}
                 <div className="mt-5 mb-5">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[13px] font-semibold text-white">{weeklyCount} this week</span>
-                    <span className="text-[11px] text-[#768390]">Goal: 5</span>
+                    <span className="text-[13px] font-semibold text-slate-900">{weeklyCount} this week</span>
+                    <span className="text-[11px] text-slate-400">Goal: 5</span>
                   </div>
-                  <div className="h-[5px] bg-[#21262d] rounded-full overflow-hidden">
+                  <div className="h-[5px] bg-slate-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-emerald-400 rounded-full transition-all duration-700"
+                      className="h-full bg-[#0A6A47] rounded-full transition-all duration-700"
                       style={{ width: `${Math.min(100, (weeklyCount / 5) * 100)}%` }}
                     />
                   </div>
                 </div>
 
-                {/* Active streak button */}
-                <div className="mt-auto flex items-center justify-between px-4 py-3.5 bg-emerald-500 rounded-xl">
-                  <div className="flex items-center gap-2.5">
-                    <Flame className="w-4 h-4 text-white flex-shrink-0" />
-                    <div>
-                      <p className="text-[8px] font-bold tracking-[0.12em] text-emerald-100 uppercase">Active Streak</p>
-                      <p className="text-[15px] font-black text-white leading-tight">
-                        {streakData?.currentStreak ?? 0} day{(streakData?.currentStreak ?? 0) !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="w-7 h-7 rounded-full bg-emerald-600/50 flex items-center justify-center">
-                    <Settings className="w-3.5 h-3.5 text-emerald-100" />
+                {/* Active streak — no settings icon */}
+                <div className="mt-auto flex items-center gap-3 px-4 py-3.5 bg-[#0A6A47] rounded-xl">
+                  <Flame className="w-4 h-4 text-white flex-shrink-0" />
+                  <div>
+                    <p className="text-[9px] font-bold tracking-[0.1em] text-emerald-200 uppercase">Active Streak</p>
+                    <p className="text-[15px] font-black text-white leading-tight">
+                      {streakData?.currentStreak ?? 0} day{(streakData?.currentStreak ?? 0) !== 1 ? 's' : ''}
+                    </p>
                   </div>
                 </div>
               </div>
 
             </div>
-          </div>
+          </Card>
 
           {/* Pipeline */}
           <Card className="p-6 border-none shadow-sm">
