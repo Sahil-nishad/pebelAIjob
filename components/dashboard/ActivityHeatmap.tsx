@@ -97,7 +97,8 @@ export function ActivityHeatmap({ days, total }: Props) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: `24px repeat(${weeks.length}, 1fr)`,
+          gridTemplateColumns: `24px repeat(${weeks.length}, 13px)`,
+          gridTemplateRows: `14px repeat(7, 13px)`,
           rowGap: 3,
           columnGap: 3,
         }}
@@ -141,7 +142,7 @@ export function ActivityHeatmap({ days, total }: Props) {
                     day.isToday && !day.isFuture && 'outline outline-[1.5px] outline-offset-[1px] outline-[#0A6A47]',
                     !day.isFuture && 'cursor-default',
                   )}
-                  style={{ aspectRatio: '1 / 1' }}
+                  style={{ width: 13, height: 13 }}
                 >
                   {tipText && (
                     <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-50 hidden group-hover/cell:block">
