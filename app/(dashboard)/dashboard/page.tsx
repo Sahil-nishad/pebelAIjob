@@ -231,7 +231,7 @@ export default function DashboardPage() {
           <Card className="p-6 border-none shadow-sm">
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="text-[15px] font-semibold text-slate-900">Activity Heatmap</h3>
+                <h3 className="text-[15px] font-semibold text-slate-900">Consistency Tracker</h3>
                 <p className="text-[11px] text-slate-400 mt-0.5">Each square = one day · last 6 months · darker = more applications.</p>
               </div>
               {streakData && streakData.currentStreak > 0 && (
