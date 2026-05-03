@@ -19,13 +19,22 @@ function cellBg(count: number, isFuture: boolean) {
   return 'bg-[#0A6A47]'
 }
 
+// Always use local calendar date (YYYY-MM-DD) — toISOString() converts to UTC
+// which breaks for UTC+ timezones where local midnight is the previous UTC day.
+function localDateStr(d: Date) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${dd}`
+}
+
 export function ActivityHeatmap({ days, total }: Props) {
   const { weeks, monthLabels } = useMemo(() => {
     const countMap = new Map(days.map(d => [d.date, d.count]))
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    const todayStr = today.toISOString().slice(0, 10)
+    const todayStr = localDateStr(today)
 
     // End on the coming Saturday so every column is a full Sun–Sat week
     const daysToSat = (6 - today.getDay() + 7) % 7
@@ -44,7 +53,7 @@ export function ActivityHeatmap({ days, total }: Props) {
     const allDays: DayCell[] = []
     const cur = new Date(startDate)
     for (let i = 0; i < NUM_WEEKS * 7; i++) {
-      const ds = cur.toISOString().slice(0, 10)
+      const ds = localDateStr(cur)
       allDays.push({
         date: ds,
         count: countMap.get(ds) ?? 0,
