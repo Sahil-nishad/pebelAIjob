@@ -227,8 +227,9 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Activity Heatmap */}
+          {/* Consistency Tracker + Your Progress side by side */}
           <Card className="p-6 border-none shadow-sm">
+            {/* Header */}
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h3 className="text-[15px] font-semibold text-slate-900">Consistency Tracker</h3>
@@ -241,7 +242,46 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
-            <ActivityHeatmap days={heatmapData.days} total={heatmapData.total} />
+
+            {/* Body: heatmap left, progress right */}
+            <div className="flex items-start gap-6">
+              <div className="flex-1 min-w-0">
+                <ActivityHeatmap days={heatmapData.days} total={heatmapData.total} />
+              </div>
+
+              <div className="w-px bg-slate-100 self-stretch flex-shrink-0" />
+
+              <div className="w-[200px] flex-shrink-0">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 rounded-lg bg-amber-50 flex items-center justify-center">
+                    <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  </div>
+                  <p className="text-[13px] font-semibold text-slate-900">Your Progress</p>
+                </div>
+                <div className="space-y-0">
+                  {motivationMsgs.map((msg, i) => (
+                    <div key={i}>
+                      {i > 0 && <div className="border-t border-slate-100 my-3" />}
+                      <div className="flex gap-2.5">
+                        <div className="mt-0.5 flex-shrink-0">
+                          <msg.icon className={cn('w-3.5 h-3.5', msg.iconColor)} />
+                        </div>
+                        <div>
+                          <p className="text-[12px] font-bold text-slate-900 leading-snug">{msg.stat}</p>
+                          <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">{msg.body}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {streakData && streakData.bestStreak > 0 && (
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[10px] text-slate-400">Best streak</span>
+                    <span className="text-[11px] font-bold text-slate-600">{streakData.bestStreak} days</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </Card>
 
           {/* Pipeline */}
@@ -328,40 +368,6 @@ export default function DashboardPage() {
 
         {/* ── Right column ── */}
         <div className="w-full lg:w-[300px] flex-shrink-0 space-y-5">
-
-          {/* Motivation Feed */}
-          <Card className="p-5 border-none shadow-sm bg-gradient-to-br from-white to-slate-50/60">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 rounded-lg bg-amber-50 flex items-center justify-center">
-                <Zap className="w-3.5 h-3.5 text-amber-500" />
-              </div>
-              <h3 className="text-[14px] font-semibold text-slate-900">Your Progress</h3>
-            </div>
-
-            <div className="space-y-0">
-              {motivationMsgs.map((msg, i) => (
-                <div key={i}>
-                  {i > 0 && <div className="border-t border-slate-100 my-3.5" />}
-                  <div className="flex gap-2.5">
-                    <div className="mt-0.5 flex-shrink-0">
-                      <msg.icon className={cn('w-3.5 h-3.5', msg.iconColor)} />
-                    </div>
-                    <div>
-                      <p className="text-[12px] font-bold text-slate-900 leading-snug">{msg.stat}</p>
-                      <p className="text-[11px] text-slate-500 leading-relaxed mt-0.5">{msg.body}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {streakData && streakData.bestStreak > 0 && (
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-[10px] text-slate-400">Best streak</span>
-                <span className="text-[11px] font-bold text-slate-600">{streakData.bestStreak} days</span>
-              </div>
-            )}
-          </Card>
 
           {/* Reminders */}
           <Card className="p-5 border-none shadow-sm">
