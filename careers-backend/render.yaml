@@ -1,0 +1,157 @@
+services:
+  # ─────────────────────────────────────────────
+  # 1. FastAPI Web Service
+  # ─────────────────────────────────────────────
+  - type: web
+    name: pebelai-careers-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: singapore          # closest to Tokyo (your Supabase region)
+    plan: starter              # $7/month — always on, no sleep
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: API_HOST
+        value: "0.0.0.0"
+      # PORT is injected automatically by Render — no need to set it
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: pebelai-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: pebelai-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: pebelai-redis
+          property: connectionString
+      # ── Set these manually in Render dashboard ──
+      - key: SECRET_KEY
+        sync: false
+      - key: INTERNAL_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+
+  # ─────────────────────────────────────────────
+  # 2. Celery Worker (Background Tasks)
+  # ─────────────────────────────────────────────
+  - type: worker
+    name: pebelai-celery-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: celery -A app.celery_app worker --loglevel=info --concurrency=2
+    region: singapore
+    plan: starter
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: pebelai-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: pebelai-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: pebelai-redis
+          property: connectionString
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: INTERNAL_API_KEY
+        sync: false
+
+  # ─────────────────────────────────────────────
+  # 3. Celery Beat (Scheduled Tasks)
+  # ─────────────────────────────────────────────
+  - type: worker
+    name: pebelai-celery-beat
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerCommand: celery -A app.celery_app beat --loglevel=info --scheduler celery.beat:PersistentScheduler
+    region: singapore
+    plan: starter
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: pebelai-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: pebelai-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: pebelai-redis
+          property: connectionString
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: INTERNAL_API_KEY
+        sync: false
+
+# ─────────────────────────────────────────────
+# Redis (Render managed Redis)
+# ─────────────────────────────────────────────
+databases:
+  - name: pebelai-redis
+    type: redis
+    plan: starter              # $10/month — persistent, no eviction
+    region: singapore
+    ipAllowList: []            # only internal access
