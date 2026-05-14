@@ -13,9 +13,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browsers (for scraping)
-RUN playwright install chromium
-RUN playwright install-deps chromium
+# Skip Playwright in production free tier (LinkedIn scraping disabled)
+# Uncomment below if you need scraping:
+# RUN playwright install chromium
+# RUN playwright install-deps chromium
 
 # Copy application code
 COPY . .
@@ -23,7 +24,7 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-# Default port (Railway overrides with $PORT)
+# Default port (Render injects $PORT)
 ENV PORT=8000
 
 # Run the application

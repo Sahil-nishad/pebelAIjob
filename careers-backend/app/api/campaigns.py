@@ -1,9 +1,10 @@
 """Campaign API routes."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
 from typing import List
 import logging
 
+from app.config import settings
 from app.middleware.auth import CurrentUser
 from app.schemas.campaign import (
     CampaignCreate,
@@ -144,3 +145,21 @@ async def get_campaign_stats(
     except Exception as e:
         logger.error(f"Failed to get campaign stats: {e}")
         raise HTTPException(status_code=500, detail="Failed to get campaign stats")
+
+
+@router.post("/reset-daily")
+async def reset_daily_limits(
+    x_internal_service_key: str = Header(None),
+):
+    """Reset daily email counts for all campaigns. Called by Vercel cron."""
+    # Verify internal service key
+    if x_internal_service_key != settings.internal_api_key:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    try:
+        campaign_service = CampaignService()
+        count = await campaign_service.reset_daily_counts()
+        return {"success": True, "campaigns_reset": count}
+    except Exception as e:
+        logger.error(f"Failed to reset daily limits: {e}")
+        raise HTTPException(status_code=500, detail="Failed to reset daily limits")

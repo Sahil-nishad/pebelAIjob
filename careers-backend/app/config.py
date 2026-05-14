@@ -15,8 +15,8 @@ class Settings(BaseSettings):
     api_port: int = 8000
     
     # Security
-    secret_key: str
-    internal_api_key: str
+    secret_key: str = "change-me-in-production"
+    internal_api_key: str = "change-me-in-production"
     allowed_origins: str = "http://localhost:3000"
     
     # Database
@@ -25,8 +25,8 @@ class Settings(BaseSettings):
     supabase_anon_key: str
     supabase_service_role_key: str
     
-    # Redis
-    redis_url: str = "redis://localhost:6379/0"
+    # Redis (optional - not needed on free tier)
+    redis_url: str | None = None
     
     # AI APIs
     openai_api_key: str | None = None
@@ -34,9 +34,9 @@ class Settings(BaseSettings):
     groq_api_key: str | None = None
     
     # Google OAuth
-    google_client_id: str
-    google_client_secret: str
-    google_redirect_uri: str
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    google_redirect_uri: str | None = None
     
     # LinkedIn (optional)
     linkedin_email: str | None = None
@@ -47,9 +47,9 @@ class Settings(BaseSettings):
     premium_daily_email_limit: int = 25
     enterprise_daily_email_limit: int = 50
     
-    # Celery
-    celery_broker_url: str = "redis://localhost:6379/0"
-    celery_result_backend: str = "redis://localhost:6379/0"
+    # Celery (optional - not needed on free tier)
+    celery_broker_url: str | None = None
+    celery_result_backend: str | None = None
     
     # Logging
     log_level: str = "INFO"

@@ -1,27 +1,28 @@
-# Deploy Careers Backend on Render
+# Deploy Careers Backend — FREE Tier (Render + Vercel)
 
-## What You're Deploying
+## Architecture (All Free)
 
-| Service | Type | Cost |
-|---------|------|------|
-| FastAPI Backend | Web Service (Docker) | $7/month |
-| Redis | Managed Redis | $10/month |
-| Celery Worker | Background Worker | $7/month |
-| Celery Beat | Background Worker | $7/month |
-| **Total** | | **~$31/month** |
+| Service | Platform | Plan | Cost |
+|---------|----------|------|------|
+| Frontend + Cron Jobs | Vercel | Hobby (Free) | $0 |
+| Database | Supabase | Free | $0 |
+| FastAPI Backend | Render | Free Web Service | $0 |
+| **Total** | | | **$0/month** |
 
-> ✅ Database migration is already done on Supabase — no DB setup needed.
+### What's Different from Paid Setup
+- ❌ No Redis (not needed)
+- ❌ No Celery Worker/Beat (replaced by Vercel Cron)
+- ⚠️ Backend sleeps after 15 min of inactivity (wakes in ~30s on first request)
+- ⚠️ LinkedIn scraping disabled (Playwright too heavy for free tier)
+- ✅ Everything else works: campaigns, analytics, email generation, Gmail OAuth
 
 ---
 
 ## Step 1 — Push Code to GitHub
 
-First push all the new code to your GitHub repo so Render can pull it.
-
 ```powershell
-cd c:\Users\sahil\OneDrive\Desktop\jobflow
 git add .
-git commit -m "feat: careers module - campaigns, analytics, render deployment"
+git commit -m "feat: free tier deployment config"
 git push origin main
 ```
 
@@ -31,302 +32,226 @@ git push origin main
 
 1. Go to **https://render.com**
 2. Click **"Get Started for Free"**
-3. Sign up with **GitHub** (same account as your repo)
-4. Authorize Render to access your repositories
+3. Sign up with **GitHub**
 
 ---
 
-## Step 3 — Create Redis First
+## Step 3 — Deploy FastAPI Backend on Render
 
-Redis must exist before the other services can reference it.
+1. Click **"New +"** → **"Web Service"**
+2. Select **"Build and deploy from a Git repository"**
+3. Connect your repo: **pebelAIjob**
+4. Configure:
 
-1. In Render dashboard → click **"New +"**
-2. Select **"Redis"**
-3. Fill in:
-   - **Name:** `pebelai-redis`
-   - **Region:** `Singapore` (closest to your Supabase Tokyo region)
-   - **Plan:** `Starter` ($10/month)
-4. Click **"Create Redis"**
-5. Wait ~1 minute for it to provision
-6. **Copy the "Internal Redis URL"** — you'll need it for env vars
-   - Looks like: `redis://red-xxxxx:6379`
+| Setting | Value |
+|---------|-------|
+| **Name** | `pebelai-careers-backend` |
+| **Region** | Singapore (or closest to you) |
+| **Branch** | `main` |
+| **Root Directory** | `careers-backend` |
+| **Runtime** | Docker |
+| **Instance Type** | **Free** |
 
----
-
-## Step 4 — Deploy FastAPI Backend
-
-1. In Render dashboard → click **"New +"**
-2. Select **"Web Service"**
-3. Select **"Build and deploy from a Git repository"**
-4. Connect your GitHub repo: `pebelAIjob`
-5. Fill in settings:
-   - **Name:** `pebelai-careers-backend`
-   - **Region:** `Singapore`
-   - **Branch:** `main`
-   - **Root Directory:** `careers-backend`
-   - **Runtime:** `Docker`
-   - **Dockerfile Path:** `./Dockerfile`
-   - **Plan:** `Starter` ($7/month)
-6. Click **"Advanced"** to add environment variables (see Step 6)
-7. Click **"Create Web Service"**
+5. Click **"Advanced"** → Add environment variables (see below)
+6. Click **"Create Web Service"**
 
 ---
 
-## Step 5 — Deploy Celery Worker
+## Step 4 — Set Environment Variables on Render
 
-1. In Render dashboard → click **"New +"**
-2. Select **"Background Worker"**
-3. Connect same GitHub repo: `pebelAIjob`
-4. Fill in settings:
-   - **Name:** `pebelai-celery-worker`
-   - **Region:** `Singapore`
-   - **Branch:** `main`
-   - **Root Directory:** `careers-backend`
-   - **Runtime:** `Docker`
-   - **Dockerfile Path:** `./Dockerfile`
-   - **Docker Command:** `celery -A app.celery_app worker --loglevel=info --concurrency=2`
-   - **Plan:** `Starter` ($7/month)
-5. Add same environment variables (see Step 6)
-6. Click **"Create Background Worker"**
-
----
-
-## Step 6 — Deploy Celery Beat
-
-1. In Render dashboard → click **"New +"**
-2. Select **"Background Worker"**
-3. Connect same GitHub repo: `pebelAIjob`
-4. Fill in settings:
-   - **Name:** `pebelai-celery-beat`
-   - **Region:** `Singapore`
-   - **Branch:** `main`
-   - **Root Directory:** `careers-backend`
-   - **Runtime:** `Docker`
-   - **Dockerfile Path:** `./Dockerfile`
-   - **Docker Command:** `celery -A app.celery_app beat --loglevel=info`
-   - **Plan:** `Starter` ($7/month)
-5. Add same environment variables (see Step 6)
-6. Click **"Create Background Worker"**
-
----
-
-## Step 6 — Environment Variables
-
-Add these to **each** of the 3 services (backend, worker, beat).
-
-> In Render: Service → Environment → Add Environment Variable
-
-### Required Variables
+In Render → Your service → **Environment** tab → Add these:
 
 | Key | Value |
 |-----|-------|
 | `APP_ENV` | `production` |
 | `DEBUG` | `false` |
-| `SECRET_KEY` | Generate: use any 64-char random string |
-| `INTERNAL_API_KEY` | Generate: use any 32-char random string |
+| `SECRET_KEY` | Any random 32+ char string |
+| `INTERNAL_API_KEY` | Any random 32+ char string (save this — needed for Vercel too) |
 | `ALLOWED_ORIGINS` | `https://www.pebelai.com` |
-| `DATABASE_URL` | See below |
+| `DATABASE_URL` | Your Supabase pooler URL (see below) |
 | `SUPABASE_URL` | `https://hbtoxufjvldkywlmorun.supabase.co` |
-| `SUPABASE_ANON_KEY` | Your Supabase anon key (from .env.local) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key (from .env.local) |
-| `REDIS_URL` | Internal Redis URL from Step 3 |
-| `CELERY_BROKER_URL` | Same as REDIS_URL |
-| `CELERY_RESULT_BACKEND` | Same as REDIS_URL |
+| `SUPABASE_ANON_KEY` | Copy from your `.env.local` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Copy from your `.env.local` |
 | `GEMINI_API_KEY` | Your Gemini API key |
-| `GROQ_API_KEY` | Your Groq API key (from .env.local) |
-| `GOOGLE_CLIENT_ID` | Your Google OAuth Client ID (from .env.local) |
-| `GOOGLE_CLIENT_SECRET` | Your Google OAuth Client Secret (from .env.local) |
+| `GROQ_API_KEY` | Copy from your `.env.local` |
+| `GOOGLE_CLIENT_ID` | Copy from your `.env.local` |
+| `GOOGLE_CLIENT_SECRET` | Copy from your `.env.local` |
 | `GOOGLE_REDIRECT_URI` | `https://www.pebelai.com/api/careers/gmail/callback` |
 
-### DATABASE_URL (Supabase Connection Pooler)
+### How to Get DATABASE_URL
 
-Get this from Supabase Dashboard:
 1. Go to https://supabase.com/dashboard/project/hbtoxufjvldkywlmorun
-2. Click **"Connect"** (top right)
-3. Select **"Transaction pooler"** tab
-4. Copy the connection string — it looks like:
+2. Click **"Connect"** button (top right)
+3. Select **"Transaction Pooler"** tab
+4. Copy the URI — looks like:
    ```
-   postgresql://postgres.hbtoxufjvldkywlmorun:[YOUR-PASSWORD]@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres
+   postgresql://postgres.hbtoxufjvldkywlmorun:[PASSWORD]@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres
    ```
-5. Replace `[YOUR-PASSWORD]` with your actual Supabase database password
+5. Replace `[PASSWORD]` with your database password
 
-> ⚠️ Use port **6543** (pooler), NOT 5432 (direct). Render's servers need the pooler.
+### How to Generate SECRET_KEY
 
-### Generate SECRET_KEY
-
-Run this in PowerShell to generate a strong key:
+Run in PowerShell:
 ```powershell
--join ((65..90) + (97..122) + (48..57) | Get-Random -Count 64 | ForEach-Object {[char]$_})
+-join ((65..90) + (97..122) + (48..57) | Get-Random -Count 40 | ForEach-Object {[char]$_})
 ```
 
 ---
 
-## Step 7 — Get Your Backend URL
+## Step 5 — Wait for Deploy (~5-10 min)
 
-After the backend deploys (~5-10 minutes):
+Render will:
+1. Pull your code from GitHub
+2. Build the Docker image
+3. Start the service
 
-1. Go to your `pebelai-careers-backend` service in Render
-2. Copy the URL at the top — looks like:
-   ```
-   https://pebelai-careers-backend.onrender.com
-   ```
-3. Test it: open `https://pebelai-careers-backend.onrender.com/health` in browser
-   - Should return: `{"status":"healthy",...}`
+Once it shows **"Live"**, copy your backend URL:
+```
+https://pebelai-careers-backend.onrender.com
+```
+
+Test it: open `https://pebelai-careers-backend.onrender.com/health`
 
 ---
 
-## Step 8 — Update Vercel Environment Variables
+## Step 6 — Update Vercel Environment Variables
 
-Now tell your frontend where the backend lives.
+Go to **Vercel Dashboard** → **pebel-a-ijob** → **Settings** → **Environment Variables**
 
-### Option A: Via Vercel Dashboard (Easiest)
+Add/update these for **Production**:
 
-1. Go to https://vercel.com/sahils-projects-2e05bd94/pebel-a-ijob/settings/environment-variables
-2. Find `CAREERS_API_URL` → Edit
-3. Set value to: `https://pebelai-careers-backend.onrender.com`
-4. Make sure it's enabled for **Production**
-5. Click Save
-
-### Option B: Via CLI
-
-```powershell
-cd c:\Users\sahil\OneDrive\Desktop\jobflow
-npx vercel env add CAREERS_API_URL production
-# When prompted, enter: https://pebelai-careers-backend.onrender.com
-```
-
-Also verify `CAREERS_INTERNAL_API_KEY` matches what you set in Render:
-```powershell
-npx vercel env add CAREERS_INTERNAL_API_KEY production
-# Enter the same INTERNAL_API_KEY you set in Render
-```
+| Key | Value |
+|-----|-------|
+| `CAREERS_API_URL` | `https://pebelai-careers-backend.onrender.com` |
+| `CAREERS_INTERNAL_API_KEY` | Same value as `INTERNAL_API_KEY` in Render |
 
 ---
 
-## Step 9 — Redeploy Vercel
-
-Trigger a fresh Vercel deployment to pick up the new env vars:
+## Step 7 — Redeploy Vercel
 
 ```powershell
-cd c:\Users\sahil\OneDrive\Desktop\jobflow
-git commit --allow-empty -m "chore: trigger redeploy with careers backend url"
+git commit --allow-empty -m "chore: trigger redeploy"
 git push origin main
 ```
 
-Or just click **"Redeploy"** in the Vercel dashboard.
+---
+
+## Step 8 — Update Google OAuth (for Gmail)
+
+Go to https://console.cloud.google.com/apis/credentials
+
+Edit your OAuth 2.0 Client ID:
+- **Authorized redirect URIs** → Add:
+  ```
+  https://www.pebelai.com/api/careers/gmail/callback
+  ```
+- **Authorized JavaScript origins** → Add:
+  ```
+  https://www.pebelai.com
+  ```
 
 ---
 
-## Step 10 — Update Google OAuth
+## Step 9 — Test
 
-Your Gmail OAuth callback URL needs to be added to Google Cloud Console.
-
-1. Go to https://console.cloud.google.com/apis/credentials
-2. Click on your OAuth 2.0 Client ID
-3. Under **"Authorized redirect URIs"**, add:
-   ```
-   https://www.pebelai.com/api/careers/gmail/callback
-   ```
-4. Under **"Authorized JavaScript origins"**, add:
-   ```
-   https://www.pebelai.com
-   ```
-5. Click **Save**
+1. Open https://www.pebelai.com/careers/outreach
+2. Click "New Campaign" → Create one
+3. Open https://www.pebelai.com/careers/analytics
+4. Check dashboard loads
 
 ---
 
-## Step 11 — Test Everything
+## ✅ Done! Deployment Checklist
 
-Once all services are deployed and Vercel is redeployed:
-
-1. **Test backend health:**
-   ```
-   https://pebelai-careers-backend.onrender.com/health
-   ```
-
-2. **Test API docs:**
-   ```
-   https://pebelai-careers-backend.onrender.com/docs
-   ```
-
-3. **Test from frontend:**
-   - Go to https://www.pebelai.com/careers/outreach
-   - Create a campaign → should save successfully
-   - Go to https://www.pebelai.com/careers/analytics
-   - Should load dashboard stats
-
-4. **Test resume upload:**
-   - Go to https://www.pebelai.com/careers/resume/upload
-   - Upload a PDF → should parse and save
-
----
-
-## Deployment Checklist
-
-- [ ] Code pushed to GitHub (`git push origin main`)
-- [ ] Render account created (signed in with GitHub)
-- [ ] Redis created (`pebelai-redis`, Singapore)
-- [ ] Backend deployed (`pebelai-careers-backend`)
-- [ ] Celery worker deployed (`pebelai-celery-worker`)
-- [ ] Celery beat deployed (`pebelai-celery-beat`)
-- [ ] All env vars set on all 3 services
-- [ ] Backend health check passes (`/health`)
-- [ ] `CAREERS_API_URL` updated in Vercel
-- [ ] `CAREERS_INTERNAL_API_KEY` matches in Vercel + Render
+- [ ] Code pushed to GitHub
+- [ ] Render account created
+- [ ] Backend deployed on Render (Free tier)
+- [ ] All env vars set on Render
+- [ ] Backend health check passes
+- [ ] `CAREERS_API_URL` set in Vercel (Production)
+- [ ] `CAREERS_INTERNAL_API_KEY` set in Vercel (Production)
 - [ ] Vercel redeployed
 - [ ] Google OAuth redirect URI updated
-- [ ] Campaign creation works on pebelai.com
-- [ ] Analytics dashboard loads on pebelai.com
+- [ ] Campaign creation works on www.pebelai.com
+- [ ] Analytics dashboard loads
+
+---
+
+## Free Tier Limitations
+
+| Limitation | Impact | Workaround |
+|-----------|--------|------------|
+| Backend sleeps after 15 min | First request takes ~30s to wake | Normal after that |
+| No Celery/Redis | No background workers | Vercel Cron handles scheduled tasks |
+| No Playwright | LinkedIn scraping disabled | Add recruiters manually or upgrade later |
+| 750 hours/month | Enough for 1 service 24/7 | Only 1 backend service needed |
+
+### When to Upgrade ($7/month Starter)
+- If cold starts bother you (backend stays awake)
+- If you need LinkedIn scraping (Playwright)
+- If you need more than 750 hours/month
+
+---
+
+## How Scheduled Tasks Work (Without Celery)
+
+| Task | How It Runs | Schedule |
+|------|-------------|----------|
+| Reset daily email limits | Vercel Cron → Backend API | Daily at midnight UTC |
+| Send reminders | Vercel Cron (existing) | Daily at 8 AM UTC |
+| Resume parsing | Inline (during upload) | Immediate |
+| Email sending | Inline (when user clicks send) | Immediate |
+
+The Vercel Cron job at `/api/cron/careers-daily-reset` calls the backend's `/api/v1/campaigns/reset-daily` endpoint every day at midnight.
 
 ---
 
 ## Troubleshooting
 
-### Backend returns 502 from frontend
-- Check `CAREERS_API_URL` in Vercel is set correctly
-- Check `INTERNAL_API_KEY` matches between Vercel and Render
-- Check backend logs in Render dashboard
+### Backend shows "Service Unavailable"
+- **Cause:** Backend is sleeping (free tier)
+- **Fix:** Wait 30 seconds and refresh. It wakes up automatically.
+
+### "Failed to connect to careers service"
+- **Check:** `CAREERS_API_URL` in Vercel matches your Render URL
+- **Check:** Backend is deployed and shows "Live" in Render
+
+### Campaign creation fails
+- **Check:** `INTERNAL_API_KEY` matches between Render and Vercel
+- **Check:** `ALLOWED_ORIGINS` includes `https://www.pebelai.com`
+- **Check:** `DATABASE_URL` uses port 6543 (pooler)
 
 ### Backend crashes on startup
-- Check `DATABASE_URL` is using port 6543 (pooler)
-- Check all required env vars are set
-- View logs: Render → Service → Logs tab
+- **Check:** All required env vars are set
+- **Check:** `DATABASE_URL` is correct (test in Supabase SQL editor)
+- **View logs:** Render → Service → Logs tab
 
-### Celery tasks not running
-- Check `REDIS_URL` is the **Internal** Redis URL (not external)
-- Check worker logs in Render dashboard
-- Verify Redis service is running
-
-### Gmail OAuth fails
-- Check `GOOGLE_REDIRECT_URI` matches exactly what's in Google Console
-- Verify `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are correct
-
-### First deploy is slow
-- Docker builds take 5-10 minutes on first deploy (Playwright is large)
-- Subsequent deploys are faster (~2-3 min) due to layer caching
+### Vercel cron not running
+- Cron jobs only run in Production (not Preview)
+- Check Vercel → Project → Cron Jobs tab
+- Verify `CRON_SECRET` is set
 
 ---
 
-## Auto-Deploy on Push
+## Auto-Deploy
 
-Once set up, every `git push origin main` will:
-1. ✅ Auto-redeploy Vercel (frontend)
-2. ✅ Auto-redeploy Render backend + workers
+After initial setup, every `git push origin main` will:
+- ✅ Auto-redeploy Vercel frontend
+- ✅ Auto-redeploy Render backend
 
-No manual steps needed after initial setup.
+No manual steps needed!
 
 ---
 
-## Cost Summary
+## Future Upgrades (When Ready to Pay)
 
-| Service | Plan | Cost |
-|---------|------|------|
-| Vercel (frontend) | Hobby | Free |
-| Supabase (database) | Free tier | Free |
-| Render Redis | Starter | $10/month |
-| Render Backend | Starter | $7/month |
-| Render Worker | Starter | $7/month |
-| Render Beat | Starter | $7/month |
-| **Total** | | **$31/month** |
+### Add Redis + Celery ($17/month extra)
+1. Add Redis on Render ($10/month Starter)
+2. Add Celery Worker ($7/month Background Worker)
+3. Set `REDIS_URL` and `CELERY_BROKER_URL` env vars
+4. Uncomment Playwright in Dockerfile for LinkedIn scraping
 
-> 💡 You can skip Celery Beat initially (saves $7/month) — it only handles scheduled tasks like daily limit resets. Add it later when needed.
+### Move to Starter Plan ($7/month)
+- Backend stays awake (no cold starts)
+- Better performance
+- More memory (512MB → 512MB but always on)
