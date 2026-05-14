@@ -34,7 +34,6 @@ async function proxy(request: NextRequest, params: { path: string[] }) {
   headers.set('x-pebel-user-id', auth.user.id)
   headers.set('x-pebel-user-email', auth.user.email)
   headers.set('x-internal-service-key', INTERNAL_KEY || 'change-me')
-
   const contentType = request.headers.get('content-type') || ''
   let body: BodyInit | undefined
 
