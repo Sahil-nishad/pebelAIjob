@@ -20,18 +20,21 @@ async def init_db():
     if _pool is None:
         try:
             parsed = urlparse(settings.database_url)
+            
+            logger.info(f"Connecting to DB at {parsed.hostname}:{parsed.port}")
+
             _pool = await asyncpg.create_pool(
                 host=parsed.hostname,
-                port=parsed.port or 5432,
+                port=parsed.port or 6543,
                 user=parsed.username,
                 password=parsed.password,
-                database=parsed.path.lstrip('/'),
+                database=parsed.path.lstrip('/') or 'postgres',
                 min_size=1,
                 max_size=5,
                 command_timeout=60,
                 ssl='require',
             )
-            logger.info("Database connection pool initialized")
+            logger.info("Database connection pool initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize database pool: {e}")
             raise
