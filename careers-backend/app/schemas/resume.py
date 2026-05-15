@@ -1,8 +1,9 @@
 """Resume schemas."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from typing import List, Dict, Any
+import json
 
 
 class ResumeCreate(BaseModel):
@@ -22,20 +23,39 @@ class ResumeResponse(BaseModel):
     """Schema for resume response."""
     id: str
     user_id: str
-    file_url: str
-    file_name: str | None
-    file_size: int | None
-    mime_type: str | None
-    parsed_name: str | None
-    extracted_skills: List[str] = Field(default_factory=list)
-    extracted_projects: List[Dict[str, Any]] = Field(default_factory=list)
-    extracted_education: List[Dict[str, Any]] = Field(default_factory=list)
-    extracted_experience: List[Dict[str, Any]] = Field(default_factory=list)
-    raw_text: str | None
-    is_active: bool
-    created_at: datetime
-    updated_at: datetime
-    
+    file_url: str | None = None
+    file_name: str | None = None
+    file_size: int | None = None
+    mime_type: str | None = None
+    parsed_name: str | None = None
+    extracted_skills: List[Any] = Field(default_factory=list)
+    extracted_projects: List[Any] = Field(default_factory=list)
+    extracted_education: List[Any] = Field(default_factory=list)
+    extracted_experience: List[Any] = Field(default_factory=list)
+    raw_text: str | None = None
+    is_active: bool = True
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    @field_validator('id', 'user_id', mode='before')
+    @classmethod
+    def stringify_uuid(cls, v):
+        return str(v) if v else v
+
+    @field_validator('extracted_skills', 'extracted_projects', 'extracted_education', 'extracted_experience', mode='before')
+    @classmethod
+    def parse_json_field(cls, v):
+        if v is None:
+            return []
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (json.JSONDecodeError, TypeError):
+                return []
+        if isinstance(v, list):
+            return v
+        return []
+
     class Config:
         from_attributes = True
 
