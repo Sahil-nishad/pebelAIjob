@@ -4,10 +4,6 @@
     {
       "path": "/api/cron/send-reminders",
       "schedule": "0 8 * * *"
-    },
-    {
-      "path": "/api/cron/careers-daily-reset",
-      "schedule": "0 0 * * *"
     }
   ]
 }

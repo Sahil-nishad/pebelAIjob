@@ -32,7 +32,12 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     gemini_api_key: str | None = None
     groq_api_key: str | None = None
-    
+
+    # Job Search APIs
+    adzuna_app_id: str | None = None
+    adzuna_app_key: str | None = None
+    jsearch_api_key: str | None = None
+
     # Google OAuth
     google_client_id: str | None = None
     google_client_secret: str | None = None
