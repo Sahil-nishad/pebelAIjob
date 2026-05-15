@@ -175,11 +175,12 @@ class ResumeService:
     
     async def parse_resume_async(self, resume_id: str):
         """
-        Trigger async resume parsing using Celery.
-        
-        This is called after upload to avoid blocking the request.
+        Parse resume inline (no Celery on free tier).
+        Called after upload.
         """
-        # TODO: Implement Celery task
-        # For now, we'll just log
-        logger.info(f"Async parsing triggered for resume {resume_id}")
-        # celery_app.send_task("tasks.parse_resume", args=[resume_id])
+        try:
+            logger.info(f"Starting inline parsing for resume {resume_id}")
+            await self.parse_resume(resume_id)
+            logger.info(f"Parsing completed for resume {resume_id}")
+        except Exception as e:
+            logger.error(f"Parsing failed for resume {resume_id}: {e}")
