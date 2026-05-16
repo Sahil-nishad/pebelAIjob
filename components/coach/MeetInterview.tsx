@@ -4,8 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Mic, MicOff, Phone, MessageSquare, Volume2, VolumeX,
-  Loader2, FileText, MoreVertical, Clock, Users,
+  Mic, MicOff, Phone, MessageSquare, Volume2,
+  Loader2, FileText, Clock, Settings, Info,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { authFetch } from '@/lib/api'
@@ -32,13 +32,14 @@ export default function MeetInterview({ company, role, sessionType, userName, on
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [isMuted, setIsMuted] = useState(false)
   const [currentSpeech, setCurrentSpeech] = useState('')
-  const [showChat, setShowChat] = useState(false)
+  const [showTranscript, setShowTranscript] = useState(false)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [reportData, setReportData] = useState<any>(null)
   const [generatingReport, setGeneratingReport] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isPushToTalkHeld, setIsPushToTalkHeld] = useState(false)
   const [aiSpeaking, setAiSpeaking] = useState(false)
+  const [currentTime, setCurrentTime] = useState('')
 
   const recognitionRef = useRef<any>(null)
   const synthRef = useRef<SpeechSynthesis | null>(null)
@@ -54,6 +55,16 @@ export default function MeetInterview({ company, role, sessionType, userName, on
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [transcript])
   useEffect(() => { setIsMobile(isMobileBrowser()) }, [])
 
+  // Current time display
+  useEffect(() => {
+    const updateTime = () => {
+      setCurrentTime(new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }))
+    }
+    updateTime()
+    const interval = setInterval(updateTime, 60000)
+    return () => clearInterval(interval)
+  }, [])
+
   // Timer
   useEffect(() => {
     if (sessionStatus !== 'joining' && sessionStatus !== 'ended') {
@@ -62,21 +73,17 @@ export default function MeetInterview({ company, role, sessionType, userName, on
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [sessionStatus])
 
-  const formatTime = (s: number) => {
-    const m = Math.floor(s / 60)
-    const sec = s % 60
-    return `${m}:${sec.toString().padStart(2, '0')}`
-  }
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`
 
   // Get best voice
   const getBestVoice = useCallback((): SpeechSynthesisVoice | null => {
     const voices = speechSynthesis.getVoices()
-    const preferred = ['Google UK English Female', 'Google UK English Male', 'Samantha', 'Karen', 'Daniel']
+    const preferred = ['Google UK English Female', 'Samantha', 'Karen', 'Microsoft Zira', 'Google UK English Male']
     for (const name of preferred) {
       const v = voices.find(voice => voice.name.includes(name))
       if (v) return v
     }
-    return voices.find(v => v.lang.startsWith('en')) || voices[0] || null
+    return voices.find(v => v.lang.startsWith('en') && v.name.includes('Female')) || voices.find(v => v.lang.startsWith('en')) || voices[0] || null
   }, [])
 
   // Speak text
@@ -86,7 +93,6 @@ export default function MeetInterview({ company, role, sessionType, userName, on
       setSessionStatus('speaking')
       setAiSpeaking(true)
 
-      // Try Deepgram TTS first
       try {
         abortControllerRef.current = new AbortController()
         const res = await fetch('/api/coach/tts', {
@@ -102,27 +108,15 @@ export default function MeetInterview({ company, role, sessionType, userName, on
           const audio = new Audio(audioUrl)
           audioRef.current = audio
           audio.onended = () => {
-            URL.revokeObjectURL(audioUrl)
-            audioRef.current = null
-            setAiSpeaking(false)
-            if (shouldRestartRef.current) {
-              setSessionStatus('listening')
-              resolve()
-              if (!isMobileBrowser()) startListening()
-            } else { resolve() }
+            URL.revokeObjectURL(audioUrl); audioRef.current = null; setAiSpeaking(false)
+            if (shouldRestartRef.current) { setSessionStatus('listening'); resolve(); if (!isMobileBrowser()) startListening() }
+            else resolve()
           }
-          audio.onerror = () => {
-            URL.revokeObjectURL(audioUrl)
-            audioRef.current = null
-            speakBrowser(text, resolve)
-          }
+          audio.onerror = () => { URL.revokeObjectURL(audioUrl); audioRef.current = null; speakBrowser(text, resolve) }
           audio.play().catch(() => speakBrowser(text, resolve))
           return
         }
-      } catch (e: any) {
-        if (e?.name === 'AbortError') { resolve(); return }
-      }
-
+      } catch (e: any) { if (e?.name === 'AbortError') { resolve(); return } }
       speakBrowser(text, resolve)
     })
   }, [isMuted])
@@ -134,238 +128,134 @@ export default function MeetInterview({ company, role, sessionType, userName, on
     const utterance = new SpeechSynthesisUtterance(text)
     const voice = getBestVoice()
     if (voice) utterance.voice = voice
-    utterance.rate = 1.0
-    utterance.pitch = 1.0
-    utterance.onend = () => {
-      setAiSpeaking(false)
-      if (shouldRestartRef.current) {
-        setSessionStatus('listening')
-        resolve()
-        if (!isMobileBrowser()) startListening()
-      } else { resolve() }
-    }
+    utterance.rate = 1.0; utterance.pitch = 1.0
+    utterance.onend = () => { setAiSpeaking(false); if (shouldRestartRef.current) { setSessionStatus('listening'); resolve(); if (!isMobileBrowser()) startListening() } else resolve() }
     utterance.onerror = () => { setAiSpeaking(false); resolve() }
     synthRef.current.speak(utterance)
   }, [getBestVoice])
 
-  // Send to coach
   const sendToCoach = useCallback(async (userMessage: string) => {
     const currentSessionId = sessionIdRef.current
     if (!currentSessionId || !userMessage.trim()) return
     setTranscript(prev => [...prev, { role: 'You', text: userMessage }])
     setSessionStatus('thinking')
     try {
-      const res = await authFetch('/api/coach/voice-message', {
-        method: 'POST',
-        body: JSON.stringify({ sessionId: currentSessionId, message: userMessage }),
-      })
+      const res = await authFetch('/api/coach/voice-message', { method: 'POST', body: JSON.stringify({ sessionId: currentSessionId, message: userMessage }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Failed')
       const aiMessage = data.message || 'Could you repeat that?'
       setTranscript(prev => [...prev, { role: 'AI Coach', text: aiMessage }])
       await speak(aiMessage)
-    } catch {
-      toast.error('Failed to get AI response')
-      setSessionStatus('listening')
-      if (!isMobileBrowser()) startListening()
-    }
+    } catch { toast.error('Failed to get AI response'); setSessionStatus('listening'); if (!isMobileBrowser()) startListening() }
   }, [speak])
 
-  // Start listening
   const startListening = useCallback(() => {
-    if (!recognitionRef.current || isListeningRef.current) return
-    if (!shouldRestartRef.current) return
-    try {
-      isListeningRef.current = true
-      setSessionStatus('listening')
-      setCurrentSpeech('')
-      recognitionRef.current.start()
-    } catch {
-      isListeningRef.current = false
-      if (shouldRestartRef.current) setTimeout(() => startListening(), 500)
-    }
+    if (!recognitionRef.current || isListeningRef.current || !shouldRestartRef.current) return
+    try { isListeningRef.current = true; setSessionStatus('listening'); setCurrentSpeech(''); recognitionRef.current.start() }
+    catch { isListeningRef.current = false; if (shouldRestartRef.current) setTimeout(() => startListening(), 500) }
   }, [])
 
-  // Push to talk
   const handlePushToTalkStart = useCallback(() => {
-    if (!recognitionRef.current || !sessionIdRef.current) return
-    if (isListeningRef.current) return
-    isPushToTalkHeldRef.current = true
-    setIsPushToTalkHeld(true)
-    setCurrentSpeech('')
-    try {
-      isListeningRef.current = true
-      setSessionStatus('listening')
-      recognitionRef.current.start()
-    } catch {
-      isListeningRef.current = false
-      isPushToTalkHeldRef.current = false
-      setIsPushToTalkHeld(false)
-    }
+    if (!recognitionRef.current || !sessionIdRef.current || isListeningRef.current) return
+    isPushToTalkHeldRef.current = true; setIsPushToTalkHeld(true); setCurrentSpeech('')
+    try { isListeningRef.current = true; setSessionStatus('listening'); recognitionRef.current.start() }
+    catch { isListeningRef.current = false; isPushToTalkHeldRef.current = false; setIsPushToTalkHeld(false) }
   }, [])
 
   const handlePushToTalkEnd = useCallback(() => {
-    isPushToTalkHeldRef.current = false
-    setIsPushToTalkHeld(false)
-    if (isListeningRef.current) {
-      isListeningRef.current = false
-      try { recognitionRef.current?.stop() } catch {}
-    }
+    isPushToTalkHeldRef.current = false; setIsPushToTalkHeld(false)
+    if (isListeningRef.current) { isListeningRef.current = false; try { recognitionRef.current?.stop() } catch {} }
   }, [])
 
-  // Play join sound and start session
+  // Start session
   const handleJoin = useCallback(async () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (!SpeechRecognition) {
-      toast.error('Your browser does not support speech recognition. Use Chrome or Edge.')
-      return
-    }
+    if (!SpeechRecognition) { toast.error('Use Chrome or Edge for speech recognition.'); return }
 
-    // Play join sound
-    try {
-      const joinAudio = new Audio('/sounds/join.mp3')
-      joinAudio.volume = 0.5
-      await joinAudio.play().catch(() => {})
-    } catch {}
-
+    try { const joinAudio = new Audio('/sounds/join.mp3'); joinAudio.volume = 0.4; await joinAudio.play().catch(() => {}) } catch {}
     setSessionStatus('connected')
-
-    // Wait a moment for the "joining" feel
-    await new Promise(r => setTimeout(r, 1500))
+    await new Promise(r => setTimeout(r, 2000))
 
     try {
-      const res = await authFetch('/api/coach/start', {
-        method: 'POST',
-        body: JSON.stringify({ company, role, sessionType }),
-      })
+      const res = await authFetch('/api/coach/start', { method: 'POST', body: JSON.stringify({ company, role, sessionType }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Failed')
-      setSessionId(data.session.id)
-      sessionIdRef.current = data.session.id
+      setSessionId(data.session.id); sessionIdRef.current = data.session.id
 
-      // Setup recognition
       const recognition = new SpeechRecognition()
       const mobile = isMobileBrowser()
-      recognition.continuous = !mobile
-      recognition.interimResults = true
-      recognition.lang = 'en-US'
+      recognition.continuous = !mobile; recognition.interimResults = true; recognition.lang = 'en-US'
 
-      let accumulatedTranscript = ''
-      let silenceTimer: ReturnType<typeof setTimeout> | null = null
-      let hasSpoken = false
+      let accumulatedTranscript = ''; let silenceTimer: ReturnType<typeof setTimeout> | null = null; let hasSpoken = false
 
       recognition.onresult = (event: any) => {
-        let interim = ''
-        let final = ''
+        let interim = ''; let final = ''
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i]
-          if (result[0]) {
-            if (result.isFinal) final += result[0].transcript + ' '
-            else interim = result[0].transcript
-          }
+          if (result[0]) { if (result.isFinal) final += result[0].transcript + ' '; else interim = result[0].transcript }
         }
         if (final) { accumulatedTranscript += final; hasSpoken = true }
         setCurrentSpeech(accumulatedTranscript + interim)
-
         if (mobile) return
         if (silenceTimer) clearTimeout(silenceTimer)
         if (hasSpoken || interim) {
           silenceTimer = setTimeout(() => {
             if (accumulatedTranscript.trim()) {
-              const message = accumulatedTranscript.trim()
-              accumulatedTranscript = ''; hasSpoken = false
-              setCurrentSpeech('')
-              recognition.stop()
-              isListeningRef.current = false
-              sendToCoach(message)
+              const message = accumulatedTranscript.trim(); accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech('')
+              recognition.stop(); isListeningRef.current = false; sendToCoach(message)
             }
           }, 3500)
         }
       }
 
       recognition.onend = () => {
-        isListeningRef.current = false
-        if (silenceTimer) clearTimeout(silenceTimer)
+        isListeningRef.current = false; if (silenceTimer) clearTimeout(silenceTimer)
         if (mobile) {
-          if (isPushToTalkHeldRef.current && shouldRestartRef.current) {
-            try { isListeningRef.current = true; recognition.start() } catch { isListeningRef.current = false }
-            return
-          }
-          if (accumulatedTranscript.trim()) {
-            const message = accumulatedTranscript.trim()
-            accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech('')
-            sendToCoach(message)
-          } else if (shouldRestartRef.current) { setSessionStatus('listening'); setCurrentSpeech('') }
+          if (isPushToTalkHeldRef.current && shouldRestartRef.current) { try { isListeningRef.current = true; recognition.start() } catch { isListeningRef.current = false }; return }
+          if (accumulatedTranscript.trim()) { const msg = accumulatedTranscript.trim(); accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech(''); sendToCoach(msg) }
+          else if (shouldRestartRef.current) { setSessionStatus('listening'); setCurrentSpeech('') }
         } else {
-          if (accumulatedTranscript.trim()) {
-            const message = accumulatedTranscript.trim()
-            accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech('')
-            sendToCoach(message)
-          } else if (shouldRestartRef.current) { setTimeout(() => startListening(), 300) }
+          if (accumulatedTranscript.trim()) { const msg = accumulatedTranscript.trim(); accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech(''); sendToCoach(msg) }
+          else if (shouldRestartRef.current) setTimeout(() => startListening(), 300)
         }
       }
 
       recognition.onerror = (event: any) => {
         isListeningRef.current = false
-        if (event.error === 'not-allowed') {
-          toast.error('Microphone access denied.')
-          setSessionStatus('ended')
-        } else if (event.error !== 'aborted' && shouldRestartRef.current) {
-          if (!mobile) setTimeout(() => startListening(), 500)
-        }
+        if (event.error === 'not-allowed') { toast.error('Microphone access denied.'); setSessionStatus('ended') }
+        else if (event.error !== 'aborted' && shouldRestartRef.current && !mobile) setTimeout(() => startListening(), 500)
       }
 
-      recognitionRef.current = recognition
-      shouldRestartRef.current = true
-
-      const introMessage = data.introMessage || `Hello ${userName}! I'm your interviewer from ${company}. Let's begin the ${sessionType} interview for the ${role} position. Are you ready?`
+      recognitionRef.current = recognition; shouldRestartRef.current = true
+      const introMessage = data.introMessage || `Hello ${userName}! Welcome to your ${sessionType} interview for the ${role} position at ${company}. Let's get started. Tell me about yourself.`
       setTranscript([{ role: 'AI Coach', text: introMessage }])
-      speechSynthesis.getVoices()
-      await new Promise(r => setTimeout(r, 500))
+      speechSynthesis.getVoices(); await new Promise(r => setTimeout(r, 500))
       await speak(introMessage)
       if (mobile) setSessionStatus('listening')
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to start')
-      setSessionStatus('ended')
-    }
+    } catch (err: any) { toast.error(err?.message || 'Failed to start'); setSessionStatus('ended') }
   }, [company, role, sessionType, userName, speak, sendToCoach, startListening])
 
-  // End call
   const handleEndCall = useCallback(() => {
-    shouldRestartRef.current = false
-    isListeningRef.current = false
-    sessionIdRef.current = null
+    shouldRestartRef.current = false; isListeningRef.current = false; sessionIdRef.current = null
     try { recognitionRef.current?.abort() } catch {}
     synthRef.current?.cancel()
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
     if (abortControllerRef.current) { abortControllerRef.current.abort() }
-    setSessionStatus('ended')
-    setAiSpeaking(false)
+    setSessionStatus('ended'); setAiSpeaking(false)
   }, [])
 
-  // Generate report
   const handleGetReport = useCallback(async () => {
-    if (transcript.length < 4) {
-      toast.error('Answer at least 2 questions to get a report')
-      return
-    }
+    if (transcript.length < 4) { toast.error('Answer at least 2 questions to get a report'); return }
     setGeneratingReport(true)
     try {
-      const res = await authFetch('/api/coach/report', {
-        method: 'POST',
-        body: JSON.stringify({ transcript, company, role, sessionType }),
-      })
+      const res = await authFetch('/api/coach/report', { method: 'POST', body: JSON.stringify({ transcript, company, role, sessionType }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Failed')
       setReportData(data.report)
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to generate report')
-    } finally {
-      setGeneratingReport(false)
-    }
+    } catch (err: any) { toast.error(err?.message || 'Failed to generate report') }
+    finally { setGeneratingReport(false) }
   }, [transcript, company, role, sessionType])
 
-  // Cleanup
   useEffect(() => {
     return () => {
       shouldRestartRef.current = false
@@ -377,149 +267,141 @@ export default function MeetInterview({ company, role, sessionType, userName, on
     }
   }, [])
 
-  // Auto-start on mount
   useEffect(() => { handleJoin() }, [])
 
   if (typeof document === 'undefined') return null
+  if (reportData) return createPortal(<InterviewReport report={reportData} company={company} role={role} sessionType={sessionType} onClose={onClose} />, document.body)
 
-  // Report view
-  if (reportData) {
-    return createPortal(
-      <InterviewReport
-        report={reportData}
-        company={company}
-        role={role}
-        sessionType={sessionType}
-        onClose={onClose}
-      />,
-      document.body
-    )
-  }
+  const userInitial = userName.charAt(0).toUpperCase()
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] bg-[#202124] flex flex-col">
+    <div className="fixed inset-0 z-[9999] bg-[#f0f4f9] flex flex-col">
 
-      {/* Top Bar */}
-      <div className="flex items-center justify-between px-4 py-3 text-white">
+      {/* Top Bar — Light theme like the reference */}
+      <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-medium">{company} — {sessionType} Interview</span>
+          <span className="text-[#0A6A47] font-bold text-lg">PebelAI Meeting</span>
+          <span className="text-gray-400">|</span>
+          <span className="text-gray-500 text-sm">{currentTime} | Interview Session</span>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm text-gray-300">
-            <Clock className="w-4 h-4" />
-            <span>{formatTime(elapsedTime)}</span>
-          </div>
-          <div className="flex items-center gap-1 text-sm text-gray-300">
-            <Users className="w-4 h-4" />
-            <span>2</span>
+        <div className="flex items-center gap-3">
+          <button className="p-2 rounded-full hover:bg-gray-100 text-gray-500"><Info className="w-5 h-5" /></button>
+          <button className="p-2 rounded-full hover:bg-gray-100 text-gray-500"><Settings className="w-5 h-5" /></button>
+          <div className="w-8 h-8 rounded-full bg-[#0A6A47] flex items-center justify-center text-white text-sm font-bold">
+            {userInitial}
           </div>
         </div>
       </div>
 
-      {/* Video Grid */}
-      <div className="flex-1 flex items-center justify-center p-4 gap-4">
-        {/* AI Interviewer */}
-        <div className="relative flex-1 max-w-[600px] aspect-video bg-[#3c4043] rounded-xl overflow-hidden flex items-center justify-center">
-          {/* AI Avatar */}
-          <div className="flex flex-col items-center gap-3">
-            <div className={`w-24 h-24 rounded-full bg-[#0A6A47] flex items-center justify-center text-white text-3xl font-bold ${aiSpeaking ? 'ring-4 ring-[#0A6A47]/50 animate-pulse' : ''}`}>
-              P
+      {/* Main Video Grid */}
+      <div className="flex-1 flex items-center justify-center p-6 gap-4">
+
+        {/* AI Interviewer Panel — PebelAI Logo with ring */}
+        <div className="relative flex-1 max-w-[580px] aspect-[4/3] rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#f8faf9] to-[#e8f0eb] flex items-center justify-center">
+          {/* Animated ring + logo */}
+          <div className="flex flex-col items-center gap-4">
+            <div className={`relative w-36 h-36 rounded-full flex items-center justify-center ${aiSpeaking ? 'animate-pulse' : ''}`}>
+              {/* Outer ring */}
+              <div className={`absolute inset-0 rounded-full border-4 ${aiSpeaking ? 'border-[#0A6A47] animate-spin' : 'border-[#0A6A47]/30'}`} style={{ animationDuration: '3s' }} />
+              {/* Inner ring */}
+              <div className={`absolute inset-2 rounded-full border-2 ${aiSpeaking ? 'border-[#0A6A47]/60' : 'border-[#0A6A47]/15'}`} />
+              {/* Logo center */}
+              <div className="w-24 h-24 rounded-full bg-white shadow-md flex items-center justify-center">
+                <img src="/pebelai-logo.svg" alt="PebelAI" className="w-16 h-16 object-contain" />
+              </div>
             </div>
-            <span className="text-white text-lg font-medium">PebelAI Interviewer</span>
-            {sessionStatus === 'thinking' && (
-              <span className="text-gray-400 text-sm flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" /> Thinking...
-              </span>
-            )}
-            {aiSpeaking && (
-              <span className="text-green-400 text-sm flex items-center gap-2">
-                <Volume2 className="w-4 h-4" /> Speaking...
-              </span>
-            )}
+            <span className="text-[#0A6A47] font-bold text-lg">PebelAI Interviewer</span>
           </div>
+          {/* Speaking indicator */}
+          {aiSpeaking && (
+            <div className="absolute top-4 right-4 bg-green-500 px-3 py-1 rounded-full flex items-center gap-2">
+              <Volume2 className="w-3 h-3 text-white" />
+              <span className="text-white text-xs font-medium">Speaking</span>
+            </div>
+          )}
+          {sessionStatus === 'thinking' && (
+            <div className="absolute top-4 right-4 bg-yellow-500 px-3 py-1 rounded-full flex items-center gap-2">
+              <Loader2 className="w-3 h-3 text-white animate-spin" />
+              <span className="text-white text-xs font-medium">Thinking</span>
+            </div>
+          )}
           {/* Name tag */}
-          <div className="absolute bottom-3 left-3 bg-black/60 px-3 py-1 rounded text-white text-sm">
-            PebelAI
+          <div className="absolute bottom-4 left-4 flex items-center gap-2">
+            <span className="bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm font-medium">
+              PebelAI Interviewer
+            </span>
+            <span className="bg-[#0A6A47] p-1 rounded-full">
+              <Volume2 className="w-3 h-3 text-white" />
+            </span>
           </div>
         </div>
 
-        {/* User */}
-        <div className="relative flex-1 max-w-[600px] aspect-video bg-[#3c4043] rounded-xl overflow-hidden flex items-center justify-center">
-          <div className="flex flex-col items-center gap-3">
-            <div className={`w-24 h-24 rounded-full bg-blue-600 flex items-center justify-center text-white text-3xl font-bold ${sessionStatus === 'listening' && !isMuted ? 'ring-4 ring-blue-400/50' : ''}`}>
-              {userName.charAt(0).toUpperCase()}
+        {/* User Panel */}
+        <div className="relative flex-1 max-w-[580px] aspect-[4/3] bg-[#3c4043] rounded-2xl overflow-hidden shadow-lg flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className={`w-28 h-28 rounded-full bg-blue-600 flex items-center justify-center text-white text-5xl font-bold transition-all ${
+              sessionStatus === 'listening' && !isMuted ? 'ring-4 ring-blue-400/50 scale-105' : ''
+            }`}>
+              {userInitial}
             </div>
-            <span className="text-white text-lg font-medium">{userName}</span>
             {currentSpeech && (
-              <p className="text-gray-300 text-sm max-w-[80%] text-center line-clamp-2">
+              <p className="text-gray-300 text-sm max-w-[80%] text-center line-clamp-2 bg-black/30 px-4 py-2 rounded-lg">
                 {currentSpeech}
               </p>
             )}
-            {sessionStatus === 'listening' && !currentSpeech && !isMobile && (
-              <span className="text-blue-400 text-sm">Listening...</span>
-            )}
-            {isMobile && sessionStatus === 'listening' && !isPushToTalkHeld && (
-              <span className="text-gray-400 text-sm">Hold mic to speak</span>
+            {sessionStatus === 'listening' && !currentSpeech && (
+              <p className="text-gray-400 text-sm">
+                {isMobile ? (isPushToTalkHeld ? 'Listening...' : 'Hold mic to speak') : 'Listening...'}
+              </p>
             )}
           </div>
           {/* Name tag */}
-          <div className="absolute bottom-3 left-3 bg-black/60 px-3 py-1 rounded text-white text-sm flex items-center gap-2">
-            {userName}
-            {isMuted && <MicOff className="w-3 h-3 text-red-400" />}
+          <div className="absolute bottom-4 left-4 flex items-center gap-2">
+            <span className="bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm font-medium">
+              {userName} (You)
+            </span>
+            {!isMuted && sessionStatus === 'listening' && (
+              <span className="bg-[#0A6A47] p-1 rounded-full">
+                <Mic className="w-3 h-3 text-white" />
+              </span>
+            )}
+            {isMuted && (
+              <span className="bg-red-500 p-1 rounded-full">
+                <MicOff className="w-3 h-3 text-white" />
+              </span>
+            )}
           </div>
-          {/* Muted indicator */}
-          {isMuted && (
-            <div className="absolute top-3 right-3 bg-red-500 p-1.5 rounded-full">
-              <MicOff className="w-4 h-4 text-white" />
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Joining overlay */}
+      {/* Joining Overlay */}
       <AnimatePresence>
         {sessionStatus === 'joining' && (
-          <motion.div
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-[#202124] flex flex-col items-center justify-center z-10"
-          >
-            <Loader2 className="w-12 h-12 text-white animate-spin mb-4" />
-            <p className="text-white text-xl font-medium">Joining interview...</p>
-            <p className="text-gray-400 text-sm mt-2">{company} — {role}</p>
+          <motion.div initial={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-[#f0f4f9] flex flex-col items-center justify-center z-10">
+            <div className="bg-white rounded-2xl p-8 shadow-xl flex flex-col items-center gap-4">
+              <Loader2 className="w-10 h-10 text-[#0A6A47] animate-spin" />
+              <p className="text-xl font-semibold text-gray-900">Joining interview...</p>
+              <p className="text-gray-500 text-sm">{company} — {role}</p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Ended overlay */}
+      {/* Ended Overlay */}
       <AnimatePresence>
         {sessionStatus === 'ended' && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 bg-[#202124] flex flex-col items-center justify-center z-10 gap-4"
-          >
-            <Phone className="w-16 h-16 text-red-400" />
-            <p className="text-white text-xl font-medium">Interview Ended</p>
-            <p className="text-gray-400 text-sm">Duration: {formatTime(elapsedTime)}</p>
-            <div className="flex items-center gap-3 mt-4">
-              <button
-                onClick={handleGetReport}
-                disabled={generatingReport || transcript.length < 4}
-                className="flex items-center gap-2 px-6 py-3 bg-[#0A6A47] text-white rounded-full font-semibold hover:bg-[#085c3d] transition-colors disabled:opacity-50"
-              >
-                {generatingReport ? (
-                  <><Loader2 className="w-5 h-5 animate-spin" /> Generating Report...</>
-                ) : (
-                  <><FileText className="w-5 h-5" /> Get Performance Report</>
-                )}
-              </button>
-              <button
-                onClick={onClose}
-                className="px-6 py-3 bg-[#3c4043] text-white rounded-full font-medium hover:bg-[#4c5053] transition-colors"
-              >
-                Close
-              </button>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-[#f0f4f9] flex flex-col items-center justify-center z-10 gap-4">
+            <div className="bg-white rounded-2xl p-8 shadow-xl flex flex-col items-center gap-4">
+              <Phone className="w-12 h-12 text-red-400" />
+              <p className="text-xl font-semibold text-gray-900">Interview Ended</p>
+              <p className="text-gray-500 text-sm">Duration: {formatTime(elapsedTime)}</p>
+              <div className="flex items-center gap-3 mt-2">
+                <button onClick={handleGetReport} disabled={generatingReport || transcript.length < 4}
+                  className="flex items-center gap-2 px-6 py-3 bg-[#0A6A47] text-white rounded-full font-semibold hover:bg-[#085c3d] transition-colors disabled:opacity-50">
+                  {generatingReport ? <><Loader2 className="w-5 h-5 animate-spin" /> Generating...</> : <><FileText className="w-5 h-5" /> Get Report</>}
+                </button>
+                <button onClick={onClose} className="px-6 py-3 bg-gray-100 text-gray-700 rounded-full font-medium hover:bg-gray-200 transition-colors">Close</button>
+              </div>
             </div>
           </motion.div>
         )}
@@ -527,15 +409,12 @@ export default function MeetInterview({ company, role, sessionType, userName, on
 
       {/* Bottom Controls */}
       {sessionStatus !== 'joining' && sessionStatus !== 'ended' && (
-        <div className="flex items-center justify-center gap-4 py-5 bg-[#202124]">
+        <div className="flex items-center justify-center gap-4 py-5 bg-white border-t border-gray-200">
           {/* Mute */}
-          <button
-            onClick={() => setIsMuted(!isMuted)}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-              isMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-[#3c4043] hover:bg-[#4c5053]'
-            }`}
-          >
-            {isMuted ? <MicOff className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
+          <button onClick={() => setIsMuted(!isMuted)}
+            className={`flex flex-col items-center gap-1 px-5 py-3 rounded-xl transition-colors ${isMuted ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+            {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+            <span className="text-[10px] font-bold uppercase">{isMuted ? 'Unmute' : 'Mute'}</span>
           </button>
 
           {/* Push to talk (mobile) */}
@@ -548,61 +427,41 @@ export default function MeetInterview({ company, role, sessionType, userName, on
               onContextMenu={e => e.preventDefault()}
               disabled={sessionStatus === 'thinking' || sessionStatus === 'speaking'}
               style={{ touchAction: 'none' }}
-              className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
-                isPushToTalkHeld
-                  ? 'bg-blue-500 scale-110'
-                  : 'bg-[#0A6A47] hover:bg-[#085c3d]'
-              } disabled:opacity-50`}
-            >
-              <Mic className={`w-7 h-7 text-white ${isPushToTalkHeld ? 'animate-pulse' : ''}`} />
+              className={`px-6 py-3 rounded-xl font-bold text-sm transition-all ${isPushToTalkHeld ? 'bg-blue-500 text-white scale-105' : 'bg-[#0A6A47] text-white'} disabled:opacity-50`}>
+              {isPushToTalkHeld ? '🎙️ Recording...' : '🎤 Hold to Speak'}
             </button>
           )}
 
-          {/* Chat */}
-          <button
-            onClick={() => setShowChat(!showChat)}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-              showChat ? 'bg-[#0A6A47]' : 'bg-[#3c4043] hover:bg-[#4c5053]'
-            }`}
-          >
-            <MessageSquare className="w-5 h-5 text-white" />
+          {/* Transcript */}
+          <button onClick={() => setShowTranscript(!showTranscript)}
+            className={`flex flex-col items-center gap-1 px-5 py-3 rounded-xl transition-colors ${showTranscript ? 'bg-[#0A6A47]/10 text-[#0A6A47]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+            <MessageSquare className="w-5 h-5" />
+            <span className="text-[10px] font-bold uppercase">Transcript</span>
           </button>
 
-          {/* End Call */}
-          <button
-            onClick={handleEndCall}
-            className="w-14 h-12 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
-          >
-            <Phone className="w-5 h-5 text-white rotate-[135deg]" />
+          {/* Leave */}
+          <button onClick={handleEndCall}
+            className="flex items-center gap-2 px-8 py-3 bg-red-500 text-white rounded-full font-semibold hover:bg-red-600 transition-colors">
+            <Phone className="w-4 h-4 rotate-[135deg]" />
+            LEAVE
           </button>
         </div>
       )}
 
-      {/* Chat Panel */}
+      {/* Transcript Panel */}
       <AnimatePresence>
-        {showChat && (
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute right-0 top-0 bottom-0 w-80 bg-white flex flex-col z-20 shadow-2xl"
-          >
+        {showTranscript && (
+          <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="absolute right-0 top-0 bottom-0 w-80 bg-white flex flex-col z-20 shadow-2xl border-l border-gray-200">
             <div className="px-4 py-3 border-b flex items-center justify-between">
-              <h3 className="font-semibold text-sm">Interview Transcript</h3>
-              <button onClick={() => setShowChat(false)} className="text-gray-400 hover:text-gray-600">
-                <MicOff className="w-4 h-4" />
-              </button>
+              <h3 className="font-semibold text-sm text-gray-800">Live Transcript</h3>
+              <button onClick={() => setShowTranscript(false)} className="text-gray-400 hover:text-gray-600 text-sm">✕</button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {transcript.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'You' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
-                    msg.role === 'You'
-                      ? 'bg-blue-100 text-blue-900'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    <span className="block text-[10px] font-bold text-gray-500 mb-1">{msg.role}</span>
+                  <div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${msg.role === 'You' ? 'bg-blue-100 text-blue-900' : 'bg-gray-100 text-gray-800'}`}>
+                    <span className="block text-[10px] font-bold text-gray-500 mb-1">{msg.role === 'You' ? userName : 'PebelAI'}</span>
                     {msg.text}
                   </div>
                 </div>
