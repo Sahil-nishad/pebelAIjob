@@ -8,7 +8,6 @@ import {
   Bot,
   Bell,
   Settings,
-  BookOpen,
   Briefcase,
 } from 'lucide-react'
 import Image from 'next/image'
@@ -21,7 +20,6 @@ const navItems = [
   { icon: Briefcase, label: 'Careers', href: '/careers' },
   { icon: Bot, label: 'AI Coach', href: '/coach' },
   { icon: Bell, label: 'Reminders', href: '/reminders' },
-  { icon: BookOpen, label: 'Blog', href: '/blog' },
 ]
 
 export function Sidebar() {
