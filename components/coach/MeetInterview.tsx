@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Mic, MicOff, Phone, MessageSquare, Volume2,
-  Loader2, FileText, Clock, Settings, Info,
+  Loader2, FileText, Clock,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { authFetch } from '@/lib/api'
@@ -299,12 +299,14 @@ export default function MeetInterview({ company, role, sessionType, userName, on
       <div className="flex items-center justify-between px-4 md:px-6 py-2 md:py-3 bg-white border-b border-gray-200">
         <div className="flex items-center gap-2 md:gap-3">
           <span className="text-[#0A6A47] font-bold text-sm md:text-lg">PebelAI Meeting</span>
-          <span className="text-gray-400 hidden md:inline">|</span>
-          <span className="text-gray-500 text-xs md:text-sm hidden md:inline">{currentTime} | Interview Session</span>
+          <span className="text-gray-400">|</span>
+          <span className="text-gray-500 text-xs md:text-sm">{currentTime}</span>
         </div>
         <div className="flex items-center gap-3">
-          <button className="p-2 rounded-full hover:bg-gray-100 text-gray-500"><Info className="w-5 h-5" /></button>
-          <button className="p-2 rounded-full hover:bg-gray-100 text-gray-500"><Settings className="w-5 h-5" /></button>
+          <div className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-full">
+            <Clock className="w-3.5 h-3.5 text-gray-500" />
+            <span className="text-sm font-mono font-medium text-gray-700">{formatTime(elapsedTime)}</span>
+          </div>
           <div className="w-8 h-8 rounded-full bg-[#0A6A47] flex items-center justify-center text-white text-sm font-bold">
             {userInitial}
           </div>
@@ -315,7 +317,11 @@ export default function MeetInterview({ company, role, sessionType, userName, on
       <div className="flex-1 flex flex-col md:flex-row items-center justify-center p-3 md:p-6 gap-3 md:gap-4 overflow-hidden">
 
         {/* AI Interviewer Panel — PebelAI Logo with ring */}
-        <div className="relative w-full md:flex-1 md:max-w-[580px] h-[40vh] md:h-auto md:aspect-[4/3] rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#f8faf9] to-[#e8f0eb] flex items-center justify-center">
+        <div className={`relative w-full md:flex-1 md:max-w-[580px] h-[40vh] md:h-auto md:aspect-[4/3] rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#f8faf9] to-[#e8f0eb] flex items-center justify-center transition-all duration-300 ${
+          aiSpeaking ? 'ring-[3px] ring-[#0A6A47] shadow-[0_0_20px_rgba(10,106,71,0.3)]' :
+          sessionStatus === 'thinking' ? 'ring-[3px] ring-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.2)]' :
+          'ring-1 ring-gray-200'
+        }`}>
           {/* Animated ring + logo */}
           <div className="flex flex-col items-center gap-3 md:gap-4">
             <div className={`relative w-24 h-24 md:w-36 md:h-36 rounded-full flex items-center justify-center ${aiSpeaking ? 'animate-pulse' : ''}`}>
@@ -355,7 +361,10 @@ export default function MeetInterview({ company, role, sessionType, userName, on
         </div>
 
         {/* User Panel */}
-        <div className="relative w-full md:flex-1 md:max-w-[580px] h-[40vh] md:h-auto md:aspect-[4/3] bg-[#3c4043] rounded-2xl overflow-hidden shadow-lg flex items-center justify-center">
+        <div className={`relative w-full md:flex-1 md:max-w-[580px] h-[40vh] md:h-auto md:aspect-[4/3] bg-[#3c4043] rounded-2xl overflow-hidden shadow-lg flex items-center justify-center transition-all duration-300 ${
+          sessionStatus === 'listening' && !isMuted ? 'ring-[3px] ring-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)]' :
+          'ring-1 ring-gray-600'
+        }`}>
           <div className="flex flex-col items-center gap-3 md:gap-4">
             <div className={`w-20 h-20 md:w-28 md:h-28 rounded-full bg-blue-600 flex items-center justify-center text-white text-4xl md:text-5xl font-bold transition-all ${
               sessionStatus === 'listening' && !isMuted ? 'ring-4 ring-blue-400/50 scale-105' : ''
