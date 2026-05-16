@@ -79,15 +79,48 @@ async def search_jobs_with_resume(
                         except (json_mod.JSONDecodeError, TypeError):
                             resume_data[key] = []
 
-                # Build keywords from resume if not provided
+                # Detect experience level from resume
+                exp_list = resume_data.get("parsed_experience", [])
+                total_years = 0
+                if isinstance(exp_list, list):
+                    total_years = len(exp_list)  # rough estimate: 1 entry ≈ 1-2 years
+
+                if total_years <= 1:
+                    experience_level = "fresher"
+                    experience = 0
+                elif total_years <= 3:
+                    experience_level = "junior"
+                    experience = 2
+                else:
+                    experience_level = "senior"
+                    experience = 5
+
+                resume_data["experience_level"] = experience_level
+
+                # Build keywords from resume — use job title + top skills
                 if not keywords:
                     skills = resume_data.get("parsed_skills", [])
-                    if isinstance(skills, list) and skills:
+                    # Try to extract job title from summary
+                    summary = resume_data.get("parsed_summary", "")
+                    title_keywords = ""
+                    for title in ["data analyst", "software engineer", "developer", "designer", "manager", "analyst", "scientist"]:
+                        if title in summary.lower():
+                            title_keywords = title
+                            break
+
+                    if title_keywords and isinstance(skills, list) and skills:
+                        # Use job title + top 3 skills for better matching
+                        keywords = f"{title_keywords} {' '.join(skills[:3])}"
+                    elif isinstance(skills, list) and skills:
                         keywords = " ".join(skills[:5])
-                    elif resume_data.get("parsed_summary"):
-                        keywords = resume_data["parsed_summary"][:100]
+                    elif summary:
+                        keywords = summary[:100]
                     else:
                         keywords = "software developer"
+
+                    # Add experience level hint to keywords for fresher
+                    if experience_level == "fresher":
+                        keywords += " fresher entry level"
 
         if not keywords:
             raise HTTPException(
@@ -102,6 +135,44 @@ async def search_jobs_with_resume(
             experience_years=experience,
             limit=30,
         )
+
+        # Filter out old jobs (>7 days) and mismatched experience levels
+        from datetime import datetime, timedelta
+        import dateutil.parser as date_parser
+
+        filtered_jobs = []
+        seven_days_ago = datetime.now() - timedelta(days=7)
+
+        senior_keywords = ['senior', 'lead', 'principal', 'staff', 'director', 'manager', 'head', 'vp', 'architect', '8+', '10+', '7+', '6+']
+        mid_keywords = ['3+', '4+', '5+', '3-5', '4-6']
+
+        for job in all_jobs:
+            # Filter by date — skip jobs older than 7 days
+            posted = job.get("posted_date", "")
+            if posted:
+                try:
+                    posted_dt = date_parser.parse(posted, ignoretz=True)
+                    if posted_dt < seven_days_ago:
+                        continue
+                except (ValueError, TypeError):
+                    pass  # Can't parse date, keep the job
+
+            # Filter by experience level
+            if resume_data and resume_data.get("experience_level") == "fresher":
+                title_lower = job.get("title", "").lower()
+                exp_req = job.get("experience_required", "").lower()
+                combined = f"{title_lower} {exp_req}"
+
+                # Skip senior/lead roles for freshers
+                if any(kw in combined for kw in senior_keywords):
+                    continue
+                # Skip mid-level roles for freshers
+                if any(kw in combined for kw in mid_keywords):
+                    continue
+
+            filtered_jobs.append(job)
+
+        all_jobs = filtered_jobs if filtered_jobs else all_jobs[:15]  # Fallback if too aggressive
 
         if not all_jobs:
             return {

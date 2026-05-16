@@ -40,6 +40,7 @@ class JobMatcherService:
         experience = resume_data.get("parsed_experience", [])
         education = resume_data.get("parsed_education", [])
         summary = resume_data.get("parsed_summary", "")
+        experience_level = resume_data.get("experience_level", "professional")
 
         # Limit to 30 jobs max for AI processing (cost/speed)
         jobs_to_score = jobs[:30]
@@ -57,6 +58,8 @@ class JobMatcherService:
             })
 
         prompt = f"""You are a job matching AI. Score each job against this resume.
+
+IMPORTANT: The candidate is a {experience_level} level candidate. Heavily penalize jobs that require significantly more experience than the candidate has. A fresher should NOT be matched with senior/lead roles.
 
 RESUME:
 - Skills: {json.dumps(skills[:20] if isinstance(skills, list) else [])}
