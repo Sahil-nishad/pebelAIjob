@@ -33,6 +33,7 @@ async def init_db():
                 max_size=5,
                 command_timeout=60,
                 ssl='require',
+                statement_cache_size=0,
             )
             logger.info("Database connection pool initialized successfully")
         except Exception as e:
