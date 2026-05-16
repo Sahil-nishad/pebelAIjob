@@ -329,7 +329,7 @@ export default function MeetInterview({ company, role, sessionType, userName, on
             <div className="absolute -inset-[6px] rounded-2xl opacity-40 blur-md" style={{ background: 'conic-gradient(from 0deg, #0A6A47, #34d399, #fbbf24, #0A6A47)' }} />
           )}
           {/* Animated ring + logo */}
-          <div className="flex flex-col items-center gap-3 md:gap-4">
+          <div className="relative z-10 flex flex-col items-center gap-3 md:gap-4">
             <div className={`relative w-24 h-24 md:w-36 md:h-36 rounded-full flex items-center justify-center ${aiSpeaking ? 'animate-pulse' : ''}`}>
               {/* Outer ring */}
               <div className={`absolute inset-0 rounded-full border-4 ${aiSpeaking ? 'border-[#0A6A47] animate-spin' : 'border-[#0A6A47]/30'}`} style={{ animationDuration: '3s' }} />
@@ -344,19 +344,19 @@ export default function MeetInterview({ company, role, sessionType, userName, on
           </div>
           {/* Speaking indicator */}
           {aiSpeaking && (
-            <div className="absolute top-4 right-4 bg-green-500 px-3 py-1 rounded-full flex items-center gap-2">
+            <div className="absolute top-4 right-4 z-10 bg-green-500 px-3 py-1 rounded-full flex items-center gap-2">
               <Volume2 className="w-3 h-3 text-white" />
               <span className="text-white text-xs font-medium">Speaking</span>
             </div>
           )}
           {sessionStatus === 'thinking' && (
-            <div className="absolute top-4 right-4 bg-yellow-500 px-3 py-1 rounded-full flex items-center gap-2">
+            <div className="absolute top-4 right-4 z-10 bg-yellow-500 px-3 py-1 rounded-full flex items-center gap-2">
               <Loader2 className="w-3 h-3 text-white animate-spin" />
               <span className="text-white text-xs font-medium">Thinking</span>
             </div>
           )}
           {/* Name tag */}
-          <div className="absolute bottom-4 left-4 flex items-center gap-2">
+          <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2">
             <span className="bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm font-medium">
               PebelAI Interviewer
             </span>
@@ -378,7 +378,7 @@ export default function MeetInterview({ company, role, sessionType, userName, on
           {sessionStatus === 'listening' && !isMuted && (
             <div className="absolute -inset-[6px] rounded-2xl opacity-40 blur-md" style={{ background: 'conic-gradient(from 0deg, #3b82f6, #06b6d4, #8b5cf6, #3b82f6)' }} />
           )}
-          <div className="flex flex-col items-center gap-3 md:gap-4">
+          <div className="relative z-10 flex flex-col items-center gap-3 md:gap-4">
             <div className={`w-20 h-20 md:w-28 md:h-28 rounded-full bg-blue-600 flex items-center justify-center text-white text-4xl md:text-5xl font-bold transition-all ${
               sessionStatus === 'listening' && !isMuted ? 'ring-4 ring-blue-400/50 scale-105' : ''
             }`}>
@@ -396,7 +396,7 @@ export default function MeetInterview({ company, role, sessionType, userName, on
             )}
           </div>
           {/* Name tag */}
-          <div className="absolute bottom-4 left-4 flex items-center gap-2">
+          <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2">
             <span className="bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm font-medium">
               {userName} (You)
             </span>
