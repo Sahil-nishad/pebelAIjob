@@ -9,10 +9,10 @@ export async function POST(req: NextRequest) {
   if (!auth) return unauthorized()
   const { user, supabase } = auth
 
-  let reqBody: { company?: unknown; role?: unknown; sessionType?: unknown; jobDescription?: unknown }
+  let reqBody: { company?: unknown; role?: unknown; sessionType?: unknown; experienceLevel?: unknown; jobDescription?: unknown }
   try { reqBody = await req.json() }
   catch { return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 }) }
-  const { company: rawCompany, role: rawRole, sessionType: rawSessionType, jobDescription: rawJobDescription } = reqBody
+  const { company: rawCompany, role: rawRole, sessionType: rawSessionType, experienceLevel: rawExperienceLevel, jobDescription: rawJobDescription } = reqBody
 
   // Sanitize user-controlled strings before injecting into LLM prompts
   const sanitize = (s: unknown, max: number) =>
@@ -21,13 +21,14 @@ export async function POST(req: NextRequest) {
   const company = sanitize(rawCompany, 100)
   const role = sanitize(rawRole, 100)
   const sessionType = sanitize(rawSessionType, 50)
+  const experienceLevel = sanitize(rawExperienceLevel, 30) || 'professional'
   const jobDescription = rawJobDescription ? sanitize(rawJobDescription, 1000) : ''
 
   let questions: unknown[] = []
   try {
     if (!hasGroqKey() && !hasGeminiKey()) throw new Error('AI service is not configured.')
     const raw = await chatCompletion(
-      [{ role: 'user', content: `Generate 10 interview questions for ${role} at ${company}. Session type: ${sessionType}. ${jobDescription ? `Job description: ${jobDescription.slice(0, 500)}` : ''}. Return ONLY valid JSON array: [{"q":"question","category":"behavioral","difficulty":"medium","tip":"what interviewer looks for"}]` }],
+      [{ role: 'user', content: `Generate 10 interview questions for ${role} at ${company}. Session type: ${sessionType}. Experience level: ${experienceLevel} (${experienceLevel === 'fresher' ? '0-1 years, ask basic/foundational questions' : experienceLevel === 'experienced' ? '5+ years, ask senior-level/leadership questions' : '1-5 years, ask mid-level questions'}). ${jobDescription ? `Job description: ${jobDescription.slice(0, 500)}` : ''}. Return ONLY valid JSON array: [{"q":"question","category":"behavioral","difficulty":"medium","tip":"what interviewer looks for"}]` }],
       { temperature: 0.7 }
     )
     questions = JSON.parse(raw.match(/\[[\s\S]*\]/)?.[0] || raw)
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
 - Company: ${company}
 - Role: ${role}
 - Interview type: ${sessionType}
+- Experience level: ${experienceLevel} (${experienceLevel === 'fresher' ? '0-1 years experience — ask basic, foundational questions. Be encouraging. Focus on potential, academics, projects, and willingness to learn.' : experienceLevel === 'experienced' ? '5+ years experience — ask senior-level questions about leadership, architecture decisions, team management, strategic thinking, and complex problem-solving.' : '1-5 years experience — ask mid-level questions about hands-on work, project ownership, collaboration, and technical depth.'})
 ${jobDescription ? `- Job description: ${jobDescription.slice(0, 1000)}` : ''}
 
 Behavior rules:

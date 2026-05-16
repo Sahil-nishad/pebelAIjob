@@ -161,7 +161,7 @@ export default function CoachPage() {
       const res = await authFetch('/api/coach/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company, role, sessionType: selectedType, jobDescription: jobDescription || undefined }),
+        body: JSON.stringify({ company, role, sessionType: selectedType, experienceLevel, jobDescription: jobDescription || undefined }),
       })
       const data = await res.json().catch(() => null)
       if (!res.ok) throw new Error(data?.error || 'Failed to start session')
