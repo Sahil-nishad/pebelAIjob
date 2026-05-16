@@ -686,7 +686,7 @@ export default function CoachPage() {
                   <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Choose Your Mode</h2>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
 
                   {/* Text Interview */}
                   <button
@@ -710,11 +710,6 @@ export default function CoachPage() {
                     <div className={`text-[12px] leading-relaxed ${canStart && !isTyping ? 'text-white/70' : 'text-slate-400'}`}>
                       Chat-based interview with AI feedback on every answer
                     </div>
-                    {canStart && !isTyping && (
-                      <div className="absolute top-4 right-4">
-                        <ArrowRight className="w-4 h-4 text-white/60" />
-                      </div>
-                    )}
                   </button>
 
                   {/* Voice Interview */}
@@ -733,11 +728,25 @@ export default function CoachPage() {
                     <div className={`text-[12px] leading-relaxed ${canStart ? 'text-slate-500' : 'text-slate-300'}`}>
                       Speak your answers — AI listens and responds in real-time
                     </div>
-                    {canStart && (
-                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ArrowRight className="w-4 h-4 text-[#0A6A47]" />
-                      </div>
-                    )}
+                  </button>
+
+                  {/* Meet Interview */}
+                  <button
+                    onClick={() => { if (!canStart) { toast.error('Fill in company and select a focus area first'); return }; setMeetModeActive(true) }}
+                    className={`group relative p-5 rounded-2xl border-2 text-left transition-all ${
+                      canStart
+                        ? 'border-blue-200 bg-white hover:border-blue-400 hover:bg-blue-50 hover:-translate-y-0.5 hover:shadow-md'
+                        : 'border-slate-100 bg-slate-50 text-slate-400 cursor-not-allowed'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${canStart ? 'bg-blue-50' : 'bg-slate-100'}`}>
+                      <Users className={`w-5 h-5 ${canStart ? 'text-blue-600' : 'text-slate-300'}`} />
+                    </div>
+                    <div className={`font-bold text-base mb-1 ${canStart ? 'text-slate-800' : 'text-slate-400'}`}>Meet Interview</div>
+                    <div className={`text-[12px] leading-relaxed ${canStart ? 'text-slate-500' : 'text-slate-300'}`}>
+                      Realistic Google Meet-style with AI interviewer
+                    </div>
+                    <span className="absolute top-3 right-3 text-[9px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">NEW</span>
                   </button>
 
                   {/* Practice PDF */}
