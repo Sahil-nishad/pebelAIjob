@@ -21,6 +21,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Force cache bust on code changes
+RUN echo "build-v2"
+
 # Expose port
 EXPOSE 8000
 
