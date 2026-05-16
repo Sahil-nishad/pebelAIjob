@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     adzuna_app_id: str | None = None
     adzuna_app_key: str | None = None
     jsearch_api_key: str | None = None
+    serper_api_key: str | None = None
 
     # Google OAuth
     google_client_id: str | None = None
