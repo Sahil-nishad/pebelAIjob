@@ -71,9 +71,10 @@ class JobSearchService:
             loc = location.replace(' ', '+') if location else ''
             url = f"https://www.indeed.co.in/rss?q={query}&l={loc}&limit={min(limit, 25)}&sort=date"
 
-            async with httpx.AsyncClient(timeout=15.0) as client:
+            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
                 response = await client.get(url, headers={
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'application/rss+xml, application/xml, text/xml',
                 })
 
                 if response.status_code != 200:
@@ -148,51 +149,39 @@ class JobSearchService:
                     logger.warning(f"LinkedIn returned {response.status_code}")
                     return []
 
-                # Parse HTML response
+                # Parse HTML response — LinkedIn guest API returns job card HTML
                 html = response.text
                 jobs = []
 
-                # Extract job cards using regex (LinkedIn guest API returns HTML)
-                job_cards = re.findall(
-                    r'<li>.*?</li>',
-                    html,
-                    re.DOTALL
-                )
+                # Extract job data using multiple regex patterns
+                # Pattern 1: base-search-card format
+                titles = re.findall(r'class="base-search-card__title[^"]*"[^>]*>\s*(.*?)\s*</', html, re.DOTALL)
+                companies = re.findall(r'class="base-search-card__subtitle[^"]*"[^>]*>.*?>(.*?)</a>', html, re.DOTALL)
+                locations = re.findall(r'class="job-search-card__location[^"]*"[^>]*>\s*(.*?)\s*</', html, re.DOTALL)
+                links = re.findall(r'href="(https://[a-z]+\.linkedin\.com/jobs/view/[^"?]+)', html)
+                dates = re.findall(r'<time[^>]*datetime="([^"]+)"', html)
 
-                for card in job_cards[:limit]:
-                    # Extract title
-                    title_match = re.search(r'class="base-search-card__title"[^>]*>(.*?)</[^>]+>', card, re.DOTALL)
-                    title = title_match.group(1).strip() if title_match else ''
-
-                    # Extract company
-                    company_match = re.search(r'class="base-search-card__subtitle"[^>]*>.*?<a[^>]*>(.*?)</a>', card, re.DOTALL)
-                    company = company_match.group(1).strip() if company_match else ''
-
-                    # Extract location
-                    loc_match = re.search(r'class="job-search-card__location"[^>]*>(.*?)</[^>]+>', card, re.DOTALL)
-                    job_location = loc_match.group(1).strip() if loc_match else location
-
-                    # Extract link
-                    link_match = re.search(r'href="(https://www\.linkedin\.com/jobs/view/[^"?]+)', card)
-                    link = link_match.group(1) if link_match else ''
-
-                    # Extract date
-                    date_match = re.search(r'<time[^>]*datetime="([^"]+)"', card)
-                    posted_date = date_match.group(1) if date_match else ''
+                # Build jobs from extracted data
+                for i in range(min(len(titles), len(links))):
+                    title = re.sub(r'<[^>]+>', '', titles[i]).strip() if i < len(titles) else ''
+                    company = re.sub(r'<[^>]+>', '', companies[i]).strip() if i < len(companies) else ''
+                    job_loc = re.sub(r'<[^>]+>', '', locations[i]).strip() if i < len(locations) else location
+                    link = links[i] if i < len(links) else ''
+                    posted = dates[i] if i < len(dates) else ''
 
                     if title and link:
                         job = {
                             "id": f"linkedin_{hash(link) % 100000}",
                             "source": "linkedin",
-                            "title": re.sub(r'<[^>]+>', '', title).strip(),
-                            "company": re.sub(r'<[^>]+>', '', company).strip(),
-                            "location": re.sub(r'<[^>]+>', '', job_location).strip(),
+                            "title": title,
+                            "company": company,
+                            "location": job_loc,
                             "salary": "Not disclosed",
                             "experience_required": "",
                             "skills": [],
                             "description": "",
                             "apply_url": link,
-                            "posted_date": posted_date,
+                            "posted_date": posted,
                             "job_type": "full-time",
                             "remote": "remote" in title.lower(),
                         }
@@ -214,7 +203,8 @@ class JobSearchService:
 
             async with httpx.AsyncClient(timeout=15.0) as client:
                 response = await client.get(url, headers={
-                    'User-Agent': 'Mozilla/5.0'
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'application/json',
                 })
 
                 if response.status_code != 200:
@@ -264,8 +254,8 @@ class JobSearchService:
     ) -> List[Dict[str, Any]]:
         """Search Google Jobs via Serper.dev (2500 free searches)."""
         try:
-            url = "https://google.serper.dev/jobs"
-            query = f"{keywords} {location}".strip()
+            url = "https://google.serper.dev/search"
+            query = f"{keywords} jobs {location}".strip()
 
             async with httpx.AsyncClient(timeout=15.0) as client:
                 response = await client.post(
@@ -278,6 +268,7 @@ class JobSearchService:
                         "q": query,
                         "gl": "in",
                         "hl": "en",
+                        "type": "search",
                         "num": min(limit, 20),
                     },
                 )
