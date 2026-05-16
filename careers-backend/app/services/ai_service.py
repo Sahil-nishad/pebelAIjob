@@ -18,9 +18,13 @@ class AIService:
         self.groq_available = bool(settings.groq_api_key)
 
         if self.gemini_available:
-            import google.generativeai as genai
-            genai.configure(api_key=settings.gemini_api_key)
-            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=settings.gemini_api_key)
+                self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+            except Exception as e:
+                logger.warning(f"Gemini init failed: {e}")
+                self.gemini_available = False
 
     async def generate_text(self, prompt: str) -> str:
         """Generate text using available AI model (Gemini or Groq)."""
