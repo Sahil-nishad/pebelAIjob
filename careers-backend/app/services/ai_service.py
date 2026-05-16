@@ -20,7 +20,7 @@ class AIService:
         if self.gemini_available:
             import google.generativeai as genai
             genai.configure(api_key=settings.gemini_api_key)
-            self.gemini_model = genai.GenerativeModel('gemini-2.0-flash-exp')
+            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
 
     async def generate_text(self, prompt: str) -> str:
         """Generate text using available AI model (Gemini or Groq)."""
