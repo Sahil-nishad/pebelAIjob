@@ -14,8 +14,10 @@ import {
 import { authFetch } from '@/lib/api'
 import toast from 'react-hot-toast'
 import dynamic from 'next/dynamic'
+import { useSession } from 'next-auth/react'
 
 const VoiceInterview = dynamic(() => import('@/components/coach/VoiceInterview'), { ssr: false })
+const MeetInterview = dynamic(() => import('@/components/coach/MeetInterview'), { ssr: false })
 
 type SessionType = 'behavioral' | 'technical' | 'case' | 'salary' | 'general'
 type ExperienceLevel = 'fresher' | 'professional' | 'experienced'
@@ -63,6 +65,8 @@ function formatMessage(text: string) {
 
 export default function CoachPage() {
   const searchParams = useSearchParams()
+  const { data: session } = useSession()
+  const userName = session?.user?.name || session?.user?.email?.split('@')[0] || 'Candidate'
 
   // Session state
   const [hasSession, setHasSession]     = useState(false)
@@ -82,7 +86,8 @@ export default function CoachPage() {
   const [generatingQA, setGeneratingQA] = useState(false)
   const [historyOpen, setHistoryOpen]   = useState(false)
   const [voiceModeActive, setVoiceModeActive] = useState(false)
-  const [activeMode, setActiveMode]     = useState<'text' | 'voice' | 'pdf' | null>(null)
+  const [meetModeActive, setMeetModeActive] = useState(false)
+  const [activeMode, setActiveMode]     = useState<'text' | 'voice' | 'meet' | 'pdf' | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -408,6 +413,27 @@ export default function CoachPage() {
             </div>
           </button>
 
+          {/* Meet-Style Interview */}
+          <button
+            onClick={() => { if (!canStart) { toast.error('Enter company and select focus area first'); return }; setMeetModeActive(true); setActiveMode('meet') }}
+            disabled={!canStart}
+            className={`group relative flex flex-col p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
+              canStart
+                ? 'border-blue-200 bg-white hover:border-blue-400 hover:shadow-md cursor-pointer'
+                : 'border-slate-200 bg-slate-50 cursor-not-allowed opacity-60'
+            }`}
+          >
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${canStart ? 'bg-blue-50' : 'bg-slate-100'}`}>
+              <Users className={`w-5 h-5 ${canStart ? 'text-blue-600' : 'text-slate-400'}`} />
+            </div>
+            <div className="font-bold text-[15px] text-slate-900 mb-1">Meet Interview</div>
+            <div className="text-[12px] text-slate-500 leading-relaxed">Realistic video-call style with AI interviewer</div>
+            <div className="flex items-center gap-1.5 mt-3">
+              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">NEW</span>
+              <span className="text-[10px] text-slate-400">Google Meet style</span>
+            </div>
+          </button>
+
           {/* Practice PDF */}
           <button
             onClick={() => { if (!canStart) { toast.error('Enter company and select focus area first'); return }; handleDownloadSectorQA(); setActiveMode('pdf') }}
@@ -449,6 +475,19 @@ export default function CoachPage() {
             role={role}
             sessionType={selectedType || 'General'}
             onClose={() => setVoiceModeActive(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── Meet-Style Interview Portal ── */}
+      <AnimatePresence>
+        {meetModeActive && (
+          <MeetInterview
+            company={company}
+            role={role}
+            sessionType={selectedType || 'General'}
+            userName={userName}
+            onClose={() => setMeetModeActive(false)}
           />
         )}
       </AnimatePresence>
