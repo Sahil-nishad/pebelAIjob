@@ -63,11 +63,21 @@ async def search_jobs_with_resume(
                     raise HTTPException(status_code=404, detail="Resume not found")
 
                 resume_data = {
-                    "parsed_skills": resume.get("parsed_skills") or [],
-                    "parsed_experience": resume.get("parsed_experience") or [],
-                    "parsed_education": resume.get("parsed_education") or [],
-                    "parsed_summary": resume.get("parsed_summary") or "",
+                    "parsed_skills": resume.get("extracted_skills") or [],
+                    "parsed_experience": resume.get("extracted_experience") or [],
+                    "parsed_education": resume.get("extracted_education") or [],
+                    "parsed_summary": resume.get("raw_text") or "",
                 }
+
+                # Parse JSON strings if needed
+                import json as json_mod
+                for key in ["parsed_skills", "parsed_experience", "parsed_education"]:
+                    val = resume_data[key]
+                    if isinstance(val, str):
+                        try:
+                            resume_data[key] = json_mod.loads(val)
+                        except (json_mod.JSONDecodeError, TypeError):
+                            resume_data[key] = []
 
                 # Build keywords from resume if not provided
                 if not keywords:

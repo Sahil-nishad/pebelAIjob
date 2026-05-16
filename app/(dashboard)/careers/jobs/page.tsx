@@ -37,7 +37,7 @@ interface Job {
 
 interface Resume {
   id: string
-  original_name: string
+  file_name: string
   parsed_skills: string[]
   parsed_summary: string
 }
@@ -189,7 +189,7 @@ export default function JobSearchPage() {
                   <option value="">Don&apos;t use resume (keyword search only)</option>
                   {resumes.map((resume) => (
                     <option key={resume.id} value={resume.id}>
-                      {resume.original_name}
+                      {resume.file_name}
                     </option>
                   ))}
                 </select>
