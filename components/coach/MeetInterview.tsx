@@ -211,7 +211,16 @@ export default function MeetInterview({ company, role, sessionType, userName, on
       recognition.onend = () => {
         isListeningRef.current = false; if (silenceTimer) clearTimeout(silenceTimer)
         if (mobile) {
-          if (isPushToTalkHeldRef.current && shouldRestartRef.current) { try { isListeningRef.current = true; recognition.start() } catch { isListeningRef.current = false }; return }
+          if (isPushToTalkHeldRef.current && shouldRestartRef.current) {
+            // Restart recognition with a small delay — Android needs this
+            setTimeout(() => {
+              if (isPushToTalkHeldRef.current && shouldRestartRef.current) {
+                try { isListeningRef.current = true; recognition.start() }
+                catch { isListeningRef.current = false }
+              }
+            }, 100)
+            return
+          }
           if (accumulatedTranscript.trim()) { const msg = accumulatedTranscript.trim(); accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech(''); sendToCoach(msg) }
           else if (shouldRestartRef.current) { setSessionStatus('listening'); setCurrentSpeech('') }
         } else {
@@ -223,6 +232,15 @@ export default function MeetInterview({ company, role, sessionType, userName, on
       recognition.onerror = (event: any) => {
         isListeningRef.current = false
         if (event.error === 'not-allowed') { toast.error('Microphone access denied.'); setSessionStatus('ended') }
+        else if (event.error === 'no-speech' && mobile && isPushToTalkHeldRef.current) {
+          // No speech detected but button still held — restart
+          setTimeout(() => {
+            if (isPushToTalkHeldRef.current && shouldRestartRef.current) {
+              try { isListeningRef.current = true; recognition.start() }
+              catch { isListeningRef.current = false }
+            }
+          }, 100)
+        }
         else if (event.error !== 'aborted' && shouldRestartRef.current && !mobile) setTimeout(() => startListening(), 500)
       }
 
@@ -419,13 +437,12 @@ export default function MeetInterview({ company, role, sessionType, userName, on
           {/* Push to talk (mobile) */}
           {isMobile && (
             <button
-              onPointerDown={e => { e.preventDefault(); handlePushToTalkStart() }}
-              onPointerUp={e => { e.preventDefault(); handlePushToTalkEnd() }}
-              onPointerCancel={e => { e.preventDefault(); handlePushToTalkEnd() }}
-              onPointerLeave={e => { e.preventDefault(); handlePushToTalkEnd() }}
+              onTouchStart={e => { e.preventDefault(); handlePushToTalkStart() }}
+              onTouchEnd={e => { e.preventDefault(); handlePushToTalkEnd() }}
+              onTouchCancel={e => { e.preventDefault(); handlePushToTalkEnd() }}
               onContextMenu={e => e.preventDefault()}
               disabled={sessionStatus === 'thinking' || sessionStatus === 'speaking'}
-              style={{ touchAction: 'none' }}
+              style={{ touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}
               className={`h-12 px-5 rounded-full font-semibold text-sm flex items-center gap-2 transition-all ${
                 isPushToTalkHeld
                   ? 'bg-blue-500 text-white scale-105 shadow-lg'
