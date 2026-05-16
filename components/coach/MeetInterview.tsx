@@ -409,12 +409,11 @@ export default function MeetInterview({ company, role, sessionType, userName, on
 
       {/* Bottom Controls */}
       {sessionStatus !== 'joining' && sessionStatus !== 'ended' && (
-        <div className="flex items-center justify-center gap-2 md:gap-4 py-3 md:py-5 px-4 bg-white border-t border-gray-200">
+        <div className="flex items-center justify-center gap-3 py-4 px-4 bg-white border-t border-gray-200">
           {/* Mute */}
           <button onClick={() => setIsMuted(!isMuted)}
-            className={`flex flex-col items-center gap-1 px-5 py-3 rounded-xl transition-colors ${isMuted ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isMuted ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
             {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-            <span className="text-[10px] font-bold uppercase">{isMuted ? 'Unmute' : 'Mute'}</span>
           </button>
 
           {/* Push to talk (mobile) */}
@@ -427,23 +426,27 @@ export default function MeetInterview({ company, role, sessionType, userName, on
               onContextMenu={e => e.preventDefault()}
               disabled={sessionStatus === 'thinking' || sessionStatus === 'speaking'}
               style={{ touchAction: 'none' }}
-              className={`px-6 py-3 rounded-xl font-bold text-sm transition-all ${isPushToTalkHeld ? 'bg-blue-500 text-white scale-105' : 'bg-[#0A6A47] text-white'} disabled:opacity-50`}>
-              {isPushToTalkHeld ? '🎙️ Recording...' : '🎤 Hold to Speak'}
+              className={`h-12 px-5 rounded-full font-semibold text-sm flex items-center gap-2 transition-all ${
+                isPushToTalkHeld
+                  ? 'bg-blue-500 text-white scale-105 shadow-lg'
+                  : 'bg-[#0A6A47] text-white hover:bg-[#085c3d]'
+              } disabled:opacity-50 disabled:scale-100`}>
+              <Mic className={`w-4 h-4 ${isPushToTalkHeld ? 'animate-pulse' : ''}`} />
+              {isPushToTalkHeld ? 'Recording...' : 'Hold to Speak'}
             </button>
           )}
 
           {/* Transcript */}
           <button onClick={() => setShowTranscript(!showTranscript)}
-            className={`flex flex-col items-center gap-1 px-5 py-3 rounded-xl transition-colors ${showTranscript ? 'bg-[#0A6A47]/10 text-[#0A6A47]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${showTranscript ? 'bg-[#0A6A47] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
             <MessageSquare className="w-5 h-5" />
-            <span className="text-[10px] font-bold uppercase">Transcript</span>
           </button>
 
           {/* Leave */}
           <button onClick={handleEndCall}
-            className="flex items-center gap-2 px-8 py-3 bg-red-500 text-white rounded-full font-semibold hover:bg-red-600 transition-colors">
+            className="h-12 px-6 bg-red-500 text-white rounded-full font-semibold text-sm flex items-center gap-2 hover:bg-red-600 transition-colors">
             <Phone className="w-4 h-4 rotate-[135deg]" />
-            LEAVE
+            Leave
           </button>
         </div>
       )}
