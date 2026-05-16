@@ -3,11 +3,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mic, MicOff, X, MessageSquare, Volume2, VolumeX, Loader2, Phone } from 'lucide-react'
+import { Mic, MicOff, X, MessageSquare, Volume2, VolumeX, Loader2, Phone, FileText } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { authFetch } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import VoiceOrb from './VoiceOrb'
+import InterviewReport from './InterviewReport'
 
 interface VoiceInterviewProps {
   company: string
@@ -34,6 +35,8 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
   const [waveformData, setWaveformData] = useState<number[]>(Array(32).fill(0))
   const [isMobile, setIsMobile] = useState(false)
   const [isPushToTalkHeld, setIsPushToTalkHeld] = useState(false)
+  const [reportData, setReportData] = useState<any>(null)
+  const [generatingReport, setGeneratingReport] = useState(false)
 
   // Keep a ref for isPushToTalkHeld so recognition onend can check it
   const isPushToTalkHeldRef = useRef(false)
@@ -430,6 +433,29 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
     setCurrentSpeech('')
   }, [])
 
+  // End interview and generate performance report
+  const handleEndAndReport = useCallback(async () => {
+    handleStop()
+    if (transcript.length < 4) {
+      toast.error('Answer at least 2 questions to get a report')
+      return
+    }
+    setGeneratingReport(true)
+    try {
+      const res = await authFetch('/api/coach/report', {
+        method: 'POST',
+        body: JSON.stringify({ transcript, company, role, sessionType }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Failed')
+      setReportData(data.report)
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to generate report')
+    } finally {
+      setGeneratingReport(false)
+    }
+  }, [transcript, company, role, sessionType, handleStop])
+
   // Cleanup on unmount — stop everything immediately
   useEffect(() => {
     return () => {
@@ -505,12 +531,27 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
             <p className="text-slate-400 text-[11px] font-medium uppercase tracking-wider">AI · {sessionType}</p>
           </div>
         </div>
-        <button
-          onClick={() => { handleStop(); onClose() }}
-          className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-all"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          {isActive && transcript.length >= 4 && (
+            <button
+              onClick={handleEndAndReport}
+              disabled={generatingReport}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#0A6A47] text-white text-sm font-semibold hover:bg-[#085c3d] transition-all disabled:opacity-60"
+            >
+              {generatingReport ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
+              ) : (
+                <><FileText className="w-4 h-4" /> End & Get Report</>
+              )}
+            </button>
+          )}
+          <button
+            onClick={() => { handleStop(); onClose() }}
+            className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition-all"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Main content */}
@@ -717,6 +758,26 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
           Powered by Web Speech API + Groq AI
         </span>
       </div>
+
+      {/* Interview Report */}
+      {reportData && (
+        <InterviewReport
+          report={reportData}
+          company={company}
+          role={role}
+          sessionType={sessionType}
+          onClose={() => { setReportData(null); onClose() }}
+        />
+      )}
+
+      {/* Generating Report Overlay */}
+      {generatingReport && (
+        <div className="absolute inset-0 z-30 bg-white/90 flex flex-col items-center justify-center gap-4">
+          <Loader2 className="w-12 h-12 text-[#0A6A47] animate-spin" />
+          <p className="text-lg font-semibold text-slate-900">Analyzing your interview...</p>
+          <p className="text-sm text-slate-500">Generating your performance report</p>
+        </div>
+      )}
 
       {/* Transcript Drawer */}
       <AnimatePresence>
