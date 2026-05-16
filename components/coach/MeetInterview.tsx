@@ -317,11 +317,17 @@ export default function MeetInterview({ company, role, sessionType, userName, on
       <div className="flex-1 flex flex-col md:flex-row items-center justify-center p-3 md:p-6 gap-3 md:gap-4 overflow-hidden">
 
         {/* AI Interviewer Panel — PebelAI Logo with ring */}
-        <div className={`relative w-full md:flex-1 md:max-w-[580px] h-[40vh] md:h-auto md:aspect-[4/3] rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#f8faf9] to-[#e8f0eb] flex items-center justify-center transition-all duration-300 ${
-          aiSpeaking ? 'ring-[3px] ring-[#0A6A47] shadow-[0_0_20px_rgba(10,106,71,0.3)]' :
-          sessionStatus === 'thinking' ? 'ring-[3px] ring-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.2)]' :
-          'ring-1 ring-gray-200'
-        }`}>
+        <div className={`relative w-full md:flex-1 md:max-w-[580px] h-[40vh] md:h-auto md:aspect-[4/3] rounded-2xl overflow-visible shadow-lg bg-gradient-to-br from-[#f8faf9] to-[#e8f0eb] flex items-center justify-center`}>
+          {/* Animated gradient ring glow */}
+          {(aiSpeaking || sessionStatus === 'thinking') && (
+            <div className="absolute -inset-[3px] rounded-2xl overflow-hidden">
+              <div className={`absolute inset-0 rounded-2xl ${aiSpeaking ? 'animate-spin' : ''}`} style={{ animationDuration: '3s', background: 'conic-gradient(from 0deg, #0A6A47, #34d399, #fbbf24, #0A6A47)' }} />
+              <div className="absolute inset-[3px] rounded-[14px] bg-gradient-to-br from-[#f8faf9] to-[#e8f0eb]" />
+            </div>
+          )}
+          {(aiSpeaking || sessionStatus === 'thinking') && (
+            <div className="absolute -inset-[6px] rounded-2xl opacity-40 blur-md" style={{ background: 'conic-gradient(from 0deg, #0A6A47, #34d399, #fbbf24, #0A6A47)' }} />
+          )}
           {/* Animated ring + logo */}
           <div className="flex flex-col items-center gap-3 md:gap-4">
             <div className={`relative w-24 h-24 md:w-36 md:h-36 rounded-full flex items-center justify-center ${aiSpeaking ? 'animate-pulse' : ''}`}>
@@ -361,10 +367,17 @@ export default function MeetInterview({ company, role, sessionType, userName, on
         </div>
 
         {/* User Panel */}
-        <div className={`relative w-full md:flex-1 md:max-w-[580px] h-[40vh] md:h-auto md:aspect-[4/3] bg-[#3c4043] rounded-2xl overflow-hidden shadow-lg flex items-center justify-center transition-all duration-300 ${
-          sessionStatus === 'listening' && !isMuted ? 'ring-[3px] ring-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)]' :
-          'ring-1 ring-gray-600'
-        }`}>
+        <div className="relative w-full md:flex-1 md:max-w-[580px] h-[40vh] md:h-auto md:aspect-[4/3] bg-[#3c4043] rounded-2xl overflow-visible shadow-lg flex items-center justify-center">
+          {/* Animated gradient ring glow when user is speaking */}
+          {sessionStatus === 'listening' && !isMuted && (
+            <div className="absolute -inset-[3px] rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 rounded-2xl animate-spin" style={{ animationDuration: '3s', background: 'conic-gradient(from 0deg, #3b82f6, #06b6d4, #8b5cf6, #3b82f6)' }} />
+              <div className="absolute inset-[3px] rounded-[14px] bg-[#3c4043]" />
+            </div>
+          )}
+          {sessionStatus === 'listening' && !isMuted && (
+            <div className="absolute -inset-[6px] rounded-2xl opacity-40 blur-md" style={{ background: 'conic-gradient(from 0deg, #3b82f6, #06b6d4, #8b5cf6, #3b82f6)' }} />
+          )}
           <div className="flex flex-col items-center gap-3 md:gap-4">
             <div className={`w-20 h-20 md:w-28 md:h-28 rounded-full bg-blue-600 flex items-center justify-center text-white text-4xl md:text-5xl font-bold transition-all ${
               sessionStatus === 'listening' && !isMuted ? 'ring-4 ring-blue-400/50 scale-105' : ''
