@@ -152,7 +152,7 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
     const utterance = new SpeechSynthesisUtterance(text)
     const voice = getBestVoice()
     if (voice) utterance.voice = voice
-    utterance.rate = 1.05
+    utterance.rate = 0.9
     utterance.pitch = 1.0
     utterance.volume = 1.0
     utterance.onend = () => {

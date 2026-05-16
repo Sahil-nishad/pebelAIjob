@@ -128,7 +128,7 @@ export default function MeetInterview({ company, role, sessionType, userName, on
     const utterance = new SpeechSynthesisUtterance(text)
     const voice = getBestVoice()
     if (voice) utterance.voice = voice
-    utterance.rate = 1.0; utterance.pitch = 1.0
+    utterance.rate = 0.9; utterance.pitch = 1.0
     utterance.onend = () => { setAiSpeaking(false); if (shouldRestartRef.current) { setSessionStatus('listening'); resolve(); if (!isMobileBrowser()) startListening() } else resolve() }
     utterance.onerror = () => { setAiSpeaking(false); resolve() }
     synthRef.current.speak(utterance)
