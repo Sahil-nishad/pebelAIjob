@@ -277,12 +277,12 @@ export default function MeetInterview({ company, role, sessionType, userName, on
   return createPortal(
     <div className="fixed inset-0 z-[9999] bg-[#f0f4f9] flex flex-col">
 
-      {/* Top Bar — Light theme like the reference */}
-      <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <span className="text-[#0A6A47] font-bold text-lg">PebelAI Meeting</span>
-          <span className="text-gray-400">|</span>
-          <span className="text-gray-500 text-sm">{currentTime} | Interview Session</span>
+      {/* Top Bar — Light theme */}
+      <div className="flex items-center justify-between px-4 md:px-6 py-2 md:py-3 bg-white border-b border-gray-200">
+        <div className="flex items-center gap-2 md:gap-3">
+          <span className="text-[#0A6A47] font-bold text-sm md:text-lg">PebelAI Meeting</span>
+          <span className="text-gray-400 hidden md:inline">|</span>
+          <span className="text-gray-500 text-xs md:text-sm hidden md:inline">{currentTime} | Interview Session</span>
         </div>
         <div className="flex items-center gap-3">
           <button className="p-2 rounded-full hover:bg-gray-100 text-gray-500"><Info className="w-5 h-5" /></button>
@@ -294,23 +294,23 @@ export default function MeetInterview({ company, role, sessionType, userName, on
       </div>
 
       {/* Main Video Grid */}
-      <div className="flex-1 flex items-center justify-center p-6 gap-4">
+      <div className="flex-1 flex flex-col md:flex-row items-center justify-center p-3 md:p-6 gap-3 md:gap-4 overflow-hidden">
 
         {/* AI Interviewer Panel — PebelAI Logo with ring */}
-        <div className="relative flex-1 max-w-[580px] aspect-[4/3] rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#f8faf9] to-[#e8f0eb] flex items-center justify-center">
+        <div className="relative w-full md:flex-1 md:max-w-[580px] h-[40vh] md:h-auto md:aspect-[4/3] rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-[#f8faf9] to-[#e8f0eb] flex items-center justify-center">
           {/* Animated ring + logo */}
-          <div className="flex flex-col items-center gap-4">
-            <div className={`relative w-36 h-36 rounded-full flex items-center justify-center ${aiSpeaking ? 'animate-pulse' : ''}`}>
+          <div className="flex flex-col items-center gap-3 md:gap-4">
+            <div className={`relative w-24 h-24 md:w-36 md:h-36 rounded-full flex items-center justify-center ${aiSpeaking ? 'animate-pulse' : ''}`}>
               {/* Outer ring */}
               <div className={`absolute inset-0 rounded-full border-4 ${aiSpeaking ? 'border-[#0A6A47] animate-spin' : 'border-[#0A6A47]/30'}`} style={{ animationDuration: '3s' }} />
               {/* Inner ring */}
               <div className={`absolute inset-2 rounded-full border-2 ${aiSpeaking ? 'border-[#0A6A47]/60' : 'border-[#0A6A47]/15'}`} />
               {/* Logo center */}
-              <div className="w-24 h-24 rounded-full bg-white shadow-md flex items-center justify-center">
-                <img src="/pebelai-logo.svg" alt="PebelAI" className="w-16 h-16 object-contain" />
+              <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-white shadow-md flex items-center justify-center">
+                <img src="/pebelai-logo.svg" alt="PebelAI" className="w-10 h-10 md:w-16 md:h-16 object-contain" />
               </div>
             </div>
-            <span className="text-[#0A6A47] font-bold text-lg">PebelAI Interviewer</span>
+            <span className="text-[#0A6A47] font-bold text-base md:text-lg">PebelAI Interviewer</span>
           </div>
           {/* Speaking indicator */}
           {aiSpeaking && (
@@ -337,9 +337,9 @@ export default function MeetInterview({ company, role, sessionType, userName, on
         </div>
 
         {/* User Panel */}
-        <div className="relative flex-1 max-w-[580px] aspect-[4/3] bg-[#3c4043] rounded-2xl overflow-hidden shadow-lg flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className={`w-28 h-28 rounded-full bg-blue-600 flex items-center justify-center text-white text-5xl font-bold transition-all ${
+        <div className="relative w-full md:flex-1 md:max-w-[580px] h-[40vh] md:h-auto md:aspect-[4/3] bg-[#3c4043] rounded-2xl overflow-hidden shadow-lg flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 md:gap-4">
+            <div className={`w-20 h-20 md:w-28 md:h-28 rounded-full bg-blue-600 flex items-center justify-center text-white text-4xl md:text-5xl font-bold transition-all ${
               sessionStatus === 'listening' && !isMuted ? 'ring-4 ring-blue-400/50 scale-105' : ''
             }`}>
               {userInitial}
@@ -409,7 +409,7 @@ export default function MeetInterview({ company, role, sessionType, userName, on
 
       {/* Bottom Controls */}
       {sessionStatus !== 'joining' && sessionStatus !== 'ended' && (
-        <div className="flex items-center justify-center gap-4 py-5 bg-white border-t border-gray-200">
+        <div className="flex items-center justify-center gap-2 md:gap-4 py-3 md:py-5 px-4 bg-white border-t border-gray-200">
           {/* Mute */}
           <button onClick={() => setIsMuted(!isMuted)}
             className={`flex flex-col items-center gap-1 px-5 py-3 rounded-xl transition-colors ${isMuted ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
