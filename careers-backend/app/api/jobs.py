@@ -54,7 +54,7 @@ async def search_jobs_with_resume(
         if data.resume_id:
             async for conn in get_db():
                 resume = await conn.fetchrow(
-                    "SELECT * FROM career_resumes WHERE id = $1 AND user_id = $2",
+                    "SELECT * FROM resumes WHERE id = $1 AND user_id = $2",
                     data.resume_id,
                     current_user["id"],
                 )
