@@ -147,7 +147,7 @@ async def search_jobs_with_resume(
         mid_keywords = ['3+', '4+', '5+', '3-5', '4-6']
 
         # Countries to exclude (non-India)
-        excluded_locations = ['pakistan', 'bangladesh', 'sri lanka', 'nepal', 'usa', 'united states', 'uk', 'united kingdom', 'canada', 'australia', 'germany', 'singapore', 'dubai', 'uae', 'qatar', 'saudi']
+        india_keywords = ['india', 'bangalore', 'bengaluru', 'mumbai', 'delhi', 'noida', 'gurgaon', 'gurugram', 'hyderabad', 'pune', 'chennai', 'kolkata', 'ahmedabad', 'jaipur', 'lucknow', 'chandigarh', 'indore', 'bhopal', 'kochi', 'coimbatore', 'thiruvananthapuram', 'nagpur', 'vadodara', 'surat', 'visakhapatnam', 'patna', 'ranchi', 'guwahati', 'bhubaneswar', 'mysore', 'mangalore', 'trivandrum', 'goa', 'remote']
 
         for job in all_jobs:
             # Filter by date — skip jobs older than 7 days
@@ -160,11 +160,13 @@ async def search_jobs_with_resume(
                 except (ValueError, TypeError):
                     pass
 
-            # Filter out non-India jobs (unless remote)
+            # Only show India jobs or remote jobs
             job_location = job.get("location", "").lower()
             if not job.get("remote", False):
-                if any(country in job_location for country in excluded_locations):
-                    continue
+                # If location is empty or generic, keep it
+                if job_location and job_location not in ['', 'not specified']:
+                    if not any(city in job_location for city in india_keywords):
+                        continue
 
             # Filter by experience level
             if resume_data and resume_data.get("experience_level") == "fresher":
