@@ -146,6 +146,9 @@ async def search_jobs_with_resume(
         senior_keywords = ['senior', 'lead', 'principal', 'staff', 'director', 'manager', 'head', 'vp', 'architect', '8+', '10+', '7+', '6+']
         mid_keywords = ['3+', '4+', '5+', '3-5', '4-6']
 
+        # Countries to exclude (non-India)
+        excluded_locations = ['pakistan', 'bangladesh', 'sri lanka', 'nepal', 'usa', 'united states', 'uk', 'united kingdom', 'canada', 'australia', 'germany', 'singapore', 'dubai', 'uae', 'qatar', 'saudi']
+
         for job in all_jobs:
             # Filter by date — skip jobs older than 7 days
             posted = job.get("posted_date", "")
@@ -155,7 +158,13 @@ async def search_jobs_with_resume(
                     if posted_dt < seven_days_ago:
                         continue
                 except (ValueError, TypeError):
-                    pass  # Can't parse date, keep the job
+                    pass
+
+            # Filter out non-India jobs (unless remote)
+            job_location = job.get("location", "").lower()
+            if not job.get("remote", False):
+                if any(country in job_location for country in excluded_locations):
+                    continue
 
             # Filter by experience level
             if resume_data and resume_data.get("experience_level") == "fresher":
@@ -163,16 +172,14 @@ async def search_jobs_with_resume(
                 exp_req = job.get("experience_required", "").lower()
                 combined = f"{title_lower} {exp_req}"
 
-                # Skip senior/lead roles for freshers
                 if any(kw in combined for kw in senior_keywords):
                     continue
-                # Skip mid-level roles for freshers
                 if any(kw in combined for kw in mid_keywords):
                     continue
 
             filtered_jobs.append(job)
 
-        all_jobs = filtered_jobs if filtered_jobs else all_jobs[:15]  # Fallback if too aggressive
+        all_jobs = filtered_jobs if filtered_jobs else all_jobs[:15]
 
         if not all_jobs:
             return {

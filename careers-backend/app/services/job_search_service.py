@@ -262,7 +262,7 @@ class JobSearchService:
         """Search Google Jobs via Serper.dev (2500 free searches)."""
         try:
             url = "https://google.serper.dev/search"
-            query = f"{keywords} jobs in {location}".strip()
+            query = f"{keywords} jobs in {location} India".strip()
 
             async with httpx.AsyncClient(timeout=15.0) as client:
                 response = await client.post(
