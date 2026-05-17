@@ -726,7 +726,7 @@ export default function CoachPage() {
                     </div>
                     <div className={`font-bold text-base mb-1 ${canStart ? 'text-slate-800' : 'text-slate-400'}`}>Live Interview</div>
                     <div className={`text-[12px] leading-relaxed ${canStart ? 'text-slate-500' : 'text-slate-300'}`}>
-                      Face-to-face mock interview with AI interviewer
+                      Real-time voice interview with AI — just like a real call
                     </div>
                   </button>
 
