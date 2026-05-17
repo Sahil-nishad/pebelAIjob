@@ -97,30 +97,30 @@ async def search_jobs_with_resume(
 
                 resume_data["experience_level"] = experience_level
 
-                # Build keywords from resume — use job title + top skills
+                # Build keywords from resume — use job title + location focus
                 if not keywords:
                     skills = resume_data.get("parsed_skills", [])
-                    # Try to extract job title from summary
                     summary = resume_data.get("parsed_summary", "")
+
+                    # Try to extract job title from summary
                     title_keywords = ""
-                    for title in ["data analyst", "software engineer", "developer", "designer", "manager", "analyst", "scientist"]:
+                    job_titles = ["data analyst", "data scientist", "software engineer", "web developer",
+                                  "frontend developer", "backend developer", "full stack", "devops",
+                                  "product manager", "ui designer", "ux designer", "machine learning",
+                                  "python developer", "java developer", "react developer", "analyst",
+                                  "business analyst", "cloud engineer", "qa engineer", "tester"]
+                    for title in job_titles:
                         if title in summary.lower():
                             title_keywords = title
                             break
 
-                    if title_keywords and isinstance(skills, list) and skills:
-                        # Use job title + top 3 skills for better matching
-                        keywords = f"{title_keywords} {' '.join(skills[:3])}"
+                    if title_keywords:
+                        keywords = title_keywords
                     elif isinstance(skills, list) and skills:
-                        keywords = " ".join(skills[:5])
-                    elif summary:
-                        keywords = summary[:100]
+                        # Use top 2-3 skills only (not 5 — too specific)
+                        keywords = " ".join(skills[:3])
                     else:
                         keywords = "software developer"
-
-                    # Add experience level hint to keywords for fresher
-                    if experience_level == "fresher":
-                        keywords += " fresher entry level"
 
         if not keywords:
             raise HTTPException(

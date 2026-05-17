@@ -23,23 +23,27 @@ class JobSearchService:
         limit: int = 30,
     ) -> List[Dict[str, Any]]:
         """Search all job sources in parallel and return combined results."""
+        # Use shorter keywords for better results (max 3-4 words)
+        short_keywords = " ".join(keywords.split()[:4])
+
         tasks = [
-            self._search_indeed_rss(keywords, location, limit),
-            self._search_linkedin_rss(keywords, location, limit),
-            self._search_remoteok(keywords, limit),
+            self._search_linkedin_rss(short_keywords, location or "India", limit),
         ]
 
-        # Add Adzuna if keys available
+        # Add Adzuna if keys available (use short keywords)
         if settings.adzuna_app_id and settings.adzuna_app_key:
-            tasks.append(self._search_adzuna(keywords, location, limit))
+            tasks.append(self._search_adzuna(short_keywords, location, limit))
 
-        # Add Serper.dev Google Jobs if key available (premium, use sparingly)
+        # Add Serper.dev Google Jobs if key available
         if settings.serper_api_key:
-            tasks.append(self._search_google_jobs(keywords, location, limit))
+            tasks.append(self._search_google_jobs(short_keywords, location or "India", limit))
 
         # Add JSearch if key available
         if settings.jsearch_api_key:
-            tasks.append(self._search_jsearch(keywords, location, limit))
+            tasks.append(self._search_jsearch(short_keywords, location or "India", limit))
+
+        # Try RemoteOK for remote jobs (may fail)
+        tasks.append(self._search_remoteok(short_keywords, limit))
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -55,11 +59,12 @@ class JobSearchService:
         seen = set()
         unique_jobs = []
         for job in all_jobs:
-            key = f"{job.get('title', '').lower().strip()}_{job.get('company', '').lower().strip()}"
-            if key not in seen:
+            key = f"{job.get('title', '').lower().strip()[:30]}_{job.get('company', '').lower().strip()[:20]}"
+            if key not in seen and key != "_":
                 seen.add(key)
                 unique_jobs.append(job)
 
+        logger.info(f"Total unique jobs found: {len(unique_jobs)}")
         return unique_jobs
 
     async def _search_indeed_rss(
@@ -133,16 +138,18 @@ class JobSearchService:
     async def _search_linkedin_rss(
         self, keywords: str, location: str, limit: int
     ) -> List[Dict[str, Any]]:
-        """Search LinkedIn Jobs via public search page scraping."""
+        """Search LinkedIn Jobs via public guest API."""
         try:
             query = keywords.replace(' ', '%20')
-            loc = location.replace(' ', '%20') if location else 'India'
-            url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={query}&location={loc}&start=0&count={min(limit, 25)}"
+            loc = (location or 'India').replace(' ', '%20')
+            # Use simpler URL format that returns more results
+            url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={query}&location={loc}&start=0"
 
             async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
                 response = await client.get(url, headers={
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Accept': 'text/html',
+                    'Accept': 'text/html,application/xhtml+xml',
+                    'Accept-Language': 'en-US,en;q=0.9',
                 })
 
                 if response.status_code != 200:
@@ -255,7 +262,7 @@ class JobSearchService:
         """Search Google Jobs via Serper.dev (2500 free searches)."""
         try:
             url = "https://google.serper.dev/search"
-            query = f"{keywords} jobs {location}".strip()
+            query = f"{keywords} jobs in {location}".strip()
 
             async with httpx.AsyncClient(timeout=15.0) as client:
                 response = await client.post(
@@ -268,8 +275,7 @@ class JobSearchService:
                         "q": query,
                         "gl": "in",
                         "hl": "en",
-                        "type": "search",
-                        "num": min(limit, 20),
+                        "num": min(limit, 10),
                     },
                 )
 
@@ -280,21 +286,39 @@ class JobSearchService:
                 data = response.json()
                 jobs = []
 
-                for item in data.get("jobs", []):
+                # Serper returns organic results — extract job-like results
+                for item in data.get("organic", []):
+                    title = item.get("title", "")
+                    link = item.get("link", "")
+                    snippet = item.get("snippet", "")
+
+                    # Filter: only keep results from job sites
+                    job_domains = ['naukri.com', 'indeed.com', 'linkedin.com', 'glassdoor.com', 'foundit.in', 'shine.com', 'internshala.com']
+                    if not any(domain in link for domain in job_domains):
+                        continue
+
+                    # Extract company from snippet or title
+                    company = ""
+                    if " - " in title:
+                        parts = title.split(" - ")
+                        if len(parts) >= 2:
+                            company = parts[-1].strip()
+                            title = " - ".join(parts[:-1]).strip()
+
                     job = {
-                        "id": f"google_{hash(item.get('title', '') + item.get('companyName', '')) % 100000}",
+                        "id": f"google_{hash(link) % 100000}",
                         "source": "google",
-                        "title": item.get("title", ""),
-                        "company": item.get("companyName", ""),
-                        "location": item.get("location", ""),
-                        "salary": item.get("salary", "Not disclosed") or "Not disclosed",
+                        "title": title,
+                        "company": company,
+                        "location": location,
+                        "salary": "Not disclosed",
                         "experience_required": "",
-                        "skills": item.get("highlights", [])[:8] if item.get("highlights") else [],
-                        "description": item.get("snippet", ""),
-                        "apply_url": item.get("link", ""),
-                        "posted_date": item.get("date", ""),
-                        "job_type": item.get("employmentType", "full-time"),
-                        "remote": "remote" in item.get("title", "").lower() or "remote" in item.get("location", "").lower(),
+                        "skills": self._extract_skills(snippet),
+                        "description": snippet,
+                        "apply_url": link,
+                        "posted_date": "",
+                        "job_type": "full-time",
+                        "remote": "remote" in title.lower() or "remote" in snippet.lower(),
                     }
                     jobs.append(job)
 
