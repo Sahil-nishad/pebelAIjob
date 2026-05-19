@@ -35,7 +35,7 @@ function Navbar() {
           <Image src="/pebelai-logo.svg" alt="PebelAI" width={150} height={39} className="h-8 w-auto object-contain" />
         </Link>
         <div className="hidden md:flex items-center gap-8">
-          {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['/extension', 'Extension'], ['/blog', 'Blog'], ['#why-pebelai', 'Why PebelAI']].map(([href, label]) => {
+          {[['#features', 'Features'], ['#how-it-works', 'How it works'], ['#why-pebelai', 'Why PebelAI']].map(([href, label]) => {
             const isInternal = href.startsWith('/')
             return isInternal ? (
               <Link key={href} href={href} className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors">{label}</Link>
@@ -143,7 +143,7 @@ function DashboardMockup() {
         className="absolute -bottom-3 -left-3 z-10 flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-[0_4px_20px_rgba(0,0,0,0.08)]"
       >
         <Puzzle className="w-3.5 h-3.5 text-[#16a34a]" />
-        <p className="text-[11px] font-semibold text-slate-700">Auto-tracked via extension</p>
+        <p className="text-[11px] font-semibold text-slate-700">AI-powered job tracking</p>
       </motion.div>
     </div>
   )
@@ -322,7 +322,7 @@ export default function LandingPage() {
       <div className="border-y border-slate-100 py-7 px-6 bg-slate-50/60">
         <div className="max-w-4xl mx-auto">
           <p className="text-center text-[15px] text-slate-600 font-medium leading-relaxed max-w-2xl mx-auto">
-            The only job tracker that automatically captures applications as you browse — so you can focus on applying, not spreadsheets.
+            The only career platform that combines AI mock interviews, smart job matching, and application tracking — so you can focus on landing your dream role.
           </p>
         </div>
       </div>
@@ -337,7 +337,7 @@ export default function LandingPage() {
               Everything you need for a high-volume search
             </h2>
             <p className="text-[15px] text-slate-500 max-w-lg">
-              Stop managing your job search in a spreadsheet. PebelAI automates the tedious parts so you spend time applying — not tracking.
+              Stop guessing if you&apos;re interview-ready. PebelAI gives you real practice with AI, finds jobs that match your skills, and keeps your applications organized.
             </p>
           </div>
 
@@ -386,7 +386,7 @@ export default function LandingPage() {
               <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-4">Smart Reminders</p>
               <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">Never ghost a follow-up again</h3>
               <p className="text-[13px] text-slate-500 leading-relaxed mb-5">
-                Get email alerts for follow-ups, application deadlines, and upcoming interviews — timed automatically based on your pipeline. Stay on top of 100+ applications without thinking about it.
+                Get email alerts for follow-ups, application deadlines, and upcoming interviews — timed automatically based on your job search activity. Stay organized across all your applications.
               </p>
               <AnalyticsMini />
             </motion.div>
@@ -402,7 +402,7 @@ export default function LandingPage() {
               <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-4">AI Interview Coach</p>
               <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">Practice interviews with AI voice agent</h3>
               <p className="text-[13px] text-slate-500 leading-relaxed mb-5">
-                The PebelAI extension detects job listings as you browse and lets you capture them instantly. No copy-pasting, no manual entry — just click and track.
+                Get real-time voice mock interviews powered by AI. Practice behavioral, technical, and case study questions — then get a detailed performance report with scores and improvement tips.
               </p>
               <ExtensionMini />
             </motion.div>
@@ -433,8 +433,8 @@ export default function LandingPage() {
               {
                 step: '02',
                 icon: Zap,
-                title: 'Auto-track or add manually',
-                desc: 'Extension captures it in 1 click. Or enter details manually in under 30 seconds.',
+                title: 'Find jobs matched to your resume',
+                desc: 'Upload your resume and AI finds matching jobs from LinkedIn, Indeed, and more — ranked by fit.',
               },
               {
                 step: '03',
@@ -488,7 +488,7 @@ export default function LandingPage() {
                 Practice until you&apos;re confident —<br />get a performance report after every session.
               </h2>
               <p className="text-[15px] text-slate-500 leading-[1.7] mb-8">
-                The PebelAI Chrome extension sits quietly in your browser. When you spot a job on LinkedIn, Indeed, Naukri, or any company site, it detects the listing and lets you add it to your tracker instantly — company, role, URL and all.
+                PebelAI&apos;s AI Interview Coach simulates real interviews with voice AI. Choose your target company, role, and experience level — then practice with realistic questions. After each session, get a detailed performance report showing your strengths, weaknesses, and exactly what to improve.
               </p>
 
               {/* Trust badges */}
@@ -600,7 +600,7 @@ export default function LandingPage() {
               {
                 icon: Bell,
                 title: 'Reminders that actually matter',
-                desc: 'A spreadsheet won\'t tell you to follow up in 7 days, or alert you the night before an interview. PebelAI does — via email, timed intelligently.',
+                desc: 'A spreadsheet won\'t coach you before an interview or tell you what skills to improve. PebelAI does — with AI-powered mock interviews and performance reports.',
               },
               {
                 icon: Bot,
@@ -641,7 +641,7 @@ export default function LandingPage() {
               ['Auto-capture from job boards', false, true],
               ['Smart follow-up reminders', false, true],
               ['AI interview prep', false, true],
-              ['Kanban pipeline view', false, true],
+              ['Application dashboard', false, true],
               ['Works at scale (100+ apps)', false, true],
             ].map(([label, spreadsheet, pebelai]) => (
               <div key={String(label)} className="grid grid-cols-3 border-b border-slate-100 last:border-0">
