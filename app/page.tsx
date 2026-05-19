@@ -274,12 +274,12 @@ export default function LandingPage() {
               className="space-y-6"
             >
               <h1 className="text-[42px] md:text-[52px] lg:text-[54px] font-bold leading-[1.08] tracking-[-0.03em] text-slate-900 font-[family-name:var(--font-heading)]">
-                Apply anywhere.<br />
-                Track automatically.<br />
-                <span className="text-[#16a34a]">Prepare with AI.</span>
+                Practice interviews.<br />
+                Find matching jobs.<br />
+                <span className="text-[#16a34a]">Land your dream role.</span>
               </h1>
               <p className="text-[16px] text-slate-500 leading-[1.7] max-w-[440px]">
-                PebelAI auto-tracks your job applications via browser extension, sends smart reminders for follow-ups and interviews, and coaches you with AI — built for candidates applying to 50–200 roles.
+                PebelAI is your AI-powered career platform — practice mock interviews with real-time voice AI, find jobs matched to your resume, and track every application in one place.
               </p>
 
               <div className="flex flex-col sm:flex-row items-start gap-3 pt-1">
@@ -352,9 +352,9 @@ export default function LandingPage() {
               className="p-7 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all duration-300"
             >
               <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-4">Auto Job Tracking</p>
-              <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">Your pipeline, built automatically</h3>
+              <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">Your applications, organized</h3>
               <p className="text-[13px] text-slate-500 leading-relaxed mb-5">
-                Install the browser extension and save any job in one click from LinkedIn, Indeed, or any site. Or add manually in seconds. Every application in one place, always up to date.
+                Track every job you apply to in one clean dashboard. Add applications manually or let AI help you stay on top of deadlines, follow-ups, and interview rounds.
               </p>
               <KanbanMini />
             </motion.div>
@@ -399,8 +399,8 @@ export default function LandingPage() {
               transition={{ delay: 0.16 }}
               className="p-7 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all duration-300"
             >
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-4">Browser Extension</p>
-              <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">Save jobs without switching tabs</h3>
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-4">AI Interview Coach</p>
+              <h3 className="text-[18px] font-bold text-slate-900 mb-2 tracking-tight font-[family-name:var(--font-heading)]">Practice interviews with AI voice agent</h3>
               <p className="text-[13px] text-slate-500 leading-relaxed mb-5">
                 The PebelAI extension detects job listings as you browse and lets you capture them instantly. No copy-pasting, no manual entry — just click and track.
               </p>
@@ -483,9 +483,9 @@ export default function LandingPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <p className="text-[12px] text-[#16a34a] font-semibold uppercase tracking-widest mb-3">Browser Extension</p>
+              <p className="text-[12px] text-[#16a34a] font-semibold uppercase tracking-widest mb-3">AI Interview Coach</p>
               <h2 className="text-[32px] md:text-[38px] font-bold tracking-[-0.025em] text-slate-900 font-[family-name:var(--font-heading)] mb-4">
-                Save any job in one click —<br />no copy-pasting ever.
+                Practice until you&apos;re confident —<br />get a performance report after every session.
               </h2>
               <p className="text-[15px] text-slate-500 leading-[1.7] mb-8">
                 The PebelAI Chrome extension sits quietly in your browser. When you spot a job on LinkedIn, Indeed, Naukri, or any company site, it detects the listing and lets you add it to your tracker instantly — company, role, URL and all.
@@ -586,7 +586,7 @@ export default function LandingPage() {
               Built for volume. Manual trackers aren&apos;t.
             </h2>
             <p className="text-[15px] text-slate-500 mt-3 max-w-lg mx-auto">
-              When you&apos;re applying to 50–200 roles, a spreadsheet breaks down. Here&apos;s what&apos;s different.
+              When you&apos;re serious about landing your next role, you need more than a spreadsheet. Here&apos;s what makes PebelAI different.
             </p>
           </div>
 
