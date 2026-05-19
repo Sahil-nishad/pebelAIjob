@@ -66,14 +66,22 @@ function buildMotivation(p: {
 }
 
 type StreakData = { currentStreak: number; bestStreak: number; todayCount: number }
-type HeatmapData = { days: { date: string; count: number; appCount?: number; coachIntensity?: number }[]; total: number; totalSessions?: number }
+type HeatmapData = {
+  days: { date: string; count: number; sessions?: number; bestScore?: number }[]
+  totalSessions: number
+  totalDays: number
+  avgScore: number
+  sessionsThisWeek: number
+}
 
 export default function DashboardPage() {
   const { applications, loading: appsLoading } = useApplications()
   const { user, profile } = useUser()
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [streakData, setStreakData] = useState<StreakData | null>(null)
-  const [heatmapData, setHeatmapData] = useState<HeatmapData>({ days: [], total: 0, totalSessions: 0 })
+  const [heatmapData, setHeatmapData] = useState<HeatmapData>({
+    days: [], totalSessions: 0, totalDays: 0, avgScore: 0, sessionsThisWeek: 0
+  })
 
   const userName = profile?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
 
@@ -226,8 +234,8 @@ export default function DashboardPage() {
               <div className="flex-1 min-w-0 p-6">
                 <div className="flex items-start justify-between mb-5">
                   <div>
-                    <h3 className="text-[15px] font-semibold text-slate-900">Consistency Tracker</h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Active monitoring of the last 6 months</p>
+                    <h3 className="text-[15px] font-semibold text-slate-900">Interview Practice Tracker</h3>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Your AI coach sessions over the last 6 months</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="text-[9px] font-bold tracking-[0.12em] text-slate-400 uppercase hidden sm:inline">Intensity</span>
@@ -239,72 +247,78 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* Heatmap — scrollable on mobile */}
                 <div className="overflow-x-auto pb-1">
-                  <ActivityHeatmap days={heatmapData.days} total={heatmapData.total} totalSessions={heatmapData.totalSessions} />
+                  <ActivityHeatmap days={heatmapData.days} totalSessions={heatmapData.totalSessions} />
                 </div>
 
                 <div className="border-t border-slate-100 mt-5 pt-4 flex flex-wrap items-center gap-4">
                   <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#0A6A47]" />
                     <span className="text-[10px] font-bold tracking-[0.1em] text-slate-400 uppercase">
-                      Peak Activity: {peakDay}
+                      Darker = Better score + longer session
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
                     <span className="text-[10px] font-bold tracking-[0.1em] text-slate-400 uppercase">
-                      Avg. {avgPerWeek} apps / week
+                      {heatmapData.totalDays} active days
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Divider — horizontal on mobile, vertical on desktop */}
+              {/* Divider */}
               <div className="h-px bg-slate-100 mx-6 lg:hidden" />
               <div className="hidden lg:block w-px bg-slate-100 self-stretch flex-shrink-0" />
 
               {/* ── Right: Your Progress ── */}
               <div className="w-full lg:w-[220px] flex-shrink-0 p-6 flex flex-col">
                 <p className="text-[15px] font-semibold text-slate-900">Your Progress</p>
-                <p className="text-[11px] text-slate-400 mt-0.5 mb-5">Real-time application throughput</p>
+                <p className="text-[11px] text-slate-400 mt-0.5 mb-5">AI interview practice stats</p>
 
-                {/* Total + % change */}
+                {/* Total sessions */}
                 <div className="flex items-end gap-2 mb-1">
-                  <p className="text-[38px] font-black text-slate-900 leading-none">{total}</p>
-                  {weekChange !== null && weekChange !== 0 && (
-                    <span className={cn(
-                      'text-[11px] font-bold px-2 py-0.5 rounded-full mb-1',
-                      weekChange > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'
-                    )}>
-                      {weekChange > 0 ? '+' : ''}{weekChange}%
-                    </span>
-                  )}
+                  <p className="text-[38px] font-black text-slate-900 leading-none">{heatmapData.totalSessions}</p>
                 </div>
-                <p className="text-[13px] text-slate-500">applications total</p>
+                <p className="text-[13px] text-slate-500">sessions total</p>
                 <p className="text-[11px] italic text-slate-400 mt-2 leading-relaxed">
-                  &quot;Consistency is the engine of success.&quot;
+                  &quot;Practice makes permanent.&quot;
                 </p>
 
-                {/* Weekly goal */}
-                <div className="mt-5 mb-5">
+                {/* Avg score */}
+                <div className="mt-5 mb-2">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[13px] font-semibold text-slate-900">{weeklyCount} this week</span>
-                    <span className="text-[11px] text-slate-400">Goal: 5</span>
+                    <span className="text-[12px] font-semibold text-slate-700">Avg. Score</span>
+                    <span className="text-[12px] font-bold text-[#0A6A47]">{heatmapData.avgScore > 0 ? `${heatmapData.avgScore}%` : '—'}</span>
                   </div>
                   <div className="h-[5px] bg-slate-100 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-[#0A6A47] rounded-full transition-all duration-700"
-                      style={{ width: `${Math.min(100, (weeklyCount / 5) * 100)}%` }}
+                      style={{ width: `${heatmapData.avgScore}%` }}
                     />
                   </div>
                 </div>
 
-                {/* Active streak — no settings icon */}
+                {/* This week */}
+                <div className="mt-3 mb-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[12px] font-semibold text-slate-700">This week</span>
+                    <span className="text-[11px] text-slate-400">Goal: 3</span>
+                  </div>
+                  <div className="h-[5px] bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-400 rounded-full transition-all duration-700"
+                      style={{ width: `${Math.min(100, (heatmapData.sessionsThisWeek / 3) * 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">{heatmapData.sessionsThisWeek} of 3 sessions</p>
+                </div>
+
+                {/* Active streak */}
                 <div className="mt-auto flex items-center gap-3 px-4 py-3.5 bg-[#0A6A47] rounded-xl">
                   <Flame className="w-4 h-4 text-white flex-shrink-0" />
                   <div>
-                    <p className="text-[9px] font-bold tracking-[0.1em] text-emerald-200 uppercase">Active Streak</p>
+                    <p className="text-[9px] font-bold tracking-[0.1em] text-emerald-200 uppercase">Practice Streak</p>
                     <p className="text-[15px] font-black text-white leading-tight">
                       {streakData?.currentStreak ?? 0} day{(streakData?.currentStreak ?? 0) !== 1 ? 's' : ''}
                     </p>

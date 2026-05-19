@@ -5,15 +5,14 @@ import { cn } from '@/lib/utils'
 
 export type HeatmapDay = {
   date: string
-  count: number
-  appCount?: number
-  coachIntensity?: number
+  count: number       // intensity 1-4
+  sessions?: number
+  bestScore?: number
 }
 
 interface Props {
   days: HeatmapDay[]
-  total: number
-  totalSessions?: number
+  totalSessions: number
   dark?: boolean
 }
 
@@ -24,38 +23,26 @@ function localDateStr(d: Date) {
   return `${y}-${m}-${dd}`
 }
 
-function cellBg(count: number, coachIntensity: number, isFuture: boolean, dark: boolean) {
+function cellBg(intensity: number, isFuture: boolean, dark: boolean) {
   if (isFuture) return 'bg-transparent'
-  const total = count
-
   if (dark) {
-    if (total === 0) return 'bg-[#161b22]'
-    if (total === 1) return 'bg-[#0e4429]'
-    if (total <= 3) return 'bg-[#006d32]'
-    if (total <= 6) return 'bg-[#26a641]'
+    if (intensity === 0) return 'bg-[#161b22]'
+    if (intensity === 1) return 'bg-[#0e4429]'
+    if (intensity === 2) return 'bg-[#006d32]'
+    if (intensity === 3) return 'bg-[#26a641]'
     return 'bg-[#39d353]'
   }
-
-  // Coach-only sessions get a slightly different shade (blue-green tint)
-  if (total === 0) return 'bg-slate-100'
-  if (coachIntensity > 0 && (count - coachIntensity) === 0) {
-    // Pure coach session day — use teal tint
-    if (coachIntensity === 1) return 'bg-teal-200'
-    if (coachIntensity === 2) return 'bg-teal-400'
-    if (coachIntensity === 3) return 'bg-teal-500'
-    return 'bg-teal-600'
-  }
-  // Mixed or apps only — standard green
-  if (total === 1) return 'bg-emerald-200'
-  if (total <= 3) return 'bg-emerald-400'
-  if (total <= 6) return 'bg-emerald-600'
+  if (intensity === 0) return 'bg-slate-100'
+  if (intensity === 1) return 'bg-emerald-200'
+  if (intensity === 2) return 'bg-emerald-400'
+  if (intensity === 3) return 'bg-emerald-600'
   return 'bg-[#0A6A47]'
 }
 
 const NUM_WEEKS = 26
 const DOW_ORDER = [1, 2, 3, 4, 5, 6, 0] as const
 
-export function ActivityHeatmap({ days, total, totalSessions = 0, dark = false }: Props) {
+export function ActivityHeatmap({ days, totalSessions, dark = false }: Props) {
   const { weeks, monthLabels } = useMemo(() => {
     const countMap = new Map(days.map(d => [d.date, d]))
     const today = new Date()
@@ -69,19 +56,19 @@ export function ActivityHeatmap({ days, total, totalSessions = 0, dark = false }
     startDate.setDate(endDate.getDate() - NUM_WEEKS * 7 + 1)
 
     type DayCell = {
-      date: string; count: number; appCount: number; coachIntensity: number
+      date: string; count: number; sessions: number; bestScore: number
       dow: number; isFuture: boolean; isToday: boolean; monthDay: number; jsDate: Date
     }
     const allDays: DayCell[] = []
     const cur = new Date(startDate)
     for (let i = 0; i < NUM_WEEKS * 7; i++) {
       const ds = localDateStr(cur)
-      const dayData = countMap.get(ds)
+      const d = countMap.get(ds)
       allDays.push({
         date: ds,
-        count: dayData?.count ?? 0,
-        appCount: dayData?.appCount ?? 0,
-        coachIntensity: dayData?.coachIntensity ?? 0,
+        count: d?.count ?? 0,
+        sessions: d?.sessions ?? 0,
+        bestScore: d?.bestScore ?? 0,
         dow: cur.getDay(),
         isFuture: cur > today,
         isToday: ds === todayStr,
@@ -139,20 +126,17 @@ export function ActivityHeatmap({ days, total, totalSessions = 0, dark = false }
             </div>
             {weeks.map((week, wi) => {
               const day = week[dow]
-              const bg = cellBg(day.count, day.coachIntensity, day.isFuture, dark)
+              const bg = cellBg(day.count, day.isFuture, dark)
               const fmtDate = day.jsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
-              // Build tooltip
               let tipText = ''
               if (!day.isFuture) {
-                const parts: string[] = []
-                if (day.appCount > 0) parts.push(`${day.appCount} application${day.appCount !== 1 ? 's' : ''}`)
-                if (day.coachIntensity > 0) {
-                  const quality = day.coachIntensity === 4 ? 'excellent' : day.coachIntensity === 3 ? 'good' : day.coachIntensity === 2 ? 'decent' : 'quick'
-                  parts.push(`${quality} interview practice`)
+                if (day.sessions > 0) {
+                  const quality = day.count === 4 ? 'Excellent' : day.count === 3 ? 'Good' : day.count === 2 ? 'Decent' : 'Quick'
+                  tipText = `${day.sessions} session${day.sessions > 1 ? 's' : ''} · ${quality} (${day.bestScore}%) · ${fmtDate}`
+                } else {
+                  tipText = `No practice · ${fmtDate}`
                 }
-                if (parts.length === 0) parts.push('No activity')
-                tipText = `${parts.join(' · ')} · ${fmtDate}`
               }
 
               return (
@@ -185,22 +169,14 @@ export function ActivityHeatmap({ days, total, totalSessions = 0, dark = false }
       {!dark && (
         <div className="flex items-center justify-between mt-4">
           <p className="text-[11px] text-slate-400">
-            <span className="font-semibold text-slate-600">{total}</span> applications ·{' '}
-            <span className="font-semibold text-teal-600">{totalSessions}</span> practice sessions
+            <span className="font-semibold text-slate-600">{totalSessions}</span> practice sessions in the last 6 months
           </p>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <span className="text-[9px] text-slate-400">Apps</span>
-              {(['bg-slate-100', 'bg-emerald-200', 'bg-emerald-400', 'bg-emerald-600', 'bg-[#0A6A47]'] as const).map((c, i) => (
-                <div key={i} className={cn('rounded-[2px] flex-shrink-0', c)} style={{ width: 11, height: 11 }} />
-              ))}
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-[9px] text-teal-500">Coach</span>
-              {(['bg-teal-200', 'bg-teal-400', 'bg-teal-500', 'bg-teal-600'] as const).map((c, i) => (
-                <div key={i} className={cn('rounded-[2px] flex-shrink-0', c)} style={{ width: 11, height: 11 }} />
-              ))}
-            </div>
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] text-slate-400 mr-0.5">Less</span>
+            {(['bg-slate-100', 'bg-emerald-200', 'bg-emerald-400', 'bg-emerald-600', 'bg-[#0A6A47]'] as const).map((c, i) => (
+              <div key={i} className={cn('rounded-[2px] flex-shrink-0', c)} style={{ width: 11, height: 11 }} />
+            ))}
+            <span className="text-[9px] text-slate-400 ml-0.5">More</span>
           </div>
         </div>
       )}

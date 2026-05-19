@@ -12,60 +12,61 @@ export async function GET(req: NextRequest) {
   since.setDate(since.getDate() - 182)
   const sinceStr = since.toISOString().slice(0, 10)
 
-  // Fetch applications
-  const { data: apps } = await supabase
-    .from('applications')
-    .select('applied_date')
-    .eq('user_id', user.id)
-    .gte('applied_date', sinceStr)
-
-  // Fetch coach sessions with score and question count
+  // Fetch coach sessions only — heatmap is now purely about practice
   const { data: sessions } = await supabase
     .from('coach_sessions')
     .select('created_at, avg_score, question_count')
     .eq('user_id', user.id)
     .gte('created_at', sinceStr)
 
-  // Map: date → { appCount, coachIntensity }
-  const dayMap = new Map<string, { appCount: number; coachIntensity: number }>()
+  // Map: date → best session intensity for that day
+  const dayMap = new Map<string, { intensity: number; sessions: number; bestScore: number }>()
 
-  const getOrCreate = (ds: string) => {
-    if (!dayMap.has(ds)) dayMap.set(ds, { appCount: 0, coachIntensity: 0 })
-    return dayMap.get(ds)!
-  }
-
-  // Count applications per day
-  for (const app of apps ?? []) {
-    const ds = (app.applied_date as string).slice(0, 10)
-    getOrCreate(ds).appCount++
-  }
-
-  // Calculate coach session intensity per day
-  // Intensity formula: (avg_score / 100) * min(question_count, 10) / 10 * 4
-  // → 0 to 4 scale, where 4 = perfect score + long session
   for (const session of sessions ?? []) {
     const ds = new Date(session.created_at).toISOString().slice(0, 10)
     const score = session.avg_score ?? 50
     const qCount = session.question_count ?? 1
-    // Intensity: 1 = any session, 2 = decent, 3 = good, 4 = excellent
+
+    // Intensity 1-4 based on score + question count
     const intensity = score >= 80 && qCount >= 6 ? 4
       : score >= 65 && qCount >= 4 ? 3
       : score >= 50 && qCount >= 2 ? 2
       : 1
-    const day = getOrCreate(ds)
-    day.coachIntensity = Math.max(day.coachIntensity, intensity)
+
+    const existing = dayMap.get(ds)
+    if (!existing) {
+      dayMap.set(ds, { intensity, sessions: 1, bestScore: score })
+    } else {
+      dayMap.set(ds, {
+        intensity: Math.max(existing.intensity, intensity),
+        sessions: existing.sessions + 1,
+        bestScore: Math.max(existing.bestScore, score),
+      })
+    }
   }
 
-  // Combine: final count = appCount + coachIntensity (so both contribute to shade)
   const days = Array.from(dayMap.entries()).map(([date, data]) => ({
     date,
-    count: data.appCount + data.coachIntensity,
-    appCount: data.appCount,
-    coachIntensity: data.coachIntensity,
+    count: data.intensity,       // count drives the shade
+    sessions: data.sessions,
+    bestScore: data.bestScore,
+    intensity: data.intensity,
   }))
 
-  const total = (apps ?? []).length
   const totalSessions = (sessions ?? []).length
+  const totalDays = dayMap.size
 
-  return NextResponse.json({ days, total, totalSessions })
+  // Stats for "Your Progress" panel
+  const avgScore = sessions && sessions.length > 0
+    ? Math.round(sessions.reduce((sum, s) => sum + (s.avg_score ?? 0), 0) / sessions.length)
+    : 0
+
+  const thisWeekStart = new Date()
+  thisWeekStart.setDate(thisWeekStart.getDate() - thisWeekStart.getDay())
+  thisWeekStart.setHours(0, 0, 0, 0)
+  const sessionsThisWeek = (sessions ?? []).filter(
+    s => new Date(s.created_at) >= thisWeekStart
+  ).length
+
+  return NextResponse.json({ days, totalSessions, totalDays, avgScore, sessionsThisWeek })
 }
