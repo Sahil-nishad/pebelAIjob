@@ -9,17 +9,17 @@ export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
 
   title: {
-    default: "PebelAI — Free AI Job Application Tracker for India",
+    default: "PebelAI — AI Interview Coach, Job Search & Application Tracker for India",
     template: "%s | PebelAI",
   },
   description:
-    "Track every job you apply to, practice interviews with AI, and never miss a follow-up. Free Chrome extension for LinkedIn, Naukri, Indeed. Built for Indian job seekers.",
+    "Practice mock interviews with AI voice coach, find jobs matched to your resume from Naukri & LinkedIn, and track every application in one place. Built for Indian job seekers.",
   keywords: [
-    "job application tracker", "free job tracker india", "ai interview coach",
-    "ats resume checker", "linkedin job tracker", "naukri job tracker",
-    "chrome extension job tracker", "teal alternative", "huntr alternative",
-    "interview prep india", "resume tracker", "job search organizer",
-    "follow up reminders", "career tracker free",
+    "ai interview coach india", "mock interview ai", "job search india",
+    "naukri job search", "resume job matching", "job application tracker",
+    "interview practice ai", "ai career platform india", "job portal india",
+    "interview preparation india", "voice interview practice", "job tracker free",
+    "career platform india", "pebelai", "ai job search",
   ],
   authors: [{ name: "Sahil Nishad", url: `${BASE_URL}/about` }],
   creator: "PebelAI",
@@ -31,24 +31,24 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: BASE_URL,
     siteName: "PebelAI",
-    title: "PebelAI — Free AI Job Application Tracker for India",
+    title: "PebelAI — AI Interview Coach, Job Search & Application Tracker",
     description:
-      "Track every job application, practice interviews with AI, and never miss a follow-up. Free forever — no credit card.",
+      "Practice interviews with AI, find jobs matched to your resume, and track every application. Free for Indian job seekers.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "PebelAI — AI-Powered Job Application Tracker",
+        alt: "PebelAI — AI Interview Coach & Job Search Platform",
       },
     ],
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "PebelAI — Free AI Job Tracker & Interview Coach",
+    title: "PebelAI — AI Interview Coach & Job Search for India",
     description:
-      "Track applications, practice interviews with AI, and land your dream job faster. Free forever.",
+      "Practice mock interviews with AI, find matching jobs from Naukri & LinkedIn, track applications. Free forever.",
     images: ["/og-image.png"],
     creator: "@pebelai",
     site: "@pebelai",
@@ -101,7 +101,7 @@ const jsonLdGraph = {
         height: 256,
       },
       description:
-        'AI-powered job application tracker built for Indian job seekers. Free kanban tracker, AI interview coach, smart follow-up reminders, and Chrome extension for LinkedIn, Naukri, Indeed.',
+        'AI-powered career platform for Indian job seekers. Practice mock interviews with voice AI, find jobs matched to your resume from Naukri & LinkedIn, and track every application in one place.',
       foundingDate: '2026',
       founder: {
         '@type': 'Person',
@@ -124,7 +124,7 @@ const jsonLdGraph = {
       '@id': `${BASE_URL}/#website`,
       url: BASE_URL,
       name: 'PebelAI',
-      description: 'Free AI job application tracker and interview coach for India.',
+      description: 'AI interview coach, job search portal, and application tracker for India.',
       publisher: { '@id': `${BASE_URL}/#org` },
       inLanguage: 'en-IN',
       potentialAction: {
@@ -141,11 +141,11 @@ const jsonLdGraph = {
       '@id': `${BASE_URL}/#software`,
       name: 'PebelAI',
       applicationCategory: 'BusinessApplication',
-      applicationSubCategory: 'Job Application Tracker',
-      operatingSystem: 'Web, Chrome, Brave, Edge',
+      applicationSubCategory: 'AI Interview Coach & Job Search',
+      operatingSystem: 'Web, Android, iOS',
       url: BASE_URL,
       description:
-        'Free AI-powered job application tracker. Auto-saves jobs from LinkedIn, Naukri, Indeed via Chrome extension. AI interview coach, smart reminders, ATS resume analysis.',
+        'Practice mock interviews with AI voice coach, find jobs matched to your resume from Naukri & LinkedIn, and track every application. Built for Indian job seekers.',
       offers: {
         '@type': 'Offer',
         price: '0',
@@ -160,12 +160,13 @@ const jsonLdGraph = {
         worstRating: '1',
       },
       featureList: [
-        'Kanban job application tracking',
-        'AI interview practice (behavioral, technical, system design)',
+        'AI voice interview coach with performance report',
+        'Live interview simulation (Google Meet style)',
+        'Job search matched to resume from Naukri, LinkedIn, Indeed',
+        'Application tracking dashboard',
         'Smart follow-up reminders',
-        'ATS resume analysis',
-        'Chrome extension for LinkedIn, Naukri, Indeed',
-        'Career analytics dashboard',
+        'Resume upload and AI parsing',
+        'Interview practice streak tracker',
       ],
       author: { '@id': `${BASE_URL}/#org` },
       publisher: { '@id': `${BASE_URL}/#org` },
