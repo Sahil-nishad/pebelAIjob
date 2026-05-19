@@ -8,8 +8,8 @@ import { useUser } from '@/hooks/useUser'
 
 const tabs = [
   { icon: LayoutDashboard, label: 'Home', href: '/dashboard' },
-  { icon: ClipboardList, label: 'Jobs', href: '/applications' },
-  { icon: Briefcase, label: 'Careers', href: '/careers' },
+  { icon: ClipboardList, label: 'Applications', href: '/applications' },
+  { icon: Briefcase, label: 'Jobs', href: '/careers' },
   { icon: Bot, label: 'Coach', href: '/coach' },
   { icon: Settings, label: 'Settings', href: '/settings' },
 ]

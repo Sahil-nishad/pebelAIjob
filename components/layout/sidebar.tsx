@@ -17,7 +17,7 @@ import { useUser } from '@/hooks/useUser'
 const navItems = [
   { icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
   { icon: ClipboardList, label: 'Applications', href: '/applications' },
-  { icon: Briefcase, label: 'Careers', href: '/careers' },
+  { icon: Briefcase, label: 'Jobs', href: '/careers' },
   { icon: Bot, label: 'AI Coach', href: '/coach' },
   { icon: Bell, label: 'Reminders', href: '/reminders' },
 ]
