@@ -66,14 +66,14 @@ function buildMotivation(p: {
 }
 
 type StreakData = { currentStreak: number; bestStreak: number; todayCount: number }
-type HeatmapData = { days: { date: string; count: number }[]; total: number }
+type HeatmapData = { days: { date: string; count: number; appCount?: number; coachIntensity?: number }[]; total: number; totalSessions?: number }
 
 export default function DashboardPage() {
   const { applications, loading: appsLoading } = useApplications()
   const { user, profile } = useUser()
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [streakData, setStreakData] = useState<StreakData | null>(null)
-  const [heatmapData, setHeatmapData] = useState<HeatmapData>({ days: [], total: 0 })
+  const [heatmapData, setHeatmapData] = useState<HeatmapData>({ days: [], total: 0, totalSessions: 0 })
 
   const userName = profile?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
 
@@ -241,7 +241,7 @@ export default function DashboardPage() {
 
                 {/* Heatmap — scrollable on mobile */}
                 <div className="overflow-x-auto pb-1">
-                  <ActivityHeatmap days={heatmapData.days} total={heatmapData.total} />
+                  <ActivityHeatmap days={heatmapData.days} total={heatmapData.total} totalSessions={heatmapData.totalSessions} />
                 </div>
 
                 <div className="border-t border-slate-100 mt-5 pt-4 flex flex-wrap items-center gap-4">
