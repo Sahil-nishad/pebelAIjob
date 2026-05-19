@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
   Briefcase, Calendar, BarChart3, Plus, Clock,
-  CheckCircle2, Loader2, Send, Settings,
-  Bot, Bell, TrendingUp, ChevronRight, AlertCircle, X, Puzzle,
+  CheckCircle2, Loader2, Send,
+  Bot, Bell, TrendingUp, ChevronRight, AlertCircle,
   Flame, Zap, Target,
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
@@ -74,16 +74,8 @@ export default function DashboardPage() {
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [streakData, setStreakData] = useState<StreakData | null>(null)
   const [heatmapData, setHeatmapData] = useState<HeatmapData>({ days: [], total: 0 })
-  const [showExtBanner, setShowExtBanner] = useState(() =>
-    typeof window !== 'undefined' && !localStorage.getItem('ext_banner_dismissed')
-  )
 
   const userName = profile?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
-
-  function dismissExtBanner() {
-    localStorage.setItem('ext_banner_dismissed', '1')
-    setShowExtBanner(false)
-  }
 
   useEffect(() => {
     authFetch('/api/reminders')
@@ -198,27 +190,6 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {/* Extension banner */}
-          {showExtBanner && (
-            <div className="flex items-start gap-3 bg-[#0A6A47]/8 border border-[#0A6A47]/20 rounded-2xl px-4 py-3.5">
-              <div className="w-8 h-8 rounded-lg bg-[#0A6A47]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Puzzle className="w-4 h-4 text-[#0A6A47]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-slate-900">Auto-track jobs with our Chrome extension</p>
-                <p className="text-[12px] text-slate-500 mt-0.5">
-                  Apply on LinkedIn or any job site and PebelAI will save it automatically.{' '}
-                  <Link href="/extension" className="text-[#0A6A47] font-semibold hover:underline">
-                    Install free →
-                  </Link>
-                </p>
-              </div>
-              <button onClick={dismissExtBanner} className="text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0 mt-0.5">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
           {/* Stats */}
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
             {stats.map((stat, i) => (
@@ -228,10 +199,15 @@ export default function DashboardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
               >
-                <Card className="p-5 border-none shadow-sm hover:shadow-md transition-all">
+                <Card className="p-5 border-none shadow-sm hover:shadow-md transition-all group">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="w-9 h-9 rounded-lg bg-[#F1F5F2] flex items-center justify-center">
-                      <stat.icon className="w-4 h-4 text-[#0A6A47]" />
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      i === 0 ? 'bg-gradient-to-br from-emerald-400 to-[#0A6A47]' :
+                      i === 1 ? 'bg-gradient-to-br from-blue-400 to-blue-600' :
+                      i === 2 ? 'bg-gradient-to-br from-violet-400 to-violet-600' :
+                      'bg-gradient-to-br from-amber-400 to-orange-500'
+                    }`}>
+                      <stat.icon className="w-5 h-5 text-white" />
                     </div>
                   </div>
                   <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{stat.label}</p>
@@ -398,7 +374,7 @@ export default function DashboardPage() {
                     <Link key={app.id} href={`/applications/${app.id}`}>
                       <div className="flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-50 transition-colors group cursor-pointer">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-lg bg-[#F1F5F2] flex items-center justify-center text-sm font-bold text-[#0A6A47] flex-shrink-0">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-sm font-bold text-slate-600 flex-shrink-0">
                             {app.company_name.charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">
@@ -477,15 +453,17 @@ export default function DashboardPage() {
             <h3 className="text-[14px] font-semibold text-slate-900 mb-4">Quick Access</h3>
             <div className="grid grid-cols-2 gap-2.5">
               {[
-                { label: 'Add Application', icon: Plus,     href: '/applications' },
-                { label: 'AI Coach',        icon: Bot,      href: '/coach' },
-                { label: 'Reminders',       icon: Bell,     href: '/reminders' },
-                { label: 'Settings',        icon: Settings, href: '/settings' },
+                { label: 'Add Application', icon: Plus,     href: '/applications', gradient: 'from-emerald-400 to-[#0A6A47]' },
+                { label: 'AI Coach',        icon: Bot,      href: '/coach',        gradient: 'from-violet-400 to-violet-600' },
+                { label: 'Find Jobs',       icon: Briefcase,href: '/careers',      gradient: 'from-blue-400 to-blue-600' },
+                { label: 'Reminders',       icon: Bell,     href: '/reminders',    gradient: 'from-amber-400 to-orange-500' },
               ].map(tool => (
                 <Link key={tool.label} href={tool.href}>
-                  <div className="flex flex-col items-center justify-center p-4 bg-[#F8F9F8] rounded-xl hover:bg-[#F1F5F2] transition-colors group cursor-pointer">
-                    <tool.icon className="w-5 h-5 text-slate-400 group-hover:text-[#0A6A47] transition-colors mb-2" />
-                    <span className="text-[10px] font-semibold text-slate-400 group-hover:text-[#0A6A47] transition-colors text-center leading-tight">{tool.label}</span>
+                  <div className="flex flex-col items-center justify-center p-4 bg-[#F8F9F8] rounded-xl hover:bg-[#F1F5F2] transition-all group cursor-pointer hover:shadow-sm">
+                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                      <tool.icon className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-[10px] font-semibold text-slate-500 group-hover:text-slate-700 transition-colors text-center leading-tight">{tool.label}</span>
                   </div>
                 </Link>
               ))}
@@ -493,19 +471,24 @@ export default function DashboardPage() {
           </Card>
 
           {/* AI Coach CTA */}
-          <Card className="p-5 border-none bg-[#0A6A47] text-white shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <Bot className="w-4 h-4 text-emerald-300" />
-              <span className="text-[11px] font-semibold text-emerald-200 uppercase tracking-wider">AI Interview Coach</span>
+          <Card className="p-5 border-none overflow-hidden relative shadow-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0A6A47] to-[#064d33]" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
+            <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full translate-y-6 -translate-x-6" />
+            <div className="relative z-10">
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center mb-3">
+                <Bot className="w-5 h-5 text-white" />
+              </div>
+              <p className="text-[11px] font-semibold text-emerald-200 uppercase tracking-wider mb-1">AI Interview Coach</p>
+              <p className="text-[13px] font-semibold text-white leading-snug mb-4">
+                Practice for your next interview with AI tailored to your target role.
+              </p>
+              <Link href="/coach">
+                <button className="w-full py-2.5 bg-white text-[#0A6A47] text-[12px] font-bold rounded-xl hover:bg-emerald-50 transition-colors">
+                  Start Practicing →
+                </button>
+              </Link>
             </div>
-            <p className="text-[13px] font-semibold text-white leading-snug mb-4">
-              Practice for your next interview with AI tailored to your target role.
-            </p>
-            <Link href="/coach">
-              <button className="w-full py-2.5 bg-white text-[#0A6A47] text-[12px] font-bold rounded-lg hover:bg-emerald-50 transition-colors">
-                Start Practicing →
-              </button>
-            </Link>
           </Card>
 
         </div>
