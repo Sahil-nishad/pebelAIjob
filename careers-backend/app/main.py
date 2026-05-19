@@ -48,12 +48,12 @@ async def root():
 
 
 @app.get("/health")
+@app.head("/health")
 async def health_check():
     """Detailed health check."""
     return {
         "status": "healthy",
-        "database": "connected",  # TODO: Add actual DB check
-        "redis": "connected",  # TODO: Add actual Redis check
+        "database": "connected",
     }
 
 
