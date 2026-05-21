@@ -197,7 +197,8 @@ export default function MeetInterview({ company, role, sessionType, userName, on
         if (startFn) {
           startFn()
         } else if (!isMobileBrowser()) {
-          startListening()
+          // startListening is declared below — access via ref to avoid forward-reference error
+          ;(window as any).__pebelWebSpeechStart?.()
         }
       }
 
@@ -223,7 +224,7 @@ export default function MeetInterview({ company, role, sessionType, userName, on
       } catch (e: any) { if (e?.name === 'AbortError') { resolve(); return } }
       speakBrowser(text, resolve)
     })
-  }, [isMuted, startListening])
+  }, [isMuted])
 
   const speakBrowser = useCallback((text: string, resolve: () => void) => {
     synthRef.current = window.speechSynthesis
@@ -240,12 +241,12 @@ export default function MeetInterview({ company, role, sessionType, userName, on
         resolve()
         const startFn = (window as any).__pebelStartListening
         if (startFn) startFn()
-        else if (!isMobileBrowser()) startListening()
+        else if (!isMobileBrowser()) ;(window as any).__pebelWebSpeechStart?.()
       } else resolve()
     }
     utterance.onerror = () => { setAiSpeaking(false); resolve() }
     synthRef.current.speak(utterance)
-  }, [getBestVoice, startListening])
+  }, [getBestVoice])
 
   const sendToCoach = useCallback(async (userMessage: string) => {
     const currentSessionId = sessionIdRef.current
@@ -259,7 +260,11 @@ export default function MeetInterview({ company, role, sessionType, userName, on
       const aiMessage = data.message || 'Could you repeat that?'
       setTranscript(prev => [...prev, { role: 'AI Coach', text: aiMessage }])
       await speak(aiMessage)
-    } catch { toast.error('Failed to get AI response'); setSessionStatus('listening'); if (!isMobileBrowser()) startListening() }
+    } catch {
+      toast.error('Failed to get AI response')
+      setSessionStatus('listening')
+      if (!isMobileBrowser()) ;(window as any).__pebelWebSpeechStart?.()
+    }
   }, [speak])
 
   const startListening = useCallback(() => {
@@ -267,6 +272,12 @@ export default function MeetInterview({ company, role, sessionType, userName, on
     try { isListeningRef.current = true; setSessionStatus('listening'); setCurrentSpeech(''); recognitionRef.current.start() }
     catch { isListeningRef.current = false; if (shouldRestartRef.current) setTimeout(() => startListening(), 500) }
   }, [])
+
+  // Register as global so speak/speakBrowser can call it without forward-reference issues
+  useEffect(() => {
+    ;(window as any).__pebelWebSpeechStart = startListening
+    return () => { ;(window as any).__pebelWebSpeechStart = null }
+  }, [startListening])
 
   const handlePushToTalkStart = useCallback(() => {
     if (!recognitionRef.current || !sessionIdRef.current || isListeningRef.current) return
@@ -390,7 +401,7 @@ export default function MeetInterview({ company, role, sessionType, userName, on
         else if (shouldRestartRef.current) { setSessionStatus('listening'); setCurrentSpeech('') }
       } else {
         if (accumulatedTranscript.trim()) { const msg = accumulatedTranscript.trim(); accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech(''); sendToCoach(msg) }
-        else if (shouldRestartRef.current) setTimeout(() => startListening(), 300)
+        else if (shouldRestartRef.current) setTimeout(() => ;(window as any).__pebelWebSpeechStart?.(), 300)
       }
     }
 
@@ -405,11 +416,11 @@ export default function MeetInterview({ company, role, sessionType, userName, on
           }
         }, 100)
       }
-      else if (event.error !== 'aborted' && shouldRestartRef.current && !mobile) setTimeout(() => startListening(), 500)
+      else if (event.error !== 'aborted' && shouldRestartRef.current && !mobile) setTimeout(() => ;(window as any).__pebelWebSpeechStart?.(), 500)
     }
 
     recognitionRef.current = recognition
-  }, [sendToCoach, startListening])
+  }, [sendToCoach])
 
   const handleEndCall = useCallback(() => {
     shouldRestartRef.current = false; isListeningRef.current = false; sessionIdRef.current = null

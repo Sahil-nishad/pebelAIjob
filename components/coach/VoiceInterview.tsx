@@ -117,7 +117,7 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         resolve()
         const startFn = (window as any).__pebelStartListening
         if (startFn) startFn()
-        else if (!isMobileBrowser()) startListening()
+        else if (!isMobileBrowser()) ;(window as any).__pebelWebSpeechStart?.()
       }
 
       // Try Deepgram TTS for natural voice
@@ -147,7 +147,7 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
       if (shouldRestartRef.current) speakWithBrowser(text, resolve)
       else resolve()
     })
-  }, [isMuted, startListening])
+  }, [isMuted])
 
   // Browser TTS fallback
   const speakWithBrowser = useCallback((text: string, resolve: () => void) => {
@@ -165,7 +165,7 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         resolve()
         const startFn = (window as any).__pebelStartListening
         if (startFn) startFn()
-        else if (!isMobileBrowser()) startListening()
+        else if (!isMobileBrowser()) ;(window as any).__pebelWebSpeechStart?.()
       } else { resolve() }
     }
     utterance.onerror = () => {
@@ -174,15 +174,14 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         resolve()
         const startFn = (window as any).__pebelStartListening
         if (startFn) startFn()
-        else if (!isMobileBrowser()) startListening()
+        else if (!isMobileBrowser()) ;(window as any).__pebelWebSpeechStart?.()
       } else { resolve() }
     }
     synthRef.current.speak(utterance)
-  }, [getBestVoice, startListening])
+  }, [getBestVoice])
 
   // Send message to voice-optimized coach API and speak the response
   const sendToCoach = useCallback(async (userMessage: string) => {
-    // Use ref — not state — so this always has the latest sessionId even in stale closures
     const currentSessionId = sessionIdRef.current
     if (!currentSessionId || !userMessage.trim()) return
     setTranscript(prev => [...prev, { role: 'You', text: userMessage }])
@@ -200,12 +199,11 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
     } catch {
       toast.error('Failed to get AI response')
       setSessionStatus('listening')
-      // Desktop only — mobile uses push-to-talk
-      if (!isMobileBrowser()) startListening()
+      if (!isMobileBrowser()) ;(window as any).__pebelWebSpeechStart?.()
     }
   }, [speak])
 
-  // Start speech recognition
+  // Start speech recognition (Web Speech fallback)
   const startListening = useCallback(() => {
     if (!recognitionRef.current || isListeningRef.current) return
     if (!shouldRestartRef.current) return
@@ -215,13 +213,16 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
       setCurrentSpeech('')
       recognitionRef.current.start()
     } catch (e) {
-      // Already started or other error — retry after delay
       isListeningRef.current = false
-      if (shouldRestartRef.current) {
-        setTimeout(() => startListening(), 500)
-      }
+      if (shouldRestartRef.current) setTimeout(() => startListening(), 500)
     }
   }, [])
+
+  // Register as global so speak/speakWithBrowser can call it without forward-reference issues
+  useEffect(() => {
+    ;(window as any).__pebelWebSpeechStart = startListening
+    return () => { ;(window as any).__pebelWebSpeechStart = null }
+  }, [startListening])
 
   // Push-to-talk: start recording (mobile)
   const handlePushToTalkStart = useCallback(() => {
@@ -364,7 +365,7 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         } else {
           if (accumulatedTranscript.trim()) {
             const msg = accumulatedTranscript.trim(); accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech(''); sendToCoach(msg)
-          } else if (shouldRestartRef.current) setTimeout(() => startListening(), 300)
+          } else if (shouldRestartRef.current) setTimeout(() => ;(window as any).__pebelWebSpeechStart?.(), 300)
         }
       }
 
@@ -379,7 +380,7 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         } else if (mobile) {
           if (shouldRestartRef.current) { setSessionStatus('listening'); setCurrentSpeech('') }
         } else {
-          if (shouldRestartRef.current) setTimeout(() => startListening(), 500)
+          if (shouldRestartRef.current) setTimeout(() => ;(window as any).__pebelWebSpeechStart?.(), 500)
         }
       }
 
@@ -396,7 +397,7 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
       toast.error(err?.message || 'Failed to start voice interview')
       setSessionStatus('error')
     }
-  }, [company, role, sessionType, speak, sendToCoach, startListening, deepgramSTT])
+  }, [company, role, sessionType, speak, sendToCoach, deepgramSTT])
 
   // Stop the session — kills everything immediately
   const handleStop = useCallback(() => {
