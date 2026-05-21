@@ -39,6 +39,7 @@ export default function MeetInterview({ company, role, sessionType, userName, on
   const [isMobile, setIsMobile] = useState(false)
   const [isPushToTalkHeld, setIsPushToTalkHeld] = useState(false)
   const [aiSpeaking, setAiSpeaking] = useState(false)
+  const [selectedVoice, setSelectedVoice] = useState<'female' | 'male'>('female')
   const [currentTime, setCurrentTime] = useState('')
 
   const recognitionRef = useRef<any>(null)
@@ -99,7 +100,7 @@ export default function MeetInterview({ company, role, sessionType, userName, on
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
-          body: JSON.stringify({ text: text.slice(0, 800) }),
+          body: JSON.stringify({ text: text.slice(0, 800), voice: selectedVoice === 'male' ? 'orion' : 'athena' }),
           signal: abortControllerRef.current.signal,
         })
         if (res.ok && res.headers.get('content-type')?.includes('audio')) {
@@ -307,6 +308,14 @@ export default function MeetInterview({ company, role, sessionType, userName, on
             <Clock className="w-3.5 h-3.5 text-gray-500" />
             <span className="text-sm font-mono font-medium text-gray-700">{formatTime(elapsedTime)}</span>
           </div>
+          <button
+            onClick={() => setSelectedVoice(selectedVoice === 'female' ? 'male' : 'female')}
+            className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition-colors"
+          >
+            <span className="text-xs font-medium text-gray-600">
+              {selectedVoice === 'female' ? '♀ Female' : '♂ Male'}
+            </span>
+          </button>
           <div className="w-8 h-8 rounded-full bg-[#0A6A47] flex items-center justify-center text-white text-sm font-bold">
             {userInitial}
           </div>
