@@ -17,6 +17,13 @@ interface ReportData {
     structure: number
     relevance: number
   }
+  body_language?: {
+    eye_contact: number
+    posture: number
+    expression: number
+    overall: number
+    tips: string[]
+  } | null
   strengths: string[]
   weaknesses: string[]
   filler_words_count: number
@@ -150,6 +157,38 @@ export default function InterviewReport({ report, company, role, sessionType, on
             <p className="text-xs text-slate-500 mt-1">STAR Method</p>
           </div>
         </motion.div>
+
+        {/* Body Language (if camera was used) */}
+        {report.body_language && (
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.18 }}
+            className="bg-white rounded-2xl border border-slate-200 p-6"
+          >
+            <h2 className="text-lg font-bold text-slate-900 mb-1 flex items-center gap-2">
+              <span>📷</span> Body Language Analysis
+            </h2>
+            <p className="text-xs text-slate-400 mb-5">Analyzed from your camera during the interview</p>
+            <div className="space-y-4">
+              <ScoreBar label="Eye Contact" score={report.body_language.eye_contact} icon={Target} />
+              <ScoreBar label="Posture" score={report.body_language.posture} icon={TrendingUp} />
+              <ScoreBar label="Facial Expression" score={report.body_language.expression} icon={Zap} />
+            </div>
+            {report.body_language.tips?.length > 0 && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-xl">
+                <p className="text-xs font-semibold text-blue-700 mb-2">Body Language Tips</p>
+                <ul className="space-y-1">
+                  {report.body_language.tips.map((tip, i) => (
+                    <li key={i} className="text-sm text-blue-700 flex items-start gap-2">
+                      <span className="text-blue-400 mt-0.5">•</span>{tip}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Strengths & Weaknesses */}
         <motion.div

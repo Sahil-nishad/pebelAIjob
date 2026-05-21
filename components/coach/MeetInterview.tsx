@@ -43,6 +43,15 @@ export default function MeetInterview({ company, role, sessionType, userName, on
   const selectedVoiceRef = useRef<'female' | 'male'>('female')
   const [currentTime, setCurrentTime] = useState('')
 
+  // Camera state
+  const [cameraEnabled, setCameraEnabled] = useState(false)
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null)
+  const [cameraError, setCameraError] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const screenshotsRef = useRef<string[]>([]) // base64 screenshots
+  const screenshotIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
   const recognitionRef = useRef<any>(null)
   const synthRef = useRef<SpeechSynthesis | null>(null)
   const isListeningRef = useRef(false)
@@ -56,6 +65,74 @@ export default function MeetInterview({ company, role, sessionType, userName, on
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [transcript])
   useEffect(() => { setIsMobile(isMobileBrowser()) }, [])
+
+  // Camera functions
+  const enableCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 640, height: 480, facingMode: 'user' },
+        audio: false,
+      })
+      setCameraStream(stream)
+      setCameraEnabled(true)
+      setCameraError(false)
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        videoRef.current.play()
+      }
+    } catch (e) {
+      setCameraError(true)
+      toast.error('Camera access denied. Interview will continue without camera.')
+    }
+  }, [])
+
+  const disableCamera = useCallback(() => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(t => t.stop())
+      setCameraStream(null)
+    }
+    setCameraEnabled(false)
+    if (screenshotIntervalRef.current) clearInterval(screenshotIntervalRef.current)
+  }, [cameraStream])
+
+  // Attach stream to video element when it becomes available
+  useEffect(() => {
+    if (cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream
+      videoRef.current.play().catch(() => {})
+    }
+  }, [cameraStream])
+
+  // Start capturing screenshots every 10s when interview is active
+  useEffect(() => {
+    if (cameraEnabled && sessionStatus !== 'joining' && sessionStatus !== 'ended') {
+      screenshotIntervalRef.current = setInterval(() => {
+        if (!videoRef.current || !canvasRef.current) return
+        const canvas = canvasRef.current
+        const video = videoRef.current
+        canvas.width = 320
+        canvas.height = 240
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, 320, 240)
+          const screenshot = canvas.toDataURL('image/jpeg', 0.5)
+          // Keep max 12 screenshots (2 min of interview)
+          screenshotsRef.current = [...screenshotsRef.current.slice(-11), screenshot]
+        }
+      }, 10000)
+    }
+    return () => {
+      if (screenshotIntervalRef.current) clearInterval(screenshotIntervalRef.current)
+    }
+  }, [cameraEnabled, sessionStatus])
+
+  // Cleanup camera on unmount
+  useEffect(() => {
+    return () => {
+      if (cameraStream) cameraStream.getTracks().forEach(t => t.stop())
+      if (screenshotIntervalRef.current) clearInterval(screenshotIntervalRef.current)
+    }
+  }, [cameraStream])
 
   // Current time display
   useEffect(() => {
@@ -267,14 +344,25 @@ export default function MeetInterview({ company, role, sessionType, userName, on
   const handleGetReport = useCallback(async () => {
     if (transcript.length < 4) { toast.error('Answer at least 2 questions to get a report'); return }
     setGeneratingReport(true)
+    // Stop camera before generating report
+    disableCamera()
     try {
-      const res = await authFetch('/api/coach/report', { method: 'POST', body: JSON.stringify({ transcript, company, role, sessionType }) })
+      const res = await authFetch('/api/coach/report', {
+        method: 'POST',
+        body: JSON.stringify({
+          transcript,
+          company,
+          role,
+          sessionType,
+          screenshots: screenshotsRef.current.slice(0, 6), // max 6 screenshots
+        }),
+      })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Failed')
       setReportData(data.report)
     } catch (err: any) { toast.error(err?.message || 'Failed to generate report') }
     finally { setGeneratingReport(false) }
-  }, [transcript, company, role, sessionType])
+  }, [transcript, company, role, sessionType, disableCamera])
 
   useEffect(() => {
     return () => {
@@ -388,23 +476,50 @@ export default function MeetInterview({ company, role, sessionType, userName, on
           {sessionStatus === 'listening' && !isMuted && (
             <div className="absolute -inset-[6px] rounded-2xl opacity-40 blur-md" style={{ background: 'conic-gradient(from 0deg, #3b82f6, #06b6d4, #8b5cf6, #3b82f6)' }} />
           )}
-          <div className="relative z-10 flex flex-col items-center gap-3 md:gap-4">
-            <div className={`w-20 h-20 md:w-28 md:h-28 rounded-full bg-blue-600 flex items-center justify-center text-white text-4xl md:text-5xl font-bold transition-all ${
-              sessionStatus === 'listening' && !isMuted ? 'ring-4 ring-blue-400/50 scale-105' : ''
-            }`}>
-              {userInitial}
+
+          {/* Camera feed (when enabled) */}
+          {cameraEnabled && (
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover rounded-2xl z-10"
+            />
+          )}
+
+          {/* Hidden canvas for screenshots */}
+          <canvas ref={canvasRef} className="hidden" />
+
+          {/* Avatar (shown when camera is off) */}
+          {!cameraEnabled && (
+            <div className="relative z-10 flex flex-col items-center gap-3 md:gap-4">
+              <div className={`w-20 h-20 md:w-28 md:h-28 rounded-full bg-blue-600 flex items-center justify-center text-white text-4xl md:text-5xl font-bold transition-all ${
+                sessionStatus === 'listening' && !isMuted ? 'ring-4 ring-blue-400/50 scale-105' : ''
+              }`}>
+                {userInitial}
+              </div>
+              {currentSpeech && (
+                <p className="text-gray-300 text-sm max-w-[80%] text-center line-clamp-2 bg-black/30 px-4 py-2 rounded-lg">
+                  {currentSpeech}
+                </p>
+              )}
+              {sessionStatus === 'listening' && !currentSpeech && (
+                <p className="text-gray-400 text-sm">
+                  {isMobile ? (isPushToTalkHeld ? 'Listening...' : 'Hold mic to speak') : 'Listening...'}
+                </p>
+              )}
             </div>
-            {currentSpeech && (
-              <p className="text-gray-300 text-sm max-w-[80%] text-center line-clamp-2 bg-black/30 px-4 py-2 rounded-lg">
+          )}
+
+          {/* Camera speech overlay */}
+          {cameraEnabled && currentSpeech && (
+            <div className="absolute bottom-16 left-4 right-4 z-20">
+              <p className="text-white text-sm bg-black/50 backdrop-blur-sm px-3 py-2 rounded-lg text-center line-clamp-2">
                 {currentSpeech}
               </p>
-            )}
-            {sessionStatus === 'listening' && !currentSpeech && (
-              <p className="text-gray-400 text-sm">
-                {isMobile ? (isPushToTalkHeld ? 'Listening...' : 'Hold mic to speak') : 'Listening...'}
-              </p>
-            )}
-          </div>
+            </div>
+          )}
           {/* Name tag */}
           <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2">
             <span className="bg-black/60 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm font-medium">
@@ -464,6 +579,24 @@ export default function MeetInterview({ company, role, sessionType, userName, on
           <button onClick={() => setIsMuted(!isMuted)}
             className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isMuted ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
             {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          </button>
+
+          {/* Camera toggle */}
+          <button
+            onClick={() => cameraEnabled ? disableCamera() : enableCamera()}
+            title={cameraEnabled ? 'Turn off camera' : 'Enable camera for body language analysis'}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+              cameraEnabled ? 'bg-[#0A6A47] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}>
+            {cameraEnabled ? (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            )}
           </button>
 
           {/* Push to talk (mobile) */}

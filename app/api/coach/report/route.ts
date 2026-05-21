@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   if (!auth) return unauthorized()
 
   try {
-    const { transcript, company, role, sessionType } = await req.json()
+    const { transcript, company, role, sessionType, screenshots } = await req.json()
 
     if (!transcript || transcript.length < 4) {
       return NextResponse.json(
@@ -23,12 +23,63 @@ export async function POST(req: NextRequest) {
       .map((t: { role: string; text: string }) => `${t.role}: ${t.text}`)
       .join('\n\n')
 
+    // Body language analysis if screenshots provided
+    let bodyLanguageSection = ''
+    if (screenshots && screenshots.length > 0) {
+      try {
+        const visionPrompt = `You are an expert interview coach analyzing body language from interview screenshots.
+
+Analyze these ${screenshots.length} screenshots taken during a mock interview and provide:
+1. Eye contact score (0-100): Was the person looking at the camera?
+2. Posture score (0-100): Were they sitting straight?
+3. Expression score (0-100): Did they look confident and engaged?
+4. Overall body language score (0-100)
+5. 2-3 specific tips for improvement
+
+Return ONLY valid JSON:
+{"eye_contact":85,"posture":70,"expression":75,"overall":77,"tips":["Maintain eye contact with camera","Sit up straighter","Smile more naturally"]}`
+
+        const visionCompletion = await groq.chat.completions.create({
+          model: 'llama-3.2-11b-vision-preview',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: visionPrompt },
+                // Send up to 3 screenshots
+                ...screenshots.slice(0, 3).map((img: string) => ({
+                  type: 'image_url' as const,
+                  image_url: { url: img },
+                })),
+              ],
+            },
+          ],
+          temperature: 0.2,
+          max_tokens: 500,
+        })
+
+        let visionText = visionCompletion.choices[0]?.message?.content?.trim() || ''
+        if (visionText.startsWith('```')) visionText = visionText.replace(/```json?|```/g, '').trim()
+        const bodyData = JSON.parse(visionText)
+        bodyLanguageSection = `\n\nBODY LANGUAGE ANALYSIS (from camera):
+Eye Contact: ${bodyData.eye_contact}/100
+Posture: ${bodyData.posture}/100
+Expression: ${bodyData.expression}/100
+Overall Body Language: ${bodyData.overall}/100
+Tips: ${bodyData.tips?.join(', ')}`
+      } catch (e) {
+        console.error('Vision analysis failed:', e)
+        // Continue without body language — not critical
+      }
+    }
+
     const prompt = `You are an expert interview coach. Analyze this mock interview transcript and generate a detailed performance report.
 
 INTERVIEW CONTEXT:
 - Company: ${company}
 - Role: ${role}
 - Type: ${sessionType}
+${bodyLanguageSection}
 
 TRANSCRIPT:
 ${transcriptText}
@@ -45,6 +96,13 @@ Generate a JSON report with this EXACT structure:
     "structure": <number 0-100>,
     "relevance": <number 0-100>
   },
+  "body_language": ${screenshots && screenshots.length > 0 ? `{
+    "eye_contact": <number 0-100>,
+    "posture": <number 0-100>,
+    "expression": <number 0-100>,
+    "overall": <number 0-100>,
+    "tips": ["<tip 1>", "<tip 2>"]
+  }` : 'null'},
   "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
   "weaknesses": ["<weakness 1>", "<weakness 2>", "<weakness 3>"],
   "filler_words_count": <number>,
