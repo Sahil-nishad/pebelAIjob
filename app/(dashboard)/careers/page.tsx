@@ -539,19 +539,11 @@ export default function CareersPage() {
 
                   {/* Card Footer — Actions */}
                   <div className="px-5 pb-5 flex items-center gap-2">
-                    {isQuickApply(currentJob.apply_url) ? (
-                      <button onClick={() => handleSmartApply(currentJob)} disabled={applying}
-                        className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[#0A6A47] to-emerald-500 text-white py-2.5 rounded-xl font-bold text-sm shadow-sm hover:shadow-md transition-all disabled:opacity-50">
-                        {applying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                        {applying ? 'Applying...' : 'Quick Apply'}
-                      </button>
-                    ) : (
-                      <button onClick={() => handleSmartApply(currentJob)} disabled={applying}
-                        className="flex-1 flex items-center justify-center gap-2 bg-[#0A6A47] text-white py-2.5 rounded-xl font-bold text-sm hover:bg-[#085c3d] transition-colors disabled:opacity-50">
-                        {applying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                        {applying ? 'Preparing...' : 'Smart Apply'}
-                      </button>
-                    )}
+                    <a href={currentJob.apply_url} target="_blank" rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 bg-[#0A6A47] text-white py-2.5 rounded-xl font-bold text-sm hover:bg-[#085c3d] transition-colors">
+                      <ExternalLink className="w-4 h-4" />
+                      {isQuickApply(currentJob.apply_url) ? 'Quick Apply' : 'Apply Now'}
+                    </a>
                     <button onClick={() => { handleSaveJob(currentJob); toast.success('Saved!') }}
                       className="w-10 h-10 flex items-center justify-center bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors">
                       <Bookmark className="w-4 h-4" />
@@ -571,11 +563,14 @@ export default function CareersPage() {
                 <ArrowLeft className="w-4 h-4" /> Previous
               </button>
 
-              {/* Apply → Next */}
-              <button onClick={handleApply} disabled={applying}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[#0A6A47] text-white rounded-xl font-semibold text-sm hover:bg-[#085c3d] transition-all shadow-sm disabled:opacity-50">
-                {applying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                {applying ? 'Applying...' : 'Apply'} <ArrowRight className="w-4 h-4" />
+              {/* Next Job */}
+              <button onClick={() => {
+                setDirection('right')
+                setHistory(prev => [...prev, currentIndex])
+                setTimeout(() => { setCurrentIndex(prev => prev + 1); setDirection(null) }, 300)
+              }}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#0A6A47] text-white rounded-xl font-semibold text-sm hover:bg-[#085c3d] transition-all shadow-sm">
+                Next Job <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           )}
