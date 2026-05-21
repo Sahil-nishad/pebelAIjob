@@ -269,23 +269,21 @@ export default function CareersPage() {
       const data = await res.json()
 
       if (data.method === 'greenhouse_api' || data.method === 'lever_api') {
-        // Direct API apply succeeded
         toast.success(data.message || 'Applied successfully!')
         handleSaveJob(job)
-        // Advance card
-        setDirection('right')
-        setHistory(prev => [...prev, currentIndex])
-        setTimeout(() => { setCurrentIndex(prev => prev + 1); setDirection(null) }, 300)
       } else {
         // Assisted apply — show modal
         setAssistedApply({ job, userInfo: data.user_info, checklist: data.checklist })
         handleSaveJob(job)
       }
     } catch {
-      // Fallback — just open the URL
       window.open(job.apply_url, '_blank')
     } finally {
       setApplying(false)
+      // Always advance to next card after apply
+      setDirection('right')
+      setHistory(prev => [...prev, currentIndex])
+      setTimeout(() => { setCurrentIndex(prev => prev + 1); setDirection(null) }, 300)
     }
   }
 
@@ -299,11 +297,7 @@ export default function CareersPage() {
   const handleApply = useCallback(() => {
     if (currentIndex >= jobs.length) return
     const job = jobs[currentIndex]
-    setDirection('right')
-    window.open(job.apply_url, '_blank')
-    handleSaveJob(job)
-    setHistory(prev => [...prev, currentIndex])
-    setTimeout(() => { setCurrentIndex(prev => prev + 1); setDirection(null) }, 300)
+    handleSmartApply(job)
   }, [currentIndex, jobs])
 
   const handleUndo = useCallback(() => {
@@ -571,32 +565,19 @@ export default function CareersPage() {
           {/* Navigation Buttons */}
           {!isDone && currentJob && (
             <div className="flex items-center justify-between">
-              {/* Skip */}
-              <button onClick={handleSkip}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl font-semibold text-sm hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-all shadow-sm">
-                <ArrowLeft className="w-4 h-4" /> Skip
-              </button>
-
-              {/* Undo */}
+              {/* Previous */}
               <button onClick={handleUndo} disabled={history.length === 0}
-                className="flex items-center gap-1.5 px-3 py-2 text-gray-400 text-xs hover:text-gray-600 transition-colors disabled:opacity-30">
-                <RotateCcw className="w-3.5 h-3.5" /> Undo
+                className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl font-semibold text-sm hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm disabled:opacity-30 disabled:cursor-not-allowed">
+                <ArrowLeft className="w-4 h-4" /> Previous
               </button>
 
-              {/* Apply */}
-              <button onClick={handleApply}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[#0A6A47] text-white rounded-xl font-semibold text-sm hover:bg-[#085c3d] transition-all shadow-sm">
-                Apply <ArrowRight className="w-4 h-4" />
-              </button>            </div>
-          )}
-
-          {/* Keyboard hint */}
-          {!isDone && currentJob && (
-            <p className="text-center text-xs text-gray-400">
-              Keyboard: <kbd className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">←</kbd> Skip &nbsp;
-              <kbd className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">→</kbd> Apply &nbsp;
-              <kbd className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">Z</kbd> Undo
-            </p>
+              {/* Apply → Next */}
+              <button onClick={handleApply} disabled={applying}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#0A6A47] text-white rounded-xl font-semibold text-sm hover:bg-[#085c3d] transition-all shadow-sm disabled:opacity-50">
+                {applying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                {applying ? 'Applying...' : 'Apply'} <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           )}
         </>
       )}
