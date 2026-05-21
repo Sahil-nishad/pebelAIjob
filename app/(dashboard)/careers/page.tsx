@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, Search, FileText, Loader2, ExternalLink,
   Bookmark, CheckCircle, Sparkles, MapPin, Briefcase,
-  Globe, X, Zap, RotateCcw, ChevronLeft, ChevronRight,
-  Heart, ArrowLeft, ArrowRight,
+  Globe, X, Zap, RotateCcw, ArrowLeft, ArrowRight,
+  Copy, ClipboardCheck,
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
@@ -60,6 +60,106 @@ function isQuickApply(url: string) {
   return url && (url.includes('greenhouse.io') || url.includes('lever.co') || url.includes('ashbyhq.com'))
 }
 
+// ── Assisted Apply Modal ─────────────────────────────────────
+function AssistedApplyModal({
+  job,
+  userInfo,
+  checklist,
+  onClose,
+}: {
+  job: Job
+  userInfo: { name: string; email: string; skills: string; experience: string }
+  checklist: { step: number; label: string; value: string }[]
+  onClose: () => void
+}) {
+  const [copied, setCopied] = useState<Record<string, boolean>>({})
+  const [done, setDone] = useState<Record<number, boolean>>({})
+
+  const copyToClipboard = (text: string, key: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(prev => ({ ...prev, [key]: true }))
+      setTimeout(() => setCopied(prev => ({ ...prev, [key]: false })), 2000)
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 40 }}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-[#0A6A47] to-emerald-500 p-5 text-white">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold text-emerald-200 uppercase tracking-wide mb-1">Assisted Apply</p>
+              <h3 className="font-bold text-lg leading-tight">{job.title}</h3>
+              <p className="text-emerald-100 text-sm">{job.company}</p>
+            </div>
+            <button onClick={onClose} className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Your Info */}
+        <div className="p-5 border-b border-gray-100">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Your Info — Click to Copy</p>
+          <div className="space-y-2">
+            {[
+              { label: 'Full Name', value: userInfo.name, key: 'name' },
+              { label: 'Email', value: userInfo.email, key: 'email' },
+              { label: 'Top Skills', value: userInfo.skills, key: 'skills' },
+            ].filter(item => item.value).map(item => (
+              <button key={item.key} onClick={() => copyToClipboard(item.value, item.key)}
+                className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors text-left group">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase">{item.label}</p>
+                  <p className="text-sm text-gray-800 truncate">{item.value}</p>
+                </div>
+                <div className={`flex-shrink-0 ml-2 p-1.5 rounded-lg transition-colors ${copied[item.key] ? 'bg-green-100 text-green-600' : 'bg-white text-gray-400 group-hover:text-gray-600'}`}>
+                  {copied[item.key] ? <ClipboardCheck className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Checklist */}
+        <div className="p-5 border-b border-gray-100">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Application Checklist</p>
+          <div className="space-y-2">
+            {checklist.map(item => (
+              <button key={item.step} onClick={() => setDone(prev => ({ ...prev, [item.step]: !prev[item.step] }))}
+                className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors text-left">
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                  done[item.step] ? 'bg-[#0A6A47] border-[#0A6A47]' : 'border-gray-300'
+                }`}>
+                  {done[item.step] && <CheckCircle className="w-3 h-3 text-white" />}
+                </div>
+                <span className={`text-sm ${done[item.step] ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+                  {item.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Open Job Button */}
+        <div className="p-5">
+          <a href={job.apply_url} target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full bg-[#0A6A47] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#085c3d] transition-colors">
+            <ExternalLink className="w-4 h-4" /> Open Job Application Page
+          </a>
+          <p className="text-center text-xs text-gray-400 mt-2">Your info is ready to paste</p>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 export default function CareersPage() {
   const [resume, setResume] = useState<ResumeData | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -73,6 +173,10 @@ export default function CareersPage() {
   const [totalFound, setTotalFound] = useState(0)
   const [direction, setDirection] = useState<'left' | 'right' | null>(null)
   const [history, setHistory] = useState<number[]>([])
+  const [applying, setApplying] = useState(false)
+  const [assistedApply, setAssistedApply] = useState<{
+    job: Job; userInfo: any; checklist: any[]
+  } | null>(null)
 
   useEffect(() => { fetchResume() }, [])
 
@@ -148,6 +252,43 @@ export default function CareersPage() {
     } catch {}
   }
 
+  const handleSmartApply = async (job: Job) => {
+    if (!resume) { toast.error('Upload your resume first'); return }
+    setApplying(true)
+    try {
+      const res = await fetch('/api/careers/jobs/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job_url: job.apply_url,
+          job_title: job.title,
+          company: job.company,
+          resume_id: resume.id,
+        }),
+      })
+      const data = await res.json()
+
+      if (data.method === 'greenhouse_api' || data.method === 'lever_api') {
+        // Direct API apply succeeded
+        toast.success(data.message || 'Applied successfully!')
+        handleSaveJob(job)
+        // Advance card
+        setDirection('right')
+        setHistory(prev => [...prev, currentIndex])
+        setTimeout(() => { setCurrentIndex(prev => prev + 1); setDirection(null) }, 300)
+      } else {
+        // Assisted apply — show modal
+        setAssistedApply({ job, userInfo: data.user_info, checklist: data.checklist })
+        handleSaveJob(job)
+      }
+    } catch {
+      // Fallback — just open the URL
+      window.open(job.apply_url, '_blank')
+    } finally {
+      setApplying(false)
+    }
+  }
+
   const handleSkip = useCallback(() => {
     if (currentIndex >= jobs.length) return
     setDirection('left')
@@ -192,6 +333,18 @@ export default function CareersPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+
+      {/* Assisted Apply Modal */}
+      <AnimatePresence>
+        {assistedApply && (
+          <AssistedApplyModal
+            job={assistedApply.job}
+            userInfo={assistedApply.userInfo}
+            checklist={assistedApply.checklist}
+            onClose={() => setAssistedApply(null)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Header */}
       <div>
@@ -393,15 +546,17 @@ export default function CareersPage() {
                   {/* Card Footer — Actions */}
                   <div className="px-5 pb-5 flex items-center gap-2">
                     {isQuickApply(currentJob.apply_url) ? (
-                      <a href={currentJob.apply_url} target="_blank" rel="noopener noreferrer"
-                        className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[#0A6A47] to-emerald-500 text-white py-2.5 rounded-xl font-bold text-sm shadow-sm hover:shadow-md transition-all">
-                        <Zap className="w-4 h-4" /> Quick Apply
-                      </a>
+                      <button onClick={() => handleSmartApply(currentJob)} disabled={applying}
+                        className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[#0A6A47] to-emerald-500 text-white py-2.5 rounded-xl font-bold text-sm shadow-sm hover:shadow-md transition-all disabled:opacity-50">
+                        {applying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                        {applying ? 'Applying...' : 'Quick Apply'}
+                      </button>
                     ) : (
-                      <a href={currentJob.apply_url} target="_blank" rel="noopener noreferrer"
-                        className="flex-1 flex items-center justify-center gap-2 bg-[#0A6A47] text-white py-2.5 rounded-xl font-bold text-sm hover:bg-[#085c3d] transition-colors">
-                        <ExternalLink className="w-4 h-4" /> Apply Now
-                      </a>
+                      <button onClick={() => handleSmartApply(currentJob)} disabled={applying}
+                        className="flex-1 flex items-center justify-center gap-2 bg-[#0A6A47] text-white py-2.5 rounded-xl font-bold text-sm hover:bg-[#085c3d] transition-colors disabled:opacity-50">
+                        {applying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                        {applying ? 'Preparing...' : 'Smart Apply'}
+                      </button>
                     )}
                     <button onClick={() => { handleSaveJob(currentJob); toast.success('Saved!') }}
                       className="w-10 h-10 flex items-center justify-center bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors">
@@ -432,8 +587,7 @@ export default function CareersPage() {
               <button onClick={handleApply}
                 className="flex items-center gap-2 px-5 py-2.5 bg-[#0A6A47] text-white rounded-xl font-semibold text-sm hover:bg-[#085c3d] transition-all shadow-sm">
                 Apply <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+              </button>            </div>
           )}
 
           {/* Keyboard hint */}
