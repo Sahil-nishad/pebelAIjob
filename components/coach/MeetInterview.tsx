@@ -197,8 +197,7 @@ export default function MeetInterview({ company, role, sessionType, userName, on
         if (startFn) {
           startFn()
         } else if (!isMobileBrowser()) {
-          // startListening is declared below — access via ref to avoid forward-reference error
-          ;(window as any).__pebelWebSpeechStart?.()
+          (window as any).__pebelWebSpeechStart?.()
         }
       }
 
@@ -240,8 +239,8 @@ export default function MeetInterview({ company, role, sessionType, userName, on
         setSessionStatus('listening')
         resolve()
         const startFn = (window as any).__pebelStartListening
-        if (startFn) startFn()
-        else if (!isMobileBrowser()) ;(window as any).__pebelWebSpeechStart?.()
+        if (startFn) { startFn() }
+        else if (!isMobileBrowser()) { (window as any).__pebelWebSpeechStart?.() }
       } else resolve()
     }
     utterance.onerror = () => { setAiSpeaking(false); resolve() }
@@ -263,7 +262,7 @@ export default function MeetInterview({ company, role, sessionType, userName, on
     } catch {
       toast.error('Failed to get AI response')
       setSessionStatus('listening')
-      if (!isMobileBrowser()) ;(window as any).__pebelWebSpeechStart?.()
+      if (!isMobileBrowser()) { (window as any).__pebelWebSpeechStart?.() }
     }
   }, [speak])
 

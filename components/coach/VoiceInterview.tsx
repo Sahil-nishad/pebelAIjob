@@ -116,8 +116,8 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         setSessionStatus('listening')
         resolve()
         const startFn = (window as any).__pebelStartListening
-        if (startFn) startFn()
-        else if (!isMobileBrowser()) ;(window as any).__pebelWebSpeechStart?.()
+        if (startFn) { startFn() }
+        else if (!isMobileBrowser()) { (window as any).__pebelWebSpeechStart?.() }
       }
 
       // Try Deepgram TTS for natural voice
@@ -164,8 +164,8 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         setSessionStatus('listening')
         resolve()
         const startFn = (window as any).__pebelStartListening
-        if (startFn) startFn()
-        else if (!isMobileBrowser()) ;(window as any).__pebelWebSpeechStart?.()
+        if (startFn) { startFn() }
+        else if (!isMobileBrowser()) { (window as any).__pebelWebSpeechStart?.() }
       } else { resolve() }
     }
     utterance.onerror = () => {
@@ -173,8 +173,8 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         setSessionStatus('listening')
         resolve()
         const startFn = (window as any).__pebelStartListening
-        if (startFn) startFn()
-        else if (!isMobileBrowser()) ;(window as any).__pebelWebSpeechStart?.()
+        if (startFn) { startFn() }
+        else if (!isMobileBrowser()) { (window as any).__pebelWebSpeechStart?.() }
       } else { resolve() }
     }
     synthRef.current.speak(utterance)
@@ -199,7 +199,7 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
     } catch {
       toast.error('Failed to get AI response')
       setSessionStatus('listening')
-      if (!isMobileBrowser()) ;(window as any).__pebelWebSpeechStart?.()
+      if (!isMobileBrowser()) { (window as any).__pebelWebSpeechStart?.() }
     }
   }, [speak])
 
