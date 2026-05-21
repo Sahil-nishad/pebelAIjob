@@ -1,15 +1,20 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Upload, Search, FileText, Loader2, ExternalLink,
   Bookmark, CheckCircle, Sparkles, MapPin, Briefcase,
-  Globe, X, Zap, RotateCcw, ArrowLeft, ArrowRight,
-  Copy, ClipboardCheck,
+  Globe, X, RotateCcw, ArrowLeft, ArrowRight,
+  Copy, ClipboardCheck, ShieldCheck, TrendingUp, AlertCircle,
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
+// ── Constants ────────────────────────────────────────────────
+const SEEN_JOBS_KEY = 'pebel_seen_job_ids'
+const MAX_SEEN = 500 // cap localStorage size
+
+// ── Types ────────────────────────────────────────────────────
 interface Job {
   id: string
   source: string
@@ -33,39 +38,94 @@ interface Job {
 interface ResumeData {
   id: string
   file_name: string
-  extracted_skills: string[]
+  extracted_skills: string[] | string
   parsed_name: string | null
+  ats_score?: number
+  ats_data?: {
+    grade?: string
+    top_issues?: string[]
+    quick_wins?: string[]
+    breakdown?: Record<string, number>
+  }
+  target_job_title?: string
+  experience_level?: string
+  total_experience_years?: number
 }
 
+// ── Helpers ──────────────────────────────────────────────────
 function getSourceBadge(source: string) {
   const map: Record<string, { bg: string; label: string }> = {
-    indeed: { bg: 'bg-blue-600', label: 'Indeed' },
-    linkedin: { bg: 'bg-blue-800', label: 'LinkedIn' },
-    remoteok: { bg: 'bg-green-600', label: 'RemoteOK' },
-    google: { bg: 'bg-red-500', label: 'Google' },
-    adzuna: { bg: 'bg-purple-600', label: 'Adzuna' },
-    jsearch: { bg: 'bg-orange-600', label: 'JSearch' },
+    indeed:   { bg: 'bg-blue-600',   label: 'Indeed' },
+    linkedin: { bg: 'bg-blue-800',   label: 'LinkedIn' },
+    remoteok: { bg: 'bg-green-600',  label: 'RemoteOK' },
+    google:   { bg: 'bg-red-500',    label: 'Google' },
+    adzuna:   { bg: 'bg-purple-600', label: 'Adzuna' },
+    jsearch:  { bg: 'bg-orange-600', label: 'JSearch' },
   }
   return map[source] || { bg: 'bg-gray-500', label: source }
 }
 
 function getScoreColor(score: number) {
-  if (score >= 80) return { bar: 'bg-green-500', text: 'text-green-700', bg: 'bg-green-50', border: 'border-green-200' }
-  if (score >= 60) return { bar: 'bg-blue-500', text: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200' }
-  if (score >= 40) return { bar: 'bg-yellow-500', text: 'text-yellow-700', bg: 'bg-yellow-50', border: 'border-yellow-200' }
-  return { bar: 'bg-gray-400', text: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-200' }
+  if (score >= 80) return { text: 'text-green-700',  bg: 'bg-green-50',  border: 'border-green-200',  ring: 'ring-green-400' }
+  if (score >= 60) return { text: 'text-blue-700',   bg: 'bg-blue-50',   border: 'border-blue-200',   ring: 'ring-blue-400' }
+  if (score >= 40) return { text: 'text-yellow-700', bg: 'bg-yellow-50', border: 'border-yellow-200', ring: 'ring-yellow-400' }
+  return               { text: 'text-gray-600',   bg: 'bg-gray-50',   border: 'border-gray-200',   ring: 'ring-gray-300' }
+}
+
+function getAtsColor(score: number) {
+  if (score >= 80) return 'text-green-600 bg-green-50 border-green-200'
+  if (score >= 60) return 'text-blue-600 bg-blue-50 border-blue-200'
+  if (score >= 40) return 'text-yellow-600 bg-yellow-50 border-yellow-200'
+  return 'text-red-600 bg-red-50 border-red-200'
 }
 
 function isQuickApply(url: string) {
   return url && (url.includes('greenhouse.io') || url.includes('lever.co') || url.includes('ashbyhq.com'))
 }
 
+function parseSkills(raw: string[] | string | undefined): string[] {
+  if (!raw) return []
+  if (typeof raw === 'string') { try { return JSON.parse(raw) } catch { return [] } }
+  return Array.isArray(raw) ? raw : []
+}
+
+// ── Seen-jobs helpers (localStorage) ────────────────────────
+function loadSeenIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(SEEN_JOBS_KEY)
+    return raw ? new Set(JSON.parse(raw)) : new Set()
+  } catch { return new Set() }
+}
+
+function saveSeenIds(ids: Set<string>) {
+  try {
+    // Keep only the most recent MAX_SEEN entries
+    const arr = Array.from(ids).slice(-MAX_SEEN)
+    localStorage.setItem(SEEN_JOBS_KEY, JSON.stringify(arr))
+  } catch {}
+}
+
+function addSeenIds(newIds: string[]) {
+  const existing = loadSeenIds()
+  newIds.forEach(id => existing.add(id))
+  saveSeenIds(existing)
+}
+
+// ── ATS Score Badge (small, corner) ─────────────────────────
+function AtsBadge({ score, grade }: { score: number; grade?: string }) {
+  const colorClass = getAtsColor(score)
+  return (
+    <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[11px] font-bold ${colorClass}`}>
+      <ShieldCheck className="w-3 h-3" />
+      ATS {score}
+      {grade && <span className="opacity-70">· {grade}</span>}
+    </div>
+  )
+}
+
 // ── Assisted Apply Modal ─────────────────────────────────────
 function AssistedApplyModal({
-  job,
-  userInfo,
-  checklist,
-  onClose,
+  job, userInfo, checklist, onClose,
 }: {
   job: Job
   userInfo: { name: string; email: string; skills: string; experience: string }
@@ -85,12 +145,9 @@ function AssistedApplyModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 40 }}
+        initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
       >
-        {/* Header */}
         <div className="bg-gradient-to-r from-[#0A6A47] to-emerald-500 p-5 text-white">
           <div className="flex items-start justify-between">
             <div>
@@ -104,7 +161,6 @@ function AssistedApplyModal({
           </div>
         </div>
 
-        {/* Your Info */}
         <div className="p-5 border-b border-gray-100">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Your Info — Click to Copy</p>
           <div className="space-y-2">
@@ -127,27 +183,21 @@ function AssistedApplyModal({
           </div>
         </div>
 
-        {/* Checklist */}
         <div className="p-5 border-b border-gray-100">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Application Checklist</p>
           <div className="space-y-2">
             {checklist.map(item => (
               <button key={item.step} onClick={() => setDone(prev => ({ ...prev, [item.step]: !prev[item.step] }))}
                 className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors text-left">
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                  done[item.step] ? 'bg-[#0A6A47] border-[#0A6A47]' : 'border-gray-300'
-                }`}>
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${done[item.step] ? 'bg-[#0A6A47] border-[#0A6A47]' : 'border-gray-300'}`}>
                   {done[item.step] && <CheckCircle className="w-3 h-3 text-white" />}
                 </div>
-                <span className={`text-sm ${done[item.step] ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                  {item.label}
-                </span>
+                <span className={`text-sm ${done[item.step] ? 'line-through text-gray-400' : 'text-gray-700'}`}>{item.label}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Open Job Button */}
         <div className="p-5">
           <a href={job.apply_url} target="_blank" rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full bg-[#0A6A47] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#085c3d] transition-colors">
@@ -160,6 +210,7 @@ function AssistedApplyModal({
   )
 }
 
+// ── Main Page ────────────────────────────────────────────────
 export default function CareersPage() {
   const [resume, setResume] = useState<ResumeData | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -174,9 +225,8 @@ export default function CareersPage() {
   const [direction, setDirection] = useState<'left' | 'right' | null>(null)
   const [history, setHistory] = useState<number[]>([])
   const [applying, setApplying] = useState(false)
-  const [assistedApply, setAssistedApply] = useState<{
-    job: Job; userInfo: any; checklist: any[]
-  } | null>(null)
+  const [assistedApply, setAssistedApply] = useState<{ job: Job; userInfo: any; checklist: any[] } | null>(null)
+  const [showAtsDetail, setShowAtsDetail] = useState(false)
 
   useEffect(() => { fetchResume() }, [])
 
@@ -209,8 +259,11 @@ export default function CareersPage() {
       const formData = new FormData()
       formData.append('file', file)
       const res = await fetch('/api/careers/resumes/upload', { method: 'POST', body: formData })
-      if (res.ok) { setResume(await res.json()); toast.success('Resume uploaded & parsed!') }
-      else toast.error('Failed to upload')
+      if (res.ok) {
+        const data = await res.json()
+        setResume(data)
+        toast.success('Resume uploaded & parsed!')
+      } else toast.error('Failed to upload')
     } catch { toast.error('Failed to upload') }
     finally { setUploading(false) }
   }
@@ -227,19 +280,40 @@ export default function CareersPage() {
   const handleSearch = async () => {
     if (!resume) { toast.error('Upload your resume first'); return }
     setSearching(true); setHasSearched(true); setCurrentIndex(0); setHistory([])
+
+    // Load seen IDs from localStorage to exclude already-shown jobs
+    const seenIds = Array.from(loadSeenIds())
+
     try {
-      const body: any = { resume_id: resume.id, top_n: 10 }
+      const body: any = {
+        resume_id: resume.id,
+        top_n: 10,
+        seen_job_ids: seenIds,
+      }
       if (location.trim()) body.location = location.trim()
+
       const res = await fetch('/api/careers/jobs/search', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       })
+
       if (res.ok) {
         const data = await res.json()
-        let results = data.jobs || []
+        let results: Job[] = data.jobs || []
         if (remoteOnly) results = results.filter((j: Job) => j.remote)
-        setJobs(results); setTotalFound(data.total_found || 0)
-        toast.success(results.length > 0 ? `Found ${results.length} jobs!` : 'No jobs found')
-      } else toast.error('Search failed')
+
+        // Mark these jobs as seen immediately
+        if (results.length > 0) {
+          addSeenIds(results.map(j => j.id))
+        }
+
+        setJobs(results)
+        setTotalFound(data.total_found || 0)
+        toast.success(results.length > 0 ? `Found ${results.length} fresh jobs!` : 'No new jobs found — try a different location')
+      } else {
+        toast.error('Search failed')
+      }
     } catch { toast.error('Failed to search') }
     finally { setSearching(false) }
   }
@@ -247,7 +321,9 @@ export default function CareersPage() {
   const handleSaveJob = async (job: Job) => {
     try {
       await fetch('/api/careers/jobs/save', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(job),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(job),
       })
     } catch {}
   }
@@ -272,7 +348,6 @@ export default function CareersPage() {
         toast.success(data.message || 'Applied successfully!')
         handleSaveJob(job)
       } else {
-        // Assisted apply — show modal
         setAssistedApply({ job, userInfo: data.user_info, checklist: data.checklist })
         handleSaveJob(job)
       }
@@ -280,7 +355,6 @@ export default function CareersPage() {
       window.open(job.apply_url, '_blank')
     } finally {
       setApplying(false)
-      // Always advance to next card after apply
       setDirection('right')
       setHistory(prev => [...prev, currentIndex])
       setTimeout(() => { setCurrentIndex(prev => prev + 1); setDirection(null) }, 300)
@@ -296,8 +370,7 @@ export default function CareersPage() {
 
   const handleApply = useCallback(() => {
     if (currentIndex >= jobs.length) return
-    const job = jobs[currentIndex]
-    handleSmartApply(job)
+    handleSmartApply(jobs[currentIndex])
   }, [currentIndex, jobs])
 
   const handleUndo = useCallback(() => {
@@ -307,13 +380,9 @@ export default function CareersPage() {
     setCurrentIndex(prev)
   }, [history])
 
-  const skills = (() => {
-    if (!resume?.extracted_skills) return []
-    const s = resume.extracted_skills
-    if (typeof s === 'string') { try { return JSON.parse(s) } catch { return [] } }
-    return Array.isArray(s) ? s : []
-  })()
-
+  const skills = parseSkills(resume?.extracted_skills)
+  const atsScore = resume?.ats_score ?? 0
+  const atsGrade = resume?.ats_data?.grade
   const currentJob = jobs[currentIndex]
   const isDone = hasSearched && jobs.length > 0 && currentIndex >= jobs.length
 
@@ -340,17 +409,89 @@ export default function CareersPage() {
         )}
       </AnimatePresence>
 
+      {/* ATS Detail Panel */}
+      <AnimatePresence>
+        {showAtsDetail && resume?.ats_data && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            className="bg-white rounded-2xl border border-gray-200 shadow-lg p-5 z-10"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-[#0A6A47]" />
+                <h3 className="font-bold text-gray-900">ATS Score Breakdown</h3>
+              </div>
+              <button onClick={() => setShowAtsDetail(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Score ring */}
+            <div className="flex items-center gap-4 mb-4">
+              <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center font-bold text-xl ${getAtsColor(atsScore)} border-current`}>
+                {atsScore}
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">Grade: {atsGrade || 'N/A'}</p>
+                <p className="text-sm text-gray-500">
+                  {atsScore >= 80 ? 'Excellent ATS compatibility' :
+                   atsScore >= 60 ? 'Good — minor improvements needed' :
+                   atsScore >= 40 ? 'Fair — several issues to fix' :
+                   'Needs improvement'}
+                </p>
+              </div>
+            </div>
+
+            {/* Breakdown bars */}
+            {resume.ats_data.breakdown && Object.keys(resume.ats_data.breakdown).length > 0 && (
+              <div className="space-y-2 mb-4">
+                {Object.entries(resume.ats_data.breakdown).map(([key, val]) => (
+                  <div key={key}>
+                    <div className="flex justify-between text-xs text-gray-500 mb-0.5">
+                      <span className="capitalize">{key.replace(/_/g, ' ')}</span>
+                      <span className="font-medium">{val}/100</span>
+                    </div>
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${val >= 80 ? 'bg-green-500' : val >= 60 ? 'bg-blue-500' : val >= 40 ? 'bg-yellow-500' : 'bg-red-400'}`}
+                        style={{ width: `${val}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Quick wins */}
+            {resume.ats_data.quick_wins && resume.ats_data.quick_wins.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-[#0A6A47] uppercase tracking-wide mb-2 flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" /> Quick Wins
+                </p>
+                <ul className="space-y-1">
+                  {resume.ats_data.quick_wins.slice(0, 3).map((tip, i) => (
+                    <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
+                      <span className="text-[#0A6A47] mt-0.5">→</span> {tip}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">AI Job Search</h1>
         <p className="text-gray-500 text-sm mt-0.5">
           {hasSearched && jobs.length > 0
-            ? `${currentIndex} of ${jobs.length} reviewed · Use ← → arrow keys`
-            : 'Upload resume → Find perfectly matched jobs'}
+            ? `${currentIndex} of ${jobs.length} reviewed · fresh jobs only`
+            : 'Upload resume → Get AI-matched fresh jobs'}
         </p>
       </div>
 
-      {/* Resume + Search Row */}
+      {/* Resume + Search Card */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
         {!resume ? (
           <div className="flex items-center gap-3">
@@ -359,7 +500,7 @@ export default function CareersPage() {
             </div>
             <div className="flex-1">
               <p className="font-semibold text-gray-900 text-sm">Upload your resume to get started</p>
-              <p className="text-xs text-gray-500">PDF or DOCX · Max 10MB</p>
+              <p className="text-xs text-gray-500">PDF or DOCX · Max 10MB · AI parses skills + ATS score</p>
             </div>
             <label className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold cursor-pointer text-sm transition-all ${
               uploading ? 'bg-gray-100 text-gray-400' : 'bg-[#0A6A47] text-white hover:bg-[#085c3d]'
@@ -370,18 +511,35 @@ export default function CareersPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {/* Resume info */}
+            {/* Resume info row */}
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
                 <FileText className="w-4 h-4 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 text-sm truncate">{resume.file_name}</p>
-                <p className="text-xs text-green-600 flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3" /> Parsed · {skills.length} skills found
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-semibold text-gray-900 text-sm truncate max-w-[160px]">{resume.file_name}</p>
+                  {/* ATS Score Badge — clickable */}
+                  {atsScore > 0 && (
+                    <button
+                      onClick={() => setShowAtsDetail(v => !v)}
+                      title="Click to see ATS breakdown"
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[11px] font-bold transition-all hover:opacity-80 ${getAtsColor(atsScore)}`}
+                    >
+                      <ShieldCheck className="w-3 h-3" />
+                      ATS {atsScore}
+                      {atsGrade && <span className="opacity-70">· {atsGrade}</span>}
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-green-600 flex items-center gap-1 mt-0.5">
+                  <CheckCircle className="w-3 h-3" />
+                  {skills.length} skills
+                  {resume.target_job_title && <> · <span className="text-gray-500">{resume.target_job_title}</span></>}
+                  {resume.experience_level && <> · <span className="capitalize text-gray-500">{resume.experience_level}</span></>}
                 </p>
               </div>
-              <button onClick={() => { setResume(null); setJobs([]); setHasSearched(false) }}
+              <button onClick={() => { setResume(null); setJobs([]); setHasSearched(false); setShowAtsDetail(false) }}
                 className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 flex-shrink-0">
                 <X className="w-4 h-4" />
               </button>
@@ -396,8 +554,7 @@ export default function CareersPage() {
                   placeholder="City (e.g., Bangalore, Noida)"
                   className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#0A6A47] focus:border-transparent outline-none" />
               </div>
-              <button onClick={() => setRemoteOnly(!remoteOnly)}
-                title="Remote only"
+              <button onClick={() => setRemoteOnly(!remoteOnly)} title="Remote only"
                 className={`px-3 py-2 rounded-xl border text-sm font-medium transition-all flex-shrink-0 ${
                   remoteOnly ? 'bg-[#0A6A47] text-white border-[#0A6A47]' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                 }`}>
@@ -470,10 +627,11 @@ export default function CareersPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <div>
+                          <div className="min-w-0">
                             <h2 className="font-bold text-gray-900 text-base leading-tight">{currentJob.title}</h2>
                             <p className="text-gray-600 text-sm mt-0.5">{currentJob.company}</p>
                           </div>
+                          {/* Match score badge */}
                           {currentJob.match_score !== null && (() => {
                             const c = getScoreColor(currentJob.match_score)
                             return (
@@ -557,13 +715,10 @@ export default function CareersPage() {
           {/* Navigation Buttons */}
           {!isDone && currentJob && (
             <div className="flex items-center justify-between">
-              {/* Previous */}
               <button onClick={handleUndo} disabled={history.length === 0}
                 className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl font-semibold text-sm hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm disabled:opacity-30 disabled:cursor-not-allowed">
                 <ArrowLeft className="w-4 h-4" /> Previous
               </button>
-
-              {/* Next Job */}
               <button onClick={() => {
                 setDirection('right')
                 setHistory(prev => [...prev, currentIndex])
@@ -582,7 +737,18 @@ export default function CareersPage() {
         <div className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
           <Sparkles className="w-9 h-9 text-[#0A6A47] mx-auto mb-3" />
           <p className="text-gray-900 font-semibold">Ready to find jobs</p>
-          <p className="text-gray-500 text-sm mt-1">Click &ldquo;Find Jobs&rdquo; to get AI-matched results</p>
+          <p className="text-gray-500 text-sm mt-1">
+            {resume.target_job_title
+              ? `Searching for "${resume.target_job_title}" roles`
+              : 'Click "Find Jobs" to get AI-matched results'}
+          </p>
+          {atsScore > 0 && (
+            <button onClick={() => setShowAtsDetail(v => !v)}
+              className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all hover:opacity-80 ${getAtsColor(atsScore)}`}>
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Resume ATS Score: {atsScore} ({atsGrade}) — click to improve
+            </button>
+          )}
         </div>
       )}
     </div>

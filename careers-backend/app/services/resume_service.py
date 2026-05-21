@@ -121,13 +121,12 @@ class ResumeService:
     async def parse_resume(self, resume_id: str) -> Dict[str, Any]:
         """
         Parse a resume and extract structured data.
-        
+
         This uses PDF parsing + AI to extract:
-        - Name
-        - Skills
-        - Projects
-        - Education
-        - Experience
+        - Name, target job title, experience level
+        - Skills (all + primary)
+        - Projects, Education, Experience
+        - ATS score
         """
         # Get resume
         async for conn in get_db():
@@ -135,18 +134,32 @@ class ResumeService:
                 "SELECT * FROM resumes WHERE id = $1",
                 resume_id
             )
-            
+
             if not resume:
                 raise ValueError("Resume not found")
-            
-            # Parse PDF
+
+            # Parse PDF/DOCX
             parser = PDFParser()
-            raw_text = await parser.extract_text(resume["file_url"])
-            
+            mime = resume.get("mime_type", "application/pdf")
+            if "wordprocessingml" in (mime or "") or str(resume.get("file_name", "")).endswith(".docx"):
+                raw_text = await parser.extract_text_from_docx(resume["file_url"])
+            else:
+                raw_text = await parser.extract_text(resume["file_url"])
+
             # Use AI to extract structured data
             ai_service = AIService()
             extracted_data = await ai_service.extract_resume_data(raw_text)
-            
+
+            # Compute ATS score
+            skills = extracted_data.get("skills", [])
+            ats_data = await ai_service.compute_ats_score(raw_text, skills)
+
+            # Merge all skills (skills + primary_skills deduplicated)
+            all_skills = list(dict.fromkeys(
+                extracted_data.get("skills", []) +
+                extracted_data.get("primary_skills", [])
+            ))
+
             # Update resume with extracted data
             result = await conn.fetchrow(
                 """
@@ -158,19 +171,29 @@ class ResumeService:
                     extracted_projects = $4,
                     extracted_education = $5,
                     extracted_experience = $6,
+                    ats_score = $7,
+                    ats_data = $8,
+                    target_job_title = $9,
+                    experience_level = $10,
+                    total_experience_years = $11,
                     updated_at = NOW()
-                WHERE id = $7
+                WHERE id = $12
                 RETURNING *
                 """,
                 raw_text,
                 extracted_data.get("name"),
-                json.dumps(extracted_data.get("skills", [])),
+                json.dumps(all_skills),
                 json.dumps(extracted_data.get("projects", [])),
                 json.dumps(extracted_data.get("education", [])),
                 json.dumps(extracted_data.get("experience", [])),
+                ats_data.get("ats_score", 0),
+                json.dumps(ats_data),
+                extracted_data.get("target_job_title", ""),
+                extracted_data.get("experience_level", "fresher"),
+                extracted_data.get("total_experience_years", 0),
                 resume_id
             )
-            
+
             return dict(result)
     
     async def parse_resume_async(self, resume_id: str):

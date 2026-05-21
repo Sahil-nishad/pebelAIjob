@@ -21,6 +21,7 @@ class JobSearchRequest(BaseModel):
     location: Optional[str] = ""
     experience_years: Optional[int] = 0
     top_n: Optional[int] = 10
+    seen_job_ids: Optional[List[str]] = []  # IDs already shown — exclude from results
 
 
 class ManualSearchRequest(BaseModel):
@@ -67,6 +68,9 @@ async def search_jobs_with_resume(
                     "parsed_experience": resume.get("extracted_experience") or [],
                     "parsed_education": resume.get("extracted_education") or [],
                     "parsed_summary": resume.get("raw_text") or "",
+                    "target_job_title": resume.get("target_job_title") or "",
+                    "experience_level": resume.get("experience_level") or "fresher",
+                    "total_experience_years": float(resume.get("total_experience_years") or 0),
                 }
 
                 # Parse JSON strings if needed
@@ -79,48 +83,56 @@ async def search_jobs_with_resume(
                         except (json_mod.JSONDecodeError, TypeError):
                             resume_data[key] = []
 
-                # Detect experience level from resume
-                exp_list = resume_data.get("parsed_experience", [])
-                total_years = 0
-                if isinstance(exp_list, list):
-                    total_years = len(exp_list)  # rough estimate: 1 entry ≈ 1-2 years
+                # Use stored experience level (from AI parsing) — more accurate than counting entries
+                experience_level = resume_data["experience_level"]
+                total_years = resume_data["total_experience_years"]
 
-                if total_years <= 1:
+                # Map to experience years for filtering
+                if experience_level == "fresher" or total_years <= 1:
                     experience_level = "fresher"
                     experience = 0
-                elif total_years <= 3:
+                elif experience_level == "junior" or total_years <= 3:
                     experience_level = "junior"
                     experience = 2
+                elif experience_level == "mid" or total_years <= 6:
+                    experience_level = "mid"
+                    experience = 4
                 else:
                     experience_level = "senior"
-                    experience = 5
+                    experience = 6
 
                 resume_data["experience_level"] = experience_level
 
-                # Build keywords from resume — use job title + location focus
+                # Build keywords from resume — prefer stored target_job_title
                 if not keywords:
+                    target_title = resume_data.get("target_job_title", "").strip()
                     skills = resume_data.get("parsed_skills", [])
                     summary = resume_data.get("parsed_summary", "")
 
-                    # Try to extract job title from summary
-                    title_keywords = ""
-                    job_titles = ["data analyst", "data scientist", "software engineer", "web developer",
-                                  "frontend developer", "backend developer", "full stack", "devops",
-                                  "product manager", "ui designer", "ux designer", "machine learning",
-                                  "python developer", "java developer", "react developer", "analyst",
-                                  "business analyst", "cloud engineer", "qa engineer", "tester"]
-                    for title in job_titles:
-                        if title in summary.lower():
-                            title_keywords = title
-                            break
-
-                    if title_keywords:
-                        keywords = title_keywords
-                    elif isinstance(skills, list) and skills:
-                        # Use top 2-3 skills only (not 5 — too specific)
-                        keywords = " ".join(skills[:3])
+                    if target_title:
+                        # Use the AI-extracted job title directly — most accurate
+                        keywords = target_title
                     else:
-                        keywords = "software developer"
+                        # Fallback: scan summary for known job titles
+                        job_titles = [
+                            "data analyst", "data scientist", "software engineer", "web developer",
+                            "frontend developer", "backend developer", "full stack", "devops",
+                            "product manager", "ui designer", "ux designer", "machine learning",
+                            "python developer", "java developer", "react developer", "analyst",
+                            "business analyst", "cloud engineer", "qa engineer", "tester",
+                            "android developer", "ios developer", "mobile developer",
+                            "data engineer", "ml engineer", "ai engineer", "nlp engineer",
+                        ]
+                        for title in job_titles:
+                            if title in summary.lower():
+                                keywords = title
+                                break
+
+                        if not keywords and isinstance(skills, list) and skills:
+                            # Use top 2 primary skills only
+                            keywords = " ".join(skills[:2])
+                        elif not keywords:
+                            keywords = "software developer"
 
         if not keywords:
             raise HTTPException(
@@ -182,6 +194,12 @@ async def search_jobs_with_resume(
             filtered_jobs.append(job)
 
         all_jobs = filtered_jobs if filtered_jobs else all_jobs[:15]
+
+        # Exclude already-seen jobs (client sends IDs it has already shown)
+        seen_ids = set(data.seen_job_ids or [])
+        if seen_ids:
+            all_jobs = [j for j in all_jobs if j.get("id") not in seen_ids]
+            logger.info(f"After excluding {len(seen_ids)} seen jobs: {len(all_jobs)} remaining")
 
         if not all_jobs:
             return {

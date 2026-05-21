@@ -33,6 +33,11 @@ class ResumeResponse(BaseModel):
     extracted_education: List[Any] = Field(default_factory=list)
     extracted_experience: List[Any] = Field(default_factory=list)
     raw_text: str | None = None
+    ats_score: int | None = 0
+    ats_data: Dict[str, Any] | None = Field(default_factory=dict)
+    target_job_title: str | None = None
+    experience_level: str | None = "fresher"
+    total_experience_years: float | None = 0
     is_active: bool = True
     created_at: datetime | None = None
     updated_at: datetime | None = None
@@ -55,6 +60,20 @@ class ResumeResponse(BaseModel):
         if isinstance(v, list):
             return v
         return []
+
+    @field_validator('ats_data', mode='before')
+    @classmethod
+    def parse_ats_data(cls, v):
+        if v is None:
+            return {}
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (json.JSONDecodeError, TypeError):
+                return {}
+        if isinstance(v, dict):
+            return v
+        return {}
 
     class Config:
         from_attributes = True
