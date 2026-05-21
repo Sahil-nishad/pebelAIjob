@@ -10,6 +10,8 @@ import { cn } from '@/lib/utils'
 import VoiceOrb from './VoiceOrb'
 import InterviewReport from './InterviewReport'
 
+import { useDeepgramSTT } from '@/lib/useDeepgramSTT'
+
 interface VoiceInterviewProps {
   company: string
   role: string
@@ -48,8 +50,18 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
   const transcriptEndRef = useRef<HTMLDivElement>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
-  // Keep sessionId in a ref so recognition closures always read the latest value
   const sessionIdRef = useRef<string | null>(null)
+
+  // Deepgram STT — much better accuracy than Web Speech API
+  const deepgramSTT = useDeepgramSTT({
+    onTranscript: (text) => {
+      if (text && shouldRestartRef.current) {
+        setCurrentSpeech('')
+        sendToCoach(text)
+      }
+    },
+    silenceMs: 2000,
+  })
 
   // Auto-scroll transcript
   useEffect(() => {
@@ -99,6 +111,15 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
       if (isMuted || !shouldRestartRef.current) { resolve(); return }
       setSessionStatus('speaking')
 
+      const afterSpeak = () => {
+        if (!shouldRestartRef.current) { resolve(); return }
+        setSessionStatus('listening')
+        resolve()
+        const startFn = (window as any).__pebelStartListening
+        if (startFn) startFn()
+        else if (!isMobileBrowser()) startListening()
+      }
+
       // Try Deepgram TTS for natural voice
       try {
         abortControllerRef.current = new AbortController()
@@ -114,23 +135,8 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
           const audioUrl = URL.createObjectURL(audioBlob)
           const audio = new Audio(audioUrl)
           audioRef.current = audio
-          audio.onended = () => {
-            URL.revokeObjectURL(audioUrl)
-            audioRef.current = null
-            if (shouldRestartRef.current) {
-              setSessionStatus('listening')
-              resolve()
-              // Mobile: don't auto-start mic — user controls via push-to-talk
-              if (!isMobileBrowser()) {
-                startListening()
-              }
-            } else { resolve() }
-          }
-          audio.onerror = () => {
-            URL.revokeObjectURL(audioUrl)
-            audioRef.current = null
-            speakWithBrowser(text, resolve)
-          }
+          audio.onended = () => { URL.revokeObjectURL(audioUrl); audioRef.current = null; afterSpeak() }
+          audio.onerror = () => { URL.revokeObjectURL(audioUrl); audioRef.current = null; speakWithBrowser(text, resolve) }
           audio.play().catch(() => speakWithBrowser(text, resolve))
           return
         }
@@ -138,12 +144,10 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         if (e?.name === 'AbortError') { resolve(); return }
       }
 
-      // Fallback: browser SpeechSynthesis
-      if (shouldRestartRef.current) {
-        speakWithBrowser(text, resolve)
-      } else { resolve() }
+      if (shouldRestartRef.current) speakWithBrowser(text, resolve)
+      else resolve()
     })
-  }, [isMuted])
+  }, [isMuted, startListening])
 
   // Browser TTS fallback
   const speakWithBrowser = useCallback((text: string, resolve: () => void) => {
@@ -159,23 +163,22 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
       if (shouldRestartRef.current) {
         setSessionStatus('listening')
         resolve()
-        // Mobile: don't auto-start mic — user controls via push-to-talk
-        if (!isMobileBrowser()) {
-          startListening()
-        }
+        const startFn = (window as any).__pebelStartListening
+        if (startFn) startFn()
+        else if (!isMobileBrowser()) startListening()
       } else { resolve() }
     }
     utterance.onerror = () => {
       if (shouldRestartRef.current) {
         setSessionStatus('listening')
         resolve()
-        if (!isMobileBrowser()) {
-          startListening()
-        }
+        const startFn = (window as any).__pebelStartListening
+        if (startFn) startFn()
+        else if (!isMobileBrowser()) startListening()
       } else { resolve() }
     }
     synthRef.current.speak(utterance)
-  }, [getBestVoice])
+  }, [getBestVoice, startListening])
 
   // Send message to voice-optimized coach API and speak the response
   const sendToCoach = useCallback(async (userMessage: string) => {
@@ -257,11 +260,6 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
 
   // Initialize session and start voice interview
   const handleStart = useCallback(async () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-    if (!SpeechRecognition) {
-      toast.error('Your browser does not support speech recognition. Use Chrome or Edge.', { duration: 5000 })
-      return
-    }
     setSessionStatus('connecting')
     try {
       const res = await authFetch('/api/coach/start', {
@@ -271,16 +269,52 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Failed to start session')
       setSessionId(data.session.id)
-      sessionIdRef.current = data.session.id  // Update ref immediately — don't wait for re-render
+      sessionIdRef.current = data.session.id
+      shouldRestartRef.current = true
+
+      const mobile = isMobileBrowser()
+
+      // ── Try Deepgram STT first ─────────────────────────────────────────
+      // Quick probe: send empty audio to check if key is configured
+      const probe = await fetch('/api/coach/stt', {
+        method: 'POST',
+        body: (() => { const f = new FormData(); f.append('audio', new Blob([''], { type: 'audio/webm' }), 'test.webm'); return f })(),
+        credentials: 'same-origin',
+      }).catch(() => null)
+
+      const useDeepgram = probe && probe.status !== 503
+
+      if (useDeepgram) {
+        // Deepgram mode — MediaRecorder → /api/coach/stt
+        const startDeepgramListening = async () => {
+          if (!shouldRestartRef.current) return
+          setSessionStatus('listening')
+          setCurrentSpeech('')
+          // Desktop: auto-stop on silence. Mobile: manual stop via push-to-talk
+          await deepgramSTT.startRecording(!mobile)
+        }
+        ;(window as any).__pebelStartListening = startDeepgramListening
+
+        const introMessage = data.introMessage || `Hello! I'm your AI interview coach. Let's practice for your ${sessionType} interview at ${company}. Are you ready?`
+        setTranscript([{ role: 'AI Coach', text: introMessage }])
+        await new Promise(r => setTimeout(r, 300))
+        await speak(introMessage)
+        if (mobile) setSessionStatus('listening')
+        return
+      }
+
+      // ── Fallback: Web Speech API ───────────────────────────────────────
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+      if (!SpeechRecognition) {
+        toast.error('Use Chrome or Edge for speech recognition.', { duration: 5000 })
+        setSessionStatus('error')
+        return
+      }
 
       const recognition = new SpeechRecognition()
-      const mobile = isMobileBrowser()
-      // Mobile: continuous=false works more reliably on Android Chrome
-      // We restart it manually while the button is held
-      // Desktop: continuous=true for seamless auto-detect
       recognition.continuous = !mobile
       recognition.interimResults = true
-      recognition.lang = 'en-US'
+      recognition.lang = 'en-IN'  // Indian English for better accuracy
       recognition.maxAlternatives = 1
 
       let accumulatedTranscript = ''
@@ -293,80 +327,44 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i]
           if (result[0]) {
-            if (result.isFinal) {
-              final += result[0].transcript + ' '
-            } else {
-              interim = result[0].transcript
-            }
+            if (result.isFinal) { final += result[0].transcript + ' ' }
+            else { interim = result[0].transcript }
           }
         }
-
-        if (final) {
-          accumulatedTranscript += final
-          hasSpoken = true
-        }
-
+        if (final) { accumulatedTranscript += final; hasSpoken = true }
         setCurrentSpeech(accumulatedTranscript + interim)
-
-        // On mobile push-to-talk: don't use silence timer — wait for user to release button
-        // onend fires when recognition.stop() is called in handlePushToTalkEnd
         if (mobile) return
-
-        // Desktop: reset silence timer — user is still talking
         if (silenceTimer) clearTimeout(silenceTimer)
         if (hasSpoken || interim) {
           silenceTimer = setTimeout(() => {
-            // User stopped talking for 3.5s — send what we have
             if (accumulatedTranscript.trim()) {
               const message = accumulatedTranscript.trim()
-              accumulatedTranscript = ''
-              hasSpoken = false
-              setCurrentSpeech('')
-              recognition.stop()
-              isListeningRef.current = false
-              sendToCoach(message)
+              accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech('')
+              recognition.stop(); isListeningRef.current = false; sendToCoach(message)
             }
-          }, 3500)
+          }, 2500)
         }
       }
 
       recognition.onend = () => {
         isListeningRef.current = false
         if (silenceTimer) clearTimeout(silenceTimer)
-
         if (mobile) {
-          // If button still held — restart recognition immediately (continuous loop)
           if (isPushToTalkHeldRef.current && shouldRestartRef.current) {
-            try {
-              isListeningRef.current = true
-              recognition.start()
-            } catch {
-              isListeningRef.current = false
-            }
+            setTimeout(() => {
+              if (isPushToTalkHeldRef.current && shouldRestartRef.current) {
+                try { isListeningRef.current = true; recognition.start() } catch { isListeningRef.current = false }
+              }
+            }, 100)
             return
           }
-          // Button released — send accumulated transcript
           if (accumulatedTranscript.trim()) {
-            const message = accumulatedTranscript.trim()
-            accumulatedTranscript = ''
-            hasSpoken = false
-            setCurrentSpeech('')
-            sendToCoach(message)
-          } else if (shouldRestartRef.current) {
-            setSessionStatus('listening')
-            setCurrentSpeech('')
-          }
+            const msg = accumulatedTranscript.trim(); accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech(''); sendToCoach(msg)
+          } else if (shouldRestartRef.current) { setSessionStatus('listening'); setCurrentSpeech('') }
         } else {
-          // Desktop: send if we have text, otherwise restart
           if (accumulatedTranscript.trim()) {
-            const message = accumulatedTranscript.trim()
-            accumulatedTranscript = ''
-            hasSpoken = false
-            setCurrentSpeech('')
-            sendToCoach(message)
-          } else if (shouldRestartRef.current && sessionStatus !== 'thinking' && sessionStatus !== 'speaking') {
-            setTimeout(() => startListening(), 300)
-          }
+            const msg = accumulatedTranscript.trim(); accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech(''); sendToCoach(msg)
+          } else if (shouldRestartRef.current) setTimeout(() => startListening(), 300)
         }
       }
 
@@ -377,53 +375,46 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
           toast.error('Microphone access denied. Allow microphone in browser settings.', { duration: 5000 })
           setSessionStatus('error')
         } else if (event.error === 'aborted') {
-          // Intentional stop — do nothing
+          // Intentional — do nothing
         } else if (mobile) {
-          // Mobile: reset to listening state on any error
           if (shouldRestartRef.current) { setSessionStatus('listening'); setCurrentSpeech('') }
         } else {
-          // Desktop: try to restart
           if (shouldRestartRef.current) setTimeout(() => startListening(), 500)
         }
       }
 
       recognitionRef.current = recognition
-      shouldRestartRef.current = true
 
       const introMessage = data.introMessage || `Hello! I'm your AI interview coach. Let's practice for your ${sessionType} interview at ${company}. Are you ready?`
       setTranscript([{ role: 'AI Coach', text: introMessage }])
       speechSynthesis.getVoices()
-      await new Promise(resolve => setTimeout(resolve, 300))
+      await new Promise(r => setTimeout(r, 300))
       await speak(introMessage)
-      // On mobile: after intro, show "Hold to speak" — don't auto-start mic
       if (mobile) setSessionStatus('listening')
+
     } catch (err: any) {
       toast.error(err?.message || 'Failed to start voice interview')
       setSessionStatus('error')
     }
-  }, [company, role, sessionType, speak, sendToCoach, startListening])
+  }, [company, role, sessionType, speak, sendToCoach, startListening, deepgramSTT])
 
   // Stop the session — kills everything immediately
   const handleStop = useCallback(() => {
     shouldRestartRef.current = false
     isListeningRef.current = false
     sessionIdRef.current = null
+    ;(window as any).__pebelStartListening = null
 
-    // Stop speech recognition
     try { recognitionRef.current?.abort() } catch {}
     try { recognitionRef.current?.stop() } catch {}
-
-    // Stop browser TTS
     synthRef.current?.cancel()
+    deepgramSTT.abortRecording()
 
-    // Stop Deepgram audio playback
     if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current.src = ''
       audioRef.current = null
     }
-
-    // Abort any in-flight fetch requests
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
       abortControllerRef.current = null
@@ -431,7 +422,7 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
 
     setSessionStatus('idle')
     setCurrentSpeech('')
-  }, [])
+  }, [deepgramSTT])
 
   // End interview and generate performance report
   const handleEndAndReport = useCallback(async () => {
@@ -456,13 +447,15 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
     }
   }, [transcript, company, role, sessionType, handleStop])
 
-  // Cleanup on unmount — stop everything immediately
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       shouldRestartRef.current = false
       isListeningRef.current = false
+      ;(window as any).__pebelStartListening = null
       try { recognitionRef.current?.abort() } catch {}
       synthRef.current?.cancel()
+      deepgramSTT.abortRecording()
       if (audioRef.current) {
         audioRef.current.pause()
         audioRef.current.src = ''
@@ -501,7 +494,9 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
     connecting: 'Setting up your AI interviewer...',
     listening: isMobile
       ? (isPushToTalkHeld ? (currentSpeech || 'Listening...') : 'Hold the mic button and speak your answer')
-      : (currentSpeech || "I'm listening. Go ahead."),
+      : deepgramSTT.isProcessing
+        ? 'Transcribing your answer...'
+        : (currentSpeech || "I'm listening. Go ahead."),
     thinking: 'Processing your answer...',
     speaking: 'Your AI coach is speaking...',
     error: 'Something went wrong. Try again.',
