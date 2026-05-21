@@ -22,7 +22,9 @@ export function getGroqClient() {
 
 // ── Gemini client ─────────────────────────────────────────────────────────────
 export function hasGeminiKey() {
-  return Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.length > 10)
+  const key = process.env.GEMINI_API_KEY
+  // Skip if key is missing, placeholder, or clearly invalid (too short)
+  return Boolean(key && key.length > 20 && key !== 'your_gemini_api_key' && !key.startsWith('your_'))
 }
 
 export function getGeminiClient() {

@@ -40,7 +40,7 @@ Return ONLY valid JSON:
 {"eye_contact":85,"posture":70,"expression":75,"overall":77,"tips":["Maintain eye contact with camera","Sit up straighter","Smile more naturally"]}`
 
         const visionCompletion = await groq.chat.completions.create({
-          model: 'llama-3.2-11b-vision-preview',
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
           messages: [
             {
               role: 'user',
