@@ -401,7 +401,7 @@ export default function MeetInterview({ company, role, sessionType, userName, on
         else if (shouldRestartRef.current) { setSessionStatus('listening'); setCurrentSpeech('') }
       } else {
         if (accumulatedTranscript.trim()) { const msg = accumulatedTranscript.trim(); accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech(''); sendToCoach(msg) }
-        else if (shouldRestartRef.current) setTimeout(() => ;(window as any).__pebelWebSpeechStart?.(), 300)
+        else if (shouldRestartRef.current) setTimeout(() => (window as any).__pebelWebSpeechStart?.(), 300)
       }
     }
 
@@ -416,7 +416,7 @@ export default function MeetInterview({ company, role, sessionType, userName, on
           }
         }, 100)
       }
-      else if (event.error !== 'aborted' && shouldRestartRef.current && !mobile) setTimeout(() => ;(window as any).__pebelWebSpeechStart?.(), 500)
+      else if (event.error !== 'aborted' && shouldRestartRef.current && !mobile) setTimeout(() => (window as any).__pebelWebSpeechStart?.(), 500)
     }
 
     recognitionRef.current = recognition

@@ -365,7 +365,7 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         } else {
           if (accumulatedTranscript.trim()) {
             const msg = accumulatedTranscript.trim(); accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech(''); sendToCoach(msg)
-          } else if (shouldRestartRef.current) setTimeout(() => ;(window as any).__pebelWebSpeechStart?.(), 300)
+          } else if (shouldRestartRef.current) setTimeout(() => (window as any).__pebelWebSpeechStart?.(), 300)
         }
       }
 
@@ -380,7 +380,7 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         } else if (mobile) {
           if (shouldRestartRef.current) { setSessionStatus('listening'); setCurrentSpeech('') }
         } else {
-          if (shouldRestartRef.current) setTimeout(() => ;(window as any).__pebelWebSpeechStart?.(), 500)
+          if (shouldRestartRef.current) setTimeout(() => (window as any).__pebelWebSpeechStart?.(), 500)
         }
       }
 
