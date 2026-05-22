@@ -35,13 +35,9 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
   const [isMuted, setIsMuted] = useState(false)
   const [currentSpeech, setCurrentSpeech] = useState('')
   const [waveformData, setWaveformData] = useState<number[]>(Array(32).fill(0))
-  const [isMobile, setIsMobile] = useState(false)
-  const [isPushToTalkHeld, setIsPushToTalkHeld] = useState(false)
   const [reportData, setReportData] = useState<any>(null)
   const [generatingReport, setGeneratingReport] = useState(false)
 
-  // Keep a ref for isPushToTalkHeld so recognition onend can check it
-  const isPushToTalkHeldRef = useRef(false)
   const recognitionRef = useRef<any>(null)
   const synthRef = useRef<SpeechSynthesis | null>(null)
   const isListeningRef = useRef(false)
@@ -85,7 +81,6 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
   // Initialize speech synthesis
   useEffect(() => {
     synthRef.current = window.speechSynthesis
-    setIsMobile(isMobileBrowser())
     return () => {
       synthRef.current?.cancel()
       recognitionRef.current?.abort()
@@ -238,34 +233,6 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
     return () => { ;(window as any).__pebelWebSpeechStart = null }
   }, [startListening])
 
-  // Push-to-talk: start recording (mobile)
-  const handlePushToTalkStart = useCallback(() => {
-    if (!recognitionRef.current || !sessionIdRef.current) return
-    if (isListeningRef.current) return
-    isPushToTalkHeldRef.current = true
-    setIsPushToTalkHeld(true)
-    setCurrentSpeech('')
-    try {
-      isListeningRef.current = true
-      setSessionStatus('listening')
-      recognitionRef.current.start()
-    } catch {
-      isListeningRef.current = false
-      isPushToTalkHeldRef.current = false
-      setIsPushToTalkHeld(false)
-    }
-  }, [])
-
-  // Push-to-talk: stop recording and send (mobile)
-  const handlePushToTalkEnd = useCallback(() => {
-    isPushToTalkHeldRef.current = false
-    setIsPushToTalkHeld(false)
-    if (isListeningRef.current) {
-      isListeningRef.current = false
-      try { recognitionRef.current?.stop() } catch {}
-    }
-  }, [])
-
   // Stop speech recognition
   const stopListening = useCallback(() => {
     shouldRestartRef.current = false
@@ -287,8 +254,6 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
       sessionIdRef.current = data.session.id
       shouldRestartRef.current = true
 
-      const mobile = isMobileBrowser()
-
       // ── Check if Deepgram STT is configured ────────────────────────────
       const sttCheck = await fetch('/api/coach/stt', {
         method: 'HEAD',
@@ -298,13 +263,16 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
       const useDeepgram = sttCheck && sttCheck.status === 200
 
       if (useDeepgram) {
-        // Deepgram mode — MediaRecorder → /api/coach/stt
+        // Deepgram mode — auto-listen on ALL devices (no push-to-talk)
         const startDeepgramListening = async () => {
           if (!shouldRestartRef.current) return
           setSessionStatus('listening')
           setCurrentSpeech('')
-          // Desktop: auto-stop on silence. Mobile: manual stop via push-to-talk
-          await deepgramSTT.startRecording(!mobile)
+          const ok = await deepgramSTT.startRecording(true) // always auto-stop on silence
+          if (!ok && shouldRestartRef.current) {
+            toast.error('Microphone access denied. Please allow mic access.')
+            setSessionStatus('error')
+          }
         }
         ;(window as any).__pebelStartListening = startDeepgramListening
 
@@ -312,11 +280,10 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         setTranscript([{ role: 'AI Coach', text: introMessage }])
         await new Promise(r => setTimeout(r, 300))
         await speak(introMessage)
-        if (mobile) setSessionStatus('listening')
         return
       }
 
-      // ── Fallback: Web Speech API ───────────────────────────────────────
+      // ── Fallback: Web Speech API — auto-listen on all devices ──────────
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
       if (!SpeechRecognition) {
         toast.error('Use Chrome or Edge for speech recognition.', { duration: 5000 })
@@ -325,9 +292,9 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
       }
 
       const recognition = new SpeechRecognition()
-      recognition.continuous = !mobile
+      recognition.continuous = true  // always continuous — no push-to-talk
       recognition.interimResults = true
-      recognition.lang = 'en-IN'  // Indian English for better accuracy
+      recognition.lang = 'en-IN'
       recognition.maxAlternatives = 1
 
       let accumulatedTranscript = ''
@@ -335,8 +302,7 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
       let hasSpoken = false
 
       recognition.onresult = (event: any) => {
-        let interim = ''
-        let final = ''
+        let interim = '', final = ''
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i]
           if (result[0]) {
@@ -346,7 +312,6 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         }
         if (final) { accumulatedTranscript += final; hasSpoken = true }
         setCurrentSpeech(accumulatedTranscript + interim)
-        if (mobile) return
         if (silenceTimer) clearTimeout(silenceTimer)
         if (hasSpoken || interim) {
           silenceTimer = setTimeout(() => {
@@ -355,29 +320,17 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
               accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech('')
               recognition.stop(); isListeningRef.current = false; sendToCoach(message)
             }
-          }, 2500)
+          }, 1500)
         }
       }
 
       recognition.onend = () => {
         isListeningRef.current = false
         if (silenceTimer) clearTimeout(silenceTimer)
-        if (mobile) {
-          if (isPushToTalkHeldRef.current && shouldRestartRef.current) {
-            setTimeout(() => {
-              if (isPushToTalkHeldRef.current && shouldRestartRef.current) {
-                try { isListeningRef.current = true; recognition.start() } catch { isListeningRef.current = false }
-              }
-            }, 100)
-            return
-          }
-          if (accumulatedTranscript.trim()) {
-            const msg = accumulatedTranscript.trim(); accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech(''); sendToCoach(msg)
-          } else if (shouldRestartRef.current) { setSessionStatus('listening'); setCurrentSpeech('') }
-        } else {
-          if (accumulatedTranscript.trim()) {
-            const msg = accumulatedTranscript.trim(); accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech(''); sendToCoach(msg)
-          } else if (shouldRestartRef.current) setTimeout(() => (window as any).__pebelWebSpeechStart?.(), 300)
+        if (accumulatedTranscript.trim()) {
+          const msg = accumulatedTranscript.trim(); accumulatedTranscript = ''; hasSpoken = false; setCurrentSpeech(''); sendToCoach(msg)
+        } else if (shouldRestartRef.current) {
+          setTimeout(() => (window as any).__pebelWebSpeechStart?.(), 300)
         }
       }
 
@@ -385,14 +338,10 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         isListeningRef.current = false
         if (silenceTimer) clearTimeout(silenceTimer)
         if (event.error === 'not-allowed') {
-          toast.error('Microphone access denied. Allow microphone in browser settings.', { duration: 5000 })
+          toast.error('Microphone access denied.', { duration: 5000 })
           setSessionStatus('error')
-        } else if (event.error === 'aborted') {
-          // Intentional — do nothing
-        } else if (mobile) {
-          if (shouldRestartRef.current) { setSessionStatus('listening'); setCurrentSpeech('') }
-        } else {
-          if (shouldRestartRef.current) setTimeout(() => (window as any).__pebelWebSpeechStart?.(), 500)
+        } else if (event.error !== 'aborted' && shouldRestartRef.current) {
+          setTimeout(() => (window as any).__pebelWebSpeechStart?.(), 500)
         }
       }
 
@@ -403,7 +352,6 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
       speechSynthesis.getVoices()
       await new Promise(r => setTimeout(r, 300))
       await speak(introMessage)
-      if (mobile) setSessionStatus('listening')
 
     } catch (err: any) {
       toast.error(err?.message || 'Failed to start voice interview')
@@ -505,11 +453,9 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
   const headingText = {
     idle: 'Tap the mic to begin your interview.',
     connecting: 'Setting up your AI interviewer...',
-    listening: isMobile
-      ? (isPushToTalkHeld ? (currentSpeech || 'Listening...') : 'Hold the mic button and speak your answer')
-      : deepgramSTT.isProcessing
-        ? 'Transcribing your answer...'
-        : (currentSpeech || "I'm listening. Go ahead."),
+    listening: deepgramSTT.isProcessing
+      ? 'Transcribing your answer...'
+      : (currentSpeech || "I'm listening. Speak your answer."),
     thinking: 'Processing your answer...',
     speaking: 'Your AI coach is speaking...',
     error: 'Something went wrong. Try again.',
@@ -686,60 +632,21 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Sound</span>
           </button>
 
-          {/* Main Mic Button — desktop: tap to toggle, mobile: hold to speak */}
+          {/* Main Mic Button — same on all devices */}
           <div className="flex flex-col items-center gap-3">
-            {isMobile && isActive ? (
-              // Mobile push-to-talk button — use pointer events (more reliable than touch)
-              <button
-                onPointerDown={e => { e.preventDefault(); handlePushToTalkStart() }}
-                onPointerUp={e => { e.preventDefault(); handlePushToTalkEnd() }}
-                onPointerCancel={e => { e.preventDefault(); handlePushToTalkEnd() }}
-                onPointerLeave={e => { e.preventDefault(); handlePushToTalkEnd() }}
-                onContextMenu={e => e.preventDefault()}
-                disabled={sessionStatus === 'thinking' || sessionStatus === 'speaking'}
-                style={{ touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}
-                className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-150 shadow-lg ${
-                  isPushToTalkHeld
-                    ? 'bg-red-500 shadow-red-500/30 scale-110'
-                    : sessionStatus === 'thinking' || sessionStatus === 'speaking'
-                    ? 'bg-slate-300 shadow-slate-200/50 opacity-60'
-                    : 'bg-[#0A6A47] shadow-[#0A6A47]/25'
-                }`}
-              >
-                {sessionStatus === 'thinking' ? (
-                  <Loader2 className="w-9 h-9 text-white animate-spin" />
-                ) : (
-                  <Mic className={`w-9 h-9 text-white ${isPushToTalkHeld ? 'animate-pulse' : ''}`} />
-                )}
-              </button>
-            ) : (
-              // Desktop: tap to start/stop
-              <button
-                onClick={isActive ? handleStop : handleStart}
-                disabled={sessionStatus === 'connecting'}
-                className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg disabled:opacity-60 disabled:cursor-wait ${
-                  isActive
-                    ? 'bg-[#0A6A47] hover:bg-[#085c3d] shadow-[#0A6A47]/25'
-                    : 'bg-[#0A6A47] hover:bg-[#085c3d] shadow-[#0A6A47]/25'
-                }`}
-              >
-                {sessionStatus === 'connecting' ? (
-                  <Loader2 className="w-8 h-8 text-white animate-spin" />
-                ) : isActive ? (
-                  <Mic className="w-8 h-8 text-white" />
-                ) : (
-                  <MicOff className="w-8 h-8 text-white" />
-                )}
-              </button>
-            )}
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-              {!isActive
-                ? sessionStatus === 'connecting' ? 'Wait...' : 'Tap to start'
-                : isMobile
-                ? isPushToTalkHeld ? 'Release to send' : sessionStatus === 'thinking' ? 'Thinking...' : sessionStatus === 'speaking' ? 'AI speaking...' : 'Hold to speak'
-                : 'Tap to end'}
-            </span>
-          </div>
+            <button
+              onClick={isActive ? handleStop : handleStart}
+              disabled={sessionStatus === 'connecting'}
+              className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg disabled:opacity-60 disabled:cursor-wait bg-[#0A6A47] hover:bg-[#085c3d] shadow-[#0A6A47]/25`}
+            >
+              {sessionStatus === 'connecting' ? (
+                <Loader2 className="w-8 h-8 text-white animate-spin" />
+              ) : isActive ? (
+                <Mic className="w-8 h-8 text-white" />
+              ) : (
+                <MicOff className="w-8 h-8 text-white" />
+              )}
+            </button>
 
           {/* Transcript toggle */}
           <button onClick={() => setShowTranscript(!showTranscript)} className="flex flex-col items-center gap-2 group">
@@ -757,13 +664,8 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
 
       {/* Footer */}
       <div className="relative z-10 py-3 flex flex-col items-center gap-1">
-        {isMobile && isActive && (
-          <p className="text-[11px] font-semibold text-[#0A6A47] bg-[#0A6A47]/10 px-3 py-1 rounded-full">
-            Hold the mic button to speak, release to send
-          </p>
-        )}
         <span className="text-[10px] font-medium text-slate-300 uppercase tracking-widest">
-          Powered by Web Speech API + Groq AI
+          Powered by Deepgram + Groq AI
         </span>
       </div>
 
