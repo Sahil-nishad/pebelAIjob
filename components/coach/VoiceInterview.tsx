@@ -647,6 +647,14 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
                 <MicOff className="w-8 h-8 text-white" />
               )}
             </button>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+              {!isActive
+                ? sessionStatus === 'connecting' ? 'Wait...' : 'Tap to start'
+                : sessionStatus === 'thinking' ? 'Thinking...'
+                : sessionStatus === 'speaking' ? 'AI speaking...'
+                : 'Tap to end'}
+            </span>
+          </div>
 
           {/* Transcript toggle */}
           <button onClick={() => setShowTranscript(!showTranscript)} className="flex flex-col items-center gap-2 group">
