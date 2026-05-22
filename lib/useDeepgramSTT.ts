@@ -18,6 +18,7 @@ export type STTStatus = 'idle' | 'recording' | 'processing' | 'error'
 
 interface UseDeepgramSTTOptions {
   onTranscript: (text: string, isFinal: boolean) => void
+  onInterim?: (text: string) => void  // Live preview text from Web Speech API
   onError?: (err: string) => void
   silenceMs?: number          // ms of silence after speech before auto-stop
   maxWaitForSpeechMs?: number // max ms to wait for user to start speaking
@@ -31,8 +32,9 @@ const SILENCE_THRESHOLD  = 0.010  // RMS below this = silence
 
 export function useDeepgramSTT({
   onTranscript,
+  onInterim,
   onError,
-  silenceMs = 2200,
+  silenceMs = 1200,
   maxWaitForSpeechMs = 30000,
   maxRecordingMs = 90000,
 }: UseDeepgramSTTOptions) {
@@ -46,6 +48,8 @@ export function useDeepgramSTT({
   const maxDurationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isRecordingRef = useRef(false)
   const deepgramAvailableRef = useRef<boolean | null>(null)
+  // Web Speech API for live preview (accuracy doesn't matter — Deepgram is the source of truth)
+  const previewRecognitionRef = useRef<any>(null)
 
   // ── Send audio blob to Deepgram ─────────────────────────────────────────
   const transcribeBlob = useCallback(async (blob: Blob): Promise<string> => {
@@ -102,6 +106,9 @@ export function useDeepgramSTT({
       streamRef.current = stream
       chunksRef.current = []
 
+      // Clear any stale preview text from previous turn
+      if (onInterim) onInterim('')
+
       const mimeType = [
         'audio/webm;codecs=opus',
         'audio/webm',
@@ -119,6 +126,13 @@ export function useDeepgramSTT({
       recorder.onstop = async () => {
         isRecordingRef.current = false
         cleanup()
+
+        // Stop Web Speech preview if running
+        if (previewRecognitionRef.current) {
+          try { previewRecognitionRef.current.abort() } catch {}
+          previewRecognitionRef.current = null
+        }
+
         stream.getTracks().forEach(t => t.stop())
         streamRef.current = null
 
@@ -159,6 +173,48 @@ export function useDeepgramSTT({
       recorder.start(250)
       isRecordingRef.current = true
       setStatus('recording')
+
+      // ── Parallel: Web Speech API for LIVE preview text ──────────────────
+      // Deepgram is the source of truth, but Web Speech runs alongside to show
+      // the user real-time interim text as they speak (instant visual feedback).
+      if (onInterim) {
+        try {
+          const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+          if (SR) {
+            const preview = new SR()
+            preview.continuous = true
+            preview.interimResults = true
+            preview.lang = 'en-IN'
+            preview.maxAlternatives = 1
+
+            let interimText = ''
+            let finalText = ''
+
+            preview.onresult = (event: any) => {
+              interimText = ''
+              for (let i = event.resultIndex; i < event.results.length; i++) {
+                const result = event.results[i]
+                if (result[0]) {
+                  if (result.isFinal) finalText += result[0].transcript + ' '
+                  else interimText += result[0].transcript
+                }
+              }
+              onInterim((finalText + interimText).trim())
+            }
+
+            preview.onerror = (event: any) => {
+              if (event.error !== 'aborted' && event.error !== 'no-speech') {
+                console.warn('[STT preview] Web Speech error:', event.error)
+              }
+            }
+
+            try { preview.start() } catch {}
+            previewRecognitionRef.current = preview
+          }
+        } catch (e) {
+          // Web Speech not available — silently skip preview
+        }
+      }
 
       // ── Voice Activity Detection via time-domain RMS ────────────────────
       if (autoStopOnSilence) {
@@ -270,6 +326,10 @@ export function useDeepgramSTT({
     cleanup()
     isRecordingRef.current = false
     chunksRef.current = []
+    if (previewRecognitionRef.current) {
+      try { previewRecognitionRef.current.abort() } catch {}
+      previewRecognitionRef.current = null
+    }
     if (mediaRecorderRef.current) {
       try {
         mediaRecorderRef.current.onstop = () => {}

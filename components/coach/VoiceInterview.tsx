@@ -60,7 +60,6 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
       if (text) {
         sendToCoach(text)
       } else {
-        // No transcript — restart listening loop on desktop
         if (!isMobileBrowser()) {
           setTimeout(() => {
             if (shouldRestartRef.current) {
@@ -71,8 +70,11 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
         }
       }
     },
-    silenceMs: 1500,
-    maxWaitForSpeechMs: 20000,
+    onInterim: (text) => {
+      if (shouldRestartRef.current) setCurrentSpeech(text)
+    },
+    silenceMs: 1200,
+    maxWaitForSpeechMs: 25000,
   })
 
   // Auto-scroll transcript

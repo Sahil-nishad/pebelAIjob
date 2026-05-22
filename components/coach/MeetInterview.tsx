@@ -73,8 +73,6 @@ export default function MeetInterview({ company, role, sessionType, userName, on
         sendToCoach(text)
       } else {
         // No transcript (silence, no speech detected) — restart listening loop
-        // sendToCoach changes status to 'thinking' before AI replies, so checking
-        // shouldRestartRef is sufficient to avoid restarting during AI turn
         if (!isMobileBrowser()) {
           setTimeout(() => {
             if (shouldRestartRef.current) {
@@ -85,11 +83,15 @@ export default function MeetInterview({ company, role, sessionType, userName, on
         }
       }
     },
+    onInterim: (text) => {
+      // Live preview text — show as user speaks
+      if (shouldRestartRef.current) setCurrentSpeech(text)
+    },
     onError: (err) => {
       console.warn('[STT] Deepgram error:', err)
     },
-    silenceMs: 1500,
-    maxWaitForSpeechMs: 20000,
+    silenceMs: 1200,
+    maxWaitForSpeechMs: 25000,
   })
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [transcript])
@@ -457,7 +459,7 @@ export default function MeetInterview({ company, role, sessionType, userName, on
           company,
           role,
           sessionType,
-          screenshots: screenshotsRef.current.slice(0, 6), // max 6 screenshots
+          screenshots: screenshotsRef.current.slice(0, 2), // max 2 screenshots — keeps payload small
         }),
       })
       const data = await res.json()
