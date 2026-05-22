@@ -1,12 +1,15 @@
 /**
- * useDeepgramSTT — MediaRecorder → Deepgram nova-2 STT hook
+ * useDeepgramSTT — Voice Activity Detection + Deepgram nova-2 STT
  *
- * Replaces the browser Web Speech API for much better accuracy,
- * especially for Indian English and technical vocabulary.
+ * How it works:
+ *  1. Mic opens, MediaRecorder starts capturing
+ *  2. Time-domain RMS analyser monitors energy in real-time (300Hz refresh)
+ *  3. When user starts speaking (RMS > start threshold) → mark "speaking"
+ *  4. When user goes quiet for `silenceMs` (default 2000ms) → stop recording
+ *  5. Send to Deepgram nova-2 → return transcript via callback
  *
- * Falls back to Web Speech API if:
- *  - Deepgram STT route returns 503 (key not configured)
- *  - MediaRecorder is not supported
+ * RMS-based VAD is what production voice apps use (Vapi, ElevenLabs, Whisper Web).
+ * Frequency-domain analysis (what we tried before) is too sensitive to background noise.
  */
 
 import { useRef, useCallback, useState } from 'react'
@@ -15,26 +18,23 @@ export type STTStatus = 'idle' | 'recording' | 'processing' | 'error'
 
 interface UseDeepgramSTTOptions {
   onTranscript: (text: string, isFinal: boolean) => void
-  onAudioLevel?: (level: number) => void  // 0..1 normalized RMS
   onError?: (err: string) => void
-  silenceMs?: number          // ms of silence AFTER speech detected before auto-stop
-  maxWaitForSpeechMs?: number // max ms to wait for user to start speaking (then auto-stop)
+  silenceMs?: number          // ms of silence after speech before auto-stop
+  maxWaitForSpeechMs?: number // max ms to wait for user to start speaking
   maxRecordingMs?: number     // hard cap on recording duration
-  language?: string           // default 'en-IN'
 }
 
-// Voice activity threshold — frequency-bin avg above this means user is speaking
-// Lower = more sensitive to quiet speech. 8-12 works well for most mics.
-const VOICE_THRESHOLD = 10
+// Time-domain RMS thresholds (0-1 scale)
+// Speech typically has RMS 0.02-0.15. Background noise sits around 0.005-0.015.
+const SPEAKING_THRESHOLD = 0.018  // RMS to detect user started speaking
+const SILENCE_THRESHOLD  = 0.010  // RMS below this = silence
 
 export function useDeepgramSTT({
   onTranscript,
-  onAudioLevel,
   onError,
-  silenceMs = 2000,
+  silenceMs = 2200,
   maxWaitForSpeechMs = 30000,
   maxRecordingMs = 90000,
-  language = 'en-IN',
 }: UseDeepgramSTTOptions) {
   const [status, setStatus] = useState<STTStatus>('idle')
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -42,13 +42,12 @@ export function useDeepgramSTT({
   const streamRef = useRef<MediaStream | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
-  const silenceCheckRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const rafIdRef = useRef<number | null>(null)
   const maxDurationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isRecordingRef = useRef(false)
-  const hasSpokenRef = useRef(false)
   const deepgramAvailableRef = useRef<boolean | null>(null)
 
-  // ── Deepgram transcription ──────────────────────────────────────────────
+  // ── Send audio blob to Deepgram ─────────────────────────────────────────
   const transcribeBlob = useCallback(async (blob: Blob): Promise<string> => {
     try {
       const form = new FormData()
@@ -60,99 +59,33 @@ export function useDeepgramSTT({
         credentials: 'same-origin',
       })
 
-      if (res.status === 503) {
-        deepgramAvailableRef.current = false
-        return ''
-      }
-
-      if (!res.ok) return ''
+      if (res.status === 503) { deepgramAvailableRef.current = false; return '' }
+      if (!res.ok) { console.warn('[STT] Deepgram returned', res.status); return '' }
 
       deepgramAvailableRef.current = true
       const data = await res.json()
       return (data.transcript || '').trim()
-    } catch {
+    } catch (err) {
+      console.warn('[STT] Network error', err)
       return ''
     }
   }, [])
 
-  // ── Cleanup helpers ─────────────────────────────────────────────────────
-  const stopSilenceDetection = useCallback(() => {
-    if (silenceCheckRef.current) { clearInterval(silenceCheckRef.current); silenceCheckRef.current = null }
+  // ── Cleanup ─────────────────────────────────────────────────────────────
+  const cleanup = useCallback(() => {
+    if (rafIdRef.current !== null) { cancelAnimationFrame(rafIdRef.current); rafIdRef.current = null }
     if (maxDurationTimerRef.current) { clearTimeout(maxDurationTimerRef.current); maxDurationTimerRef.current = null }
     try { audioContextRef.current?.close() } catch {}
     audioContextRef.current = null
     analyserRef.current = null
   }, [])
 
-  // ── Voice activity detection ────────────────────────────────────────────
-  // Critical: only count silence AFTER user has actually started speaking.
-  // Otherwise recording stops before user gets a chance to talk.
-  const startSilenceDetection = useCallback((stream: MediaStream, onAutoStop: () => void) => {
-    try {
-      audioContextRef.current = new AudioContext()
-      analyserRef.current = audioContextRef.current.createAnalyser()
-      analyserRef.current.fftSize = 512
-      analyserRef.current.smoothingTimeConstant = 0.3
-
-      const source = audioContextRef.current.createMediaStreamSource(stream)
-      source.connect(analyserRef.current)
-
-      const data = new Uint8Array(analyserRef.current.frequencyBinCount)
-      const CHECK_INTERVAL = 150 // ms
-
-      let silentFor = 0
-      let waitedForSpeech = 0
-      let stopped = false  // guard against firing onAutoStop more than once
-      hasSpokenRef.current = false
-
-      silenceCheckRef.current = setInterval(() => {
-        if (stopped || !analyserRef.current) return
-        analyserRef.current.getByteFrequencyData(data)
-        const avg = data.reduce((a, b) => a + b, 0) / data.length
-
-        if (onAudioLevel) onAudioLevel(Math.min(avg / 80, 1))
-
-        if (avg >= VOICE_THRESHOLD) {
-          // User is speaking — reset silence counter, mark as spoken
-          hasSpokenRef.current = true
-          silentFor = 0
-        } else if (hasSpokenRef.current) {
-          // User spoke and now is silent — count silence toward auto-stop
-          silentFor += CHECK_INTERVAL
-          if (silentFor >= silenceMs) {
-            stopped = true
-            onAutoStop()
-          }
-        } else {
-          // User hasn't spoken yet — wait. If they never speak, give up after maxWaitForSpeechMs.
-          waitedForSpeech += CHECK_INTERVAL
-          if (waitedForSpeech >= maxWaitForSpeechMs) {
-            stopped = true
-            onAutoStop()
-          }
-        }
-      }, CHECK_INTERVAL)
-
-      // Hard cap on total recording duration
-      maxDurationTimerRef.current = setTimeout(() => {
-        if (isRecordingRef.current && !stopped) {
-          stopped = true
-          onAutoStop()
-        }
-      }, maxRecordingMs)
-    } catch (err) {
-      // AudioContext failed — fall back to plain timer
-      maxDurationTimerRef.current = setTimeout(onAutoStop, silenceMs + 5000)
-    }
-  }, [silenceMs, maxWaitForSpeechMs, maxRecordingMs, onAudioLevel])
-
   // ── Start recording ─────────────────────────────────────────────────────
   const startRecording = useCallback(async (autoStopOnSilence = true): Promise<boolean> => {
     if (isRecordingRef.current) return false
 
-    // Feature-detect MediaRecorder
     if (typeof MediaRecorder === 'undefined') {
-      onError?.('MediaRecorder not supported in this browser')
+      onError?.('MediaRecorder not supported. Use Chrome, Edge, or Firefox.')
       return false
     }
 
@@ -162,16 +95,13 @@ export function useDeepgramSTT({
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
-          sampleRate: 16000,
           channelCount: 1,
         },
       })
 
       streamRef.current = stream
       chunksRef.current = []
-      hasSpokenRef.current = false
 
-      // Pick best supported MIME type
       const mimeType = [
         'audio/webm;codecs=opus',
         'audio/webm',
@@ -188,14 +118,9 @@ export function useDeepgramSTT({
 
       recorder.onstop = async () => {
         isRecordingRef.current = false
-        const userDidSpeak = hasSpokenRef.current
-        stopSilenceDetection()
-
-        // Stop mic tracks
+        cleanup()
         stream.getTracks().forEach(t => t.stop())
         streamRef.current = null
-
-        if (onAudioLevel) onAudioLevel(0)
 
         if (chunksRef.current.length === 0) {
           setStatus('idle')
@@ -206,46 +131,117 @@ export function useDeepgramSTT({
         const blob = new Blob(chunksRef.current, { type: mimeType || 'audio/webm' })
         chunksRef.current = []
 
-        // If user never spoke (audio energy stayed below threshold), don't waste API call
-        if (!userDidSpeak) {
+        // Tiny recordings (< 1.5KB ≈ <500ms) are noise/clicks — skip
+        if (blob.size < 1500) {
+          console.log('[STT] Skipping tiny recording', blob.size, 'bytes')
           setStatus('idle')
           onTranscript('', true)
           return
         }
 
-        // Skip very tiny recordings (< 800ms of audio at low bitrate ≈ 1200 bytes)
-        if (blob.size < 1200) {
-          setStatus('idle')
-          onTranscript('', true)
-          return
-        }
-
+        console.log('[STT] Sending', blob.size, 'bytes to Deepgram')
         setStatus('processing')
         const text = await transcribeBlob(blob)
+        console.log('[STT] Transcript:', text || '(empty)')
         setStatus('idle')
         onTranscript(text, true)
       }
 
-      recorder.onerror = () => {
+      recorder.onerror = (e) => {
+        console.error('[STT] Recorder error', e)
         isRecordingRef.current = false
         setStatus('error')
         onError?.('Recording failed')
       }
 
-      // Start collecting audio chunks every 250ms
+      // Collect chunks every 250ms — important: must call start with timeslice
+      // for ondataavailable to fire periodically
       recorder.start(250)
       isRecordingRef.current = true
       setStatus('recording')
 
-      // Set up voice activity detection
+      // ── Voice Activity Detection via time-domain RMS ────────────────────
       if (autoStopOnSilence) {
-        startSilenceDetection(stream, () => {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+        audioContextRef.current = ctx
+
+        // Resume if suspended (Chrome autoplay policy)
+        if (ctx.state === 'suspended') {
+          try { await ctx.resume() } catch {}
+        }
+
+        const analyser = ctx.createAnalyser()
+        analyser.fftSize = 2048  // larger buffer = smoother RMS
+        analyserRef.current = analyser
+
+        const source = ctx.createMediaStreamSource(stream)
+        source.connect(analyser)
+
+        const buffer = new Float32Array(analyser.fftSize)
+        let hasStartedSpeaking = false
+        let lastSpeechAt = 0
+        let recordingStartedAt = performance.now()
+        let stopped = false
+
+        const stopNow = () => {
+          if (stopped) return
+          stopped = true
+          if (rafIdRef.current !== null) { cancelAnimationFrame(rafIdRef.current); rafIdRef.current = null }
           if (isRecordingRef.current) {
             try { recorder.stop() } catch {}
           }
-        })
+        }
+
+        const tick = () => {
+          if (stopped || !analyserRef.current) return
+
+          analyserRef.current.getFloatTimeDomainData(buffer)
+
+          // Compute RMS (root mean square) of time-domain samples
+          let sumSquares = 0
+          for (let i = 0; i < buffer.length; i++) {
+            sumSquares += buffer[i] * buffer[i]
+          }
+          const rms = Math.sqrt(sumSquares / buffer.length)
+
+          const now = performance.now()
+          const elapsedSinceStart = now - recordingStartedAt
+
+          if (rms >= SPEAKING_THRESHOLD) {
+            // User is speaking
+            if (!hasStartedSpeaking) {
+              console.log('[STT] User started speaking (RMS:', rms.toFixed(4), ')')
+              hasStartedSpeaking = true
+            }
+            lastSpeechAt = now
+          } else if (rms < SILENCE_THRESHOLD && hasStartedSpeaking) {
+            // User has been speaking, but is now quiet — check duration
+            const silentFor = now - lastSpeechAt
+            if (silentFor >= silenceMs) {
+              console.log('[STT] User stopped speaking after', silentFor.toFixed(0), 'ms of silence')
+              stopNow()
+              return
+            }
+          } else if (!hasStartedSpeaking && elapsedSinceStart >= maxWaitForSpeechMs) {
+            // User never started speaking — give up
+            console.log('[STT] No speech detected after', elapsedSinceStart.toFixed(0), 'ms')
+            stopNow()
+            return
+          }
+
+          // Hard cap
+          if (elapsedSinceStart >= maxRecordingMs) {
+            console.log('[STT] Hit max recording duration')
+            stopNow()
+            return
+          }
+
+          rafIdRef.current = requestAnimationFrame(tick)
+        }
+
+        rafIdRef.current = requestAnimationFrame(tick)
       } else {
-        // Push-to-talk mode: still need max-duration safety
+        // Push-to-talk mode: just hard cap
         maxDurationTimerRef.current = setTimeout(() => {
           if (isRecordingRef.current) {
             try { recorder.stop() } catch {}
@@ -255,13 +251,14 @@ export function useDeepgramSTT({
 
       return true
     } catch (err: any) {
+      console.error('[STT] startRecording failed', err)
       setStatus('error')
       onError?.(err?.message || 'Microphone access denied')
       return false
     }
-  }, [onTranscript, onError, onAudioLevel, transcribeBlob, startSilenceDetection, stopSilenceDetection, maxRecordingMs])
+  }, [onTranscript, onError, transcribeBlob, cleanup, silenceMs, maxWaitForSpeechMs, maxRecordingMs])
 
-  // ── Stop recording (push-to-talk release) ──────────────────────────────
+  // ── Stop recording (manual stop or push-to-talk release) ───────────────
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecordingRef.current) {
       try { mediaRecorderRef.current.stop() } catch {}
@@ -270,7 +267,7 @@ export function useDeepgramSTT({
 
   // ── Abort (discard audio, don't transcribe) ─────────────────────────────
   const abortRecording = useCallback(() => {
-    stopSilenceDetection()
+    cleanup()
     isRecordingRef.current = false
     chunksRef.current = []
     if (mediaRecorderRef.current) {
@@ -281,11 +278,8 @@ export function useDeepgramSTT({
     }
     streamRef.current?.getTracks().forEach(t => t.stop())
     streamRef.current = null
-    if (onAudioLevel) onAudioLevel(0)
     setStatus('idle')
-  }, [stopSilenceDetection, onAudioLevel])
-
-  const isDeepgramAvailable = deepgramAvailableRef.current !== false
+  }, [cleanup])
 
   return {
     status,
@@ -294,6 +288,6 @@ export function useDeepgramSTT({
     startRecording,
     stopRecording,
     abortRecording,
-    isDeepgramAvailable,
+    isDeepgramAvailable: deepgramAvailableRef.current !== false,
   }
 }

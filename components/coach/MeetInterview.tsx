@@ -335,10 +335,9 @@ export default function MeetInterview({ company, role, sessionType, userName, on
         const startDeepgramListening = async () => {
           if (!shouldRestartRef.current) return
           setSessionStatus('listening')
-          setCurrentSpeech('Speak now...')
+          setCurrentSpeech('')
           const ok = await deepgramSTT.startRecording(!mobile) // auto-stop on silence for desktop
           if (!ok && shouldRestartRef.current) {
-            // Mic denied — fall back to Web Speech
             console.warn('[Deepgram] Mic access failed, falling back to Web Speech')
             setupWebSpeech()
           }
