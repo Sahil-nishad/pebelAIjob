@@ -55,12 +55,24 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
   // Deepgram STT — much better accuracy than Web Speech API
   const deepgramSTT = useDeepgramSTT({
     onTranscript: (text) => {
-      if (text && shouldRestartRef.current) {
-        setCurrentSpeech('')
+      if (!shouldRestartRef.current) return
+      setCurrentSpeech('')
+      if (text) {
         sendToCoach(text)
+      } else {
+        // No transcript — restart listening loop on desktop
+        if (!isMobileBrowser()) {
+          setTimeout(() => {
+            if (shouldRestartRef.current) {
+              const startFn = (window as any).__pebelStartListening
+              if (startFn) startFn()
+            }
+          }, 300)
+        }
       }
     },
-    silenceMs: 2000,
+    silenceMs: 1500,
+    maxWaitForSpeechMs: 20000,
   })
 
   // Auto-scroll transcript
@@ -275,15 +287,13 @@ export default function VoiceInterview({ company, role, sessionType, onClose }: 
 
       const mobile = isMobileBrowser()
 
-      // ── Try Deepgram STT first ─────────────────────────────────────────
-      // Quick probe: send empty audio to check if key is configured
-      const probe = await fetch('/api/coach/stt', {
-        method: 'POST',
-        body: (() => { const f = new FormData(); f.append('audio', new Blob([''], { type: 'audio/webm' }), 'test.webm'); return f })(),
+      // ── Check if Deepgram STT is configured ────────────────────────────
+      const sttCheck = await fetch('/api/coach/stt', {
+        method: 'HEAD',
         credentials: 'same-origin',
       }).catch(() => null)
 
-      const useDeepgram = probe && probe.status !== 503
+      const useDeepgram = sttCheck && sttCheck.status === 200
 
       if (useDeepgram) {
         // Deepgram mode — MediaRecorder → /api/coach/stt

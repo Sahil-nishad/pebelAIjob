@@ -66,16 +66,30 @@ export default function MeetInterview({ company, role, sessionType, userName, on
   // Deepgram STT — used when available; falls back to Web Speech API
   const deepgramSTT = useDeepgramSTT({
     onTranscript: (text) => {
-      if (text && shouldRestartRef.current) {
-        setCurrentSpeech('')
+      if (!shouldRestartRef.current) return
+      setCurrentSpeech('')
+      if (text) {
+        // Got a real transcript — send to AI
         sendToCoach(text)
+      } else {
+        // No transcript (silence, no speech detected) — restart listening loop
+        // sendToCoach changes status to 'thinking' before AI replies, so checking
+        // shouldRestartRef is sufficient to avoid restarting during AI turn
+        if (!isMobileBrowser()) {
+          setTimeout(() => {
+            if (shouldRestartRef.current) {
+              const startFn = (window as any).__pebelStartListening
+              if (startFn) startFn()
+            }
+          }, 300)
+        }
       }
     },
     onError: (err) => {
       console.warn('[STT] Deepgram error:', err)
-      // Fall back to Web Speech API silently
     },
-    silenceMs: 2000,
+    silenceMs: 1500,
+    maxWaitForSpeechMs: 20000,
   })
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [transcript])
@@ -306,15 +320,13 @@ export default function MeetInterview({ company, role, sessionType, userName, on
 
       shouldRestartRef.current = true
 
-      // ── Try Deepgram STT first (much better accuracy) ──────────────────
-      // Test if Deepgram is available by checking if the key is configured
-      const sttTest = await fetch('/api/coach/stt', {
-        method: 'POST',
-        body: (() => { const f = new FormData(); f.append('audio', new Blob([''], { type: 'audio/webm' }), 'test.webm'); return f })(),
+      // ── Check if Deepgram STT is configured (HEAD request) ─────────────
+      const sttCheck = await fetch('/api/coach/stt', {
+        method: 'HEAD',
         credentials: 'same-origin',
       }).catch(() => null)
 
-      const useDeepgram = sttTest && sttTest.status !== 503
+      const useDeepgram = sttCheck && sttCheck.status === 200
 
       if (useDeepgram) {
         // ── Deepgram STT mode ──────────────────────────────────────────────
@@ -323,10 +335,11 @@ export default function MeetInterview({ company, role, sessionType, userName, on
         const startDeepgramListening = async () => {
           if (!shouldRestartRef.current) return
           setSessionStatus('listening')
-          setCurrentSpeech('Listening...')
+          setCurrentSpeech('Speak now...')
           const ok = await deepgramSTT.startRecording(!mobile) // auto-stop on silence for desktop
           if (!ok && shouldRestartRef.current) {
             // Mic denied — fall back to Web Speech
+            console.warn('[Deepgram] Mic access failed, falling back to Web Speech')
             setupWebSpeech()
           }
         }

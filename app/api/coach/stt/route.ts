@@ -3,6 +3,14 @@ import { requireAuth, unauthorized } from '@/lib/auth'
 
 const DEEPGRAM_API_KEY = process.env.DEEPGRAM_API_KEY
 
+// HEAD /api/coach/stt — quick check whether STT is available
+export async function HEAD(req: NextRequest) {
+  const auth = await requireAuth(req)
+  if (!auth) return unauthorized()
+  if (!DEEPGRAM_API_KEY) return new NextResponse(null, { status: 503 })
+  return new NextResponse(null, { status: 200 })
+}
+
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req)
   if (!auth) return unauthorized()
