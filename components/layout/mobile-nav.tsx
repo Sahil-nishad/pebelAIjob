@@ -7,11 +7,11 @@ import { cn } from '@/lib/utils'
 import { useUser } from '@/hooks/useUser'
 
 const tabs = [
-  { icon: LayoutDashboard, label: 'Home', href: '/dashboard' },
-  { icon: ClipboardList, label: 'Applications', href: '/applications' },
-  { icon: Briefcase, label: 'Jobs', href: '/careers' },
-  { icon: Bot, label: 'Coach', href: '/coach' },
-  { icon: Settings, label: 'Settings', href: '/settings' },
+  { icon: LayoutDashboard, label: 'Home',    href: '/dashboard' },
+  { icon: Bot,             label: 'Coach',   href: '/coach' },
+  { icon: Briefcase,       label: 'Jobs',    href: '/careers' },
+  { icon: ClipboardList,   label: 'Track',   href: '/applications' },
+  { icon: Settings,        label: 'Account', href: '/settings' },
 ]
 
 export function MobileNav() {

@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   if (!auth) return unauthorized()
 
   try {
-    const { transcript, company, role, sessionType, screenshots } = await req.json()
+    const { transcript, company, role, sessionType, screenshots, sessionId } = await req.json()
 
     if (!transcript || transcript.length < 4) {
       return NextResponse.json(
@@ -195,6 +195,20 @@ Grade: A (80-100), B (70-79), C (60-69), D (50-59), F (<50)`
     report.question_breakdown = report.question_breakdown || []
     report.improvement_tips = report.improvement_tips || []
     report.next_steps = report.next_steps || []
+
+    // Persist report + scores back to the session if sessionId provided
+    if (sessionId) {
+      await auth.supabase
+        .from('coach_sessions')
+        .update({
+          avg_score: report.overall_score,
+          scores_json: report.scores,
+          transcript_json: transcript,
+          report_json: report,
+        })
+        .eq('id', sessionId)
+        .eq('user_id', auth.user.id)
+    }
 
     return NextResponse.json({ report })
   } catch (error: any) {

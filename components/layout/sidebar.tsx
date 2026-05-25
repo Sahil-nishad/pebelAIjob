@@ -15,11 +15,11 @@ import { cn } from '@/lib/utils'
 import { useUser } from '@/hooks/useUser'
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'Overview', href: '/dashboard' },
-  { icon: ClipboardList, label: 'Applications', href: '/applications' },
-  { icon: Briefcase, label: 'Jobs', href: '/careers' },
-  { icon: Bot, label: 'AI Coach', href: '/coach' },
-  { icon: Bell, label: 'Reminders', href: '/reminders' },
+  { icon: LayoutDashboard, label: 'Overview',     href: '/dashboard' },
+  { icon: Bot,             label: 'AI Coach',     href: '/coach' },
+  { icon: Briefcase,       label: 'Jobs',         href: '/careers' },
+  { icon: ClipboardList,   label: 'Applications', href: '/applications' },
+  { icon: Bell,            label: 'Reminders',    href: '/reminders' },
 ]
 
 export function Sidebar() {

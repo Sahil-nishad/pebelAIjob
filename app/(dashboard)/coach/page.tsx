@@ -9,12 +9,14 @@ import {
   HelpCircle, Clock, Trash2, Sparkles, ArrowRight, Briefcase,
   Download, FileText, Loader2, History, X, Mic, MessageSquare,
   ChevronRight, Zap, BookOpen, GraduationCap, Briefcase as BriefcaseIcon,
-  Star, Users,
+  Star, Users, TrendingUp, Calendar, Play, ChevronDown, ChevronUp,
+  Award, BarChart2, CalendarPlus, ShieldCheck, AlertCircle, CheckCircle,
 } from 'lucide-react'
 import { authFetch } from '@/lib/api'
 import toast from 'react-hot-toast'
 import dynamic from 'next/dynamic'
 import { useSession } from 'next-auth/react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis } from 'recharts'
 
 const VoiceInterview = dynamic(() => import('@/components/coach/VoiceInterview'), { ssr: false })
 const MeetInterview = dynamic(() => import('@/components/coach/MeetInterview'), { ssr: false })
@@ -89,6 +91,20 @@ export default function CoachPage() {
   const [meetModeActive, setMeetModeActive] = useState(false)
   const [activeMode, setActiveMode]     = useState<'text' | 'voice' | 'meet' | 'pdf' | null>(null)
 
+  // ── New Pro features state ────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<'practice' | 'progress' | 'schedule' | 'ats'>('practice')
+  const [progressData, setProgressData] = useState<any>(null)
+  const [progressLoading, setProgressLoading] = useState(false)
+  const [schedules, setSchedules] = useState<any[]>([])
+  const [schedulingOpen, setSchedulingOpen] = useState(false)
+  const [scheduleForm, setScheduleForm] = useState({ company: '', role: '', session_type: 'general', experience_level: 'professional', scheduled_at: '', notes: '' })
+  const [savingSchedule, setSavingSchedule] = useState(false)
+  const [replaySession, setReplaySession] = useState<any>(null)
+  const [atsResumes, setAtsResumes] = useState<any[]>([])
+  const [atsResult, setAtsResult] = useState<any>(null)
+  const [atsLoading, setAtsLoading] = useState(false)
+  const [selectedResumeId, setSelectedResumeId] = useState<string>('')
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -97,6 +113,20 @@ export default function CoachPage() {
   useEffect(() => {
     authFetch('/api/coach/sessions').then(r => r.json()).then(d => { if (Array.isArray(d)) setSessions(d) }).catch(() => {})
   }, [])
+
+  // ── Load progress + schedules + resumes ───────────────────────────────────
+  useEffect(() => {
+    if (activeTab === 'progress' && !progressData) {
+      setProgressLoading(true)
+      authFetch('/api/coach/progress').then(r => r.json()).then(d => setProgressData(d)).catch(() => {}).finally(() => setProgressLoading(false))
+    }
+    if (activeTab === 'schedule') {
+      authFetch('/api/coach/schedule').then(r => r.json()).then(d => { if (Array.isArray(d)) setSchedules(d) }).catch(() => {})
+    }
+    if (activeTab === 'ats' && atsResumes.length === 0) {
+      authFetch('/api/careers/resumes').then(r => r.json()).then(d => { if (Array.isArray(d)) { setAtsResumes(d); if (d.length > 0) setSelectedResumeId(d[0].id) } }).catch(() => {})
+    }
+  }, [activeTab])
 
   useEffect(() => {
     const c = searchParams.get('company')
@@ -233,6 +263,43 @@ export default function CoachPage() {
   }
 
   const canStart = company.trim() && selectedType
+
+  // ── Schedule handler ──────────────────────────────────────────────────────
+  const handleSaveSchedule = async () => {
+    if (!scheduleForm.company || !scheduleForm.role || !scheduleForm.scheduled_at) {
+      toast.error('Fill in company, role, and date/time'); return
+    }
+    setSavingSchedule(true)
+    try {
+      const res = await authFetch('/api/coach/schedule', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(scheduleForm) })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      setSchedules(prev => [...prev, data])
+      setSchedulingOpen(false)
+      setScheduleForm({ company: '', role: '', session_type: 'general', experience_level: 'professional', scheduled_at: '', notes: '' })
+      toast.success('Interview scheduled!')
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'Failed') }
+    finally { setSavingSchedule(false) }
+  }
+
+  const handleDeleteSchedule = async (id: string) => {
+    await authFetch(`/api/coach/schedule?id=${id}`, { method: 'DELETE' })
+    setSchedules(prev => prev.filter(s => s.id !== id))
+    toast.success('Removed')
+  }
+
+  // ── ATS optimizer ─────────────────────────────────────────────────────────
+  const handleAtsOptimize = async () => {
+    if (!selectedResumeId) { toast.error('Select a resume first'); return }
+    setAtsLoading(true); setAtsResult(null)
+    try {
+      const res = await authFetch('/api/careers/resumes/optimize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resume_id: selectedResumeId }) })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      setAtsResult(data)
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'Failed to analyze resume') }
+    finally { setAtsLoading(false) }
+  }
 
 
   // ── Setup screen (before session starts) ─────────────────────────────────
@@ -559,18 +626,356 @@ export default function CoachPage() {
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
 
-              {/* Header */}
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h1 className="text-2xl font-black text-slate-900 tracking-tight">AI Interview Coach</h1>
-                  <p className="text-slate-500 text-sm mt-0.5">Practice with AI tailored to your target role</p>
+              {/* ── Tab Navigation ── */}
+              <div className="flex items-center gap-1 bg-white rounded-2xl border border-slate-100 shadow-sm p-1.5 mb-6">
+                {([
+                  { id: 'practice', label: 'Practice', icon: Mic },
+                  { id: 'progress', label: 'Progress', icon: TrendingUp },
+                  { id: 'schedule', label: 'Schedule', icon: Calendar },
+                  { id: 'ats',      label: 'ATS Score', icon: ShieldCheck },
+                ] as const).map(tab => (
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-semibold transition-all ${
+                      activeTab === tab.id
+                        ? 'bg-[#0A6A47] text-white shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                    }`}>
+                    <tab.icon className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* ── PROGRESS TAB ── */}
+              {activeTab === 'progress' && (
+                <div className="space-y-5">
+                  {progressLoading ? (
+                    <div className="flex items-center justify-center h-48"><Loader2 className="w-7 h-7 text-[#0A6A47] animate-spin" /></div>
+                  ) : !progressData || progressData.stats.totalSessions === 0 ? (
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-12 text-center">
+                      <BarChart2 className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                      <p className="font-semibold text-slate-700">No sessions yet</p>
+                      <p className="text-sm text-slate-400 mt-1">Complete your first interview to see progress tracking</p>
+                      <button onClick={() => setActiveTab('practice')} className="mt-4 px-5 py-2.5 bg-[#0A6A47] text-white rounded-xl text-sm font-semibold hover:bg-[#085c3d] transition-colors">Start Practicing →</button>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Stats row */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {[
+                          { label: 'Sessions', value: progressData.stats.totalSessions, color: 'text-[#0A6A47]' },
+                          { label: 'Avg Score', value: progressData.stats.avgScore ? `${progressData.stats.avgScore}%` : '—', color: 'text-blue-600' },
+                          { label: 'Best Score', value: progressData.stats.bestScore ? `${progressData.stats.bestScore}%` : '—', color: 'text-violet-600' },
+                          { label: 'Improvement', value: progressData.stats.improvement > 0 ? `+${progressData.stats.improvement}%` : progressData.stats.improvement < 0 ? `${progressData.stats.improvement}%` : '—', color: progressData.stats.improvement >= 0 ? 'text-emerald-600' : 'text-red-500' },
+                        ].map(s => (
+                          <div key={s.label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-center">
+                            <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
+                            <p className="text-[11px] text-slate-400 mt-1 font-medium">{s.label}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Score over time chart */}
+                      {progressData.chart.length >= 2 && (
+                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-[#0A6A47]" /> Score Over Time</h3>
+                          <ResponsiveContainer width="100%" height={200}>
+                            <LineChart data={progressData.chart}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                              <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                              <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                              <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
+                              <Line type="monotone" dataKey="overall" stroke="#0A6A47" strokeWidth={2.5} dot={{ fill: '#0A6A47', r: 4 }} name="Overall" />
+                              <Line type="monotone" dataKey="confidence" stroke="#8b5cf6" strokeWidth={1.5} dot={false} name="Confidence" strokeDasharray="4 2" />
+                              <Line type="monotone" dataKey="communication" stroke="#3b82f6" strokeWidth={1.5} dot={false} name="Communication" strokeDasharray="4 2" />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      )}
+
+                      {/* Skill breakdown */}
+                      {progressData.stats.skills && (
+                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><Award className="w-4 h-4 text-[#0A6A47]" /> Skill Averages</h3>
+                          <div className="space-y-3">
+                            {Object.entries(progressData.stats.skills).map(([key, val]: [string, any]) => (
+                              <div key={key}>
+                                <div className="flex justify-between text-sm mb-1">
+                                  <span className="font-medium text-slate-700 capitalize">{key.replace(/_/g, ' ')}</span>
+                                  <span className="font-bold text-slate-900">{val}%</span>
+                                </div>
+                                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                  <motion.div initial={{ width: 0 }} animate={{ width: `${val}%` }} transition={{ duration: 0.8 }}
+                                    className={`h-full rounded-full ${val >= 80 ? 'bg-green-500' : val >= 60 ? 'bg-blue-500' : val >= 40 ? 'bg-yellow-500' : 'bg-red-400'}`} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Session replay list */}
+                      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                        <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><Play className="w-4 h-4 text-[#0A6A47]" /> Session Replay</h3>
+                        <div className="space-y-2">
+                          {progressData.sessions.filter((s: any) => s.transcript_json || s.report_json).slice(0, 8).map((s: any) => (
+                            <div key={s.id} className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors">
+                              <div className="min-w-0">
+                                <p className="font-semibold text-sm text-slate-800 truncate">{s.company} — {s.role}</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5">{new Date(s.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · {s.session_type}</p>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                                {s.avg_score && (
+                                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${s.avg_score >= 80 ? 'bg-green-100 text-green-700' : s.avg_score >= 60 ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                                    {Math.round(s.avg_score)}%
+                                  </span>
+                                )}
+                                <button onClick={() => setReplaySession(s)}
+                                  className="flex items-center gap-1 px-3 py-1.5 bg-[#0A6A47] text-white rounded-lg text-xs font-semibold hover:bg-[#085c3d] transition-colors">
+                                  <Play className="w-3 h-3" /> View
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                          {progressData.sessions.filter((s: any) => !s.transcript_json && !s.report_json).length > 0 && (
+                            <p className="text-xs text-slate-400 text-center pt-2">Older sessions don't have replay data. New sessions will be saved automatically.</p>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
-                <button
-                  onClick={() => setHistoryOpen(true)}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 text-sm font-semibold hover:border-[#0A6A47]/40 hover:text-[#0A6A47] transition-all"
-                >
-                  <History className="w-4 h-4" />
-                  <span className="hidden sm:inline">History</span>
+              )}
+
+              {/* ── SCHEDULE TAB ── */}
+              {activeTab === 'schedule' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="font-bold text-slate-900">Scheduled Interviews</h2>
+                      <p className="text-sm text-slate-400 mt-0.5">Plan your practice sessions in advance</p>
+                    </div>
+                    <button onClick={() => setSchedulingOpen(!schedulingOpen)}
+                      className="flex items-center gap-2 px-4 py-2.5 bg-[#0A6A47] text-white rounded-xl text-sm font-semibold hover:bg-[#085c3d] transition-colors">
+                      <CalendarPlus className="w-4 h-4" /> Schedule
+                    </button>
+                  </div>
+
+                  {/* Schedule form */}
+                  <AnimatePresence>
+                    {schedulingOpen && (
+                      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                        className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
+                        <h3 className="font-bold text-slate-900">New Scheduled Session</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Company</label>
+                            <input value={scheduleForm.company} onChange={e => setScheduleForm(f => ({ ...f, company: e.target.value }))}
+                              placeholder="e.g. Google, TCS" className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#0A6A47] focus:border-transparent outline-none" />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Role</label>
+                            <input value={scheduleForm.role} onChange={e => setScheduleForm(f => ({ ...f, role: e.target.value }))}
+                              placeholder="e.g. Software Engineer" className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#0A6A47] focus:border-transparent outline-none" />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Interview Type</label>
+                            <select value={scheduleForm.session_type} onChange={e => setScheduleForm(f => ({ ...f, session_type: e.target.value }))}
+                              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#0A6A47] focus:border-transparent outline-none bg-white">
+                              {sessionTypes.map(t => <option key={t.type} value={t.type}>{t.label}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Date & Time</label>
+                            <input type="datetime-local" value={scheduleForm.scheduled_at} onChange={e => setScheduleForm(f => ({ ...f, scheduled_at: e.target.value }))}
+                              min={new Date().toISOString().slice(0, 16)}
+                              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#0A6A47] focus:border-transparent outline-none" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Notes (optional)</label>
+                          <input value={scheduleForm.notes} onChange={e => setScheduleForm(f => ({ ...f, notes: e.target.value }))}
+                            placeholder="e.g. Focus on system design questions" className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#0A6A47] focus:border-transparent outline-none" />
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={handleSaveSchedule} disabled={savingSchedule}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-[#0A6A47] text-white rounded-xl text-sm font-semibold hover:bg-[#085c3d] transition-colors disabled:opacity-50">
+                            {savingSchedule ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                            Save Schedule
+                          </button>
+                          <button onClick={() => setSchedulingOpen(false)} className="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors">Cancel</button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Upcoming schedules */}
+                  {schedules.length === 0 ? (
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-10 text-center">
+                      <Calendar className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                      <p className="font-semibold text-slate-700">No scheduled sessions</p>
+                      <p className="text-sm text-slate-400 mt-1">Schedule a practice session to build a consistent habit</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {schedules.map(s => {
+                        const dt = new Date(s.scheduled_at)
+                        const isToday = dt.toDateString() === new Date().toDateString()
+                        const isTomorrow = dt.toDateString() === new Date(Date.now() + 86400000).toDateString()
+                        const label = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : dt.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })
+                        return (
+                          <div key={s.id} className={`bg-white rounded-2xl border shadow-sm p-4 flex items-center justify-between gap-3 ${isToday ? 'border-[#0A6A47]/30 bg-[#0A6A47]/5' : 'border-slate-100'}`}>
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${isToday ? 'bg-[#0A6A47] text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                <span className="text-[9px] font-bold uppercase">{label.slice(0, 3)}</span>
+                                <span className="text-sm font-black leading-none">{dt.getDate()}</span>
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-bold text-sm text-slate-900 truncate">{s.company} — {s.role}</p>
+                                <p className="text-[11px] text-slate-400">{label} at {dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} · {s.session_type}</p>
+                                {s.notes && <p className="text-[11px] text-slate-400 italic mt-0.5">{s.notes}</p>}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {isToday && (
+                                <button onClick={() => { setCompany(s.company); setRole(s.role); setSelectedType(s.session_type as any); setExperienceLevel(s.experience_level as any); setActiveTab('practice') }}
+                                  className="px-3 py-1.5 bg-[#0A6A47] text-white rounded-lg text-xs font-bold hover:bg-[#085c3d] transition-colors">
+                                  Start Now
+                                </button>
+                              )}
+                              <button onClick={() => handleDeleteSchedule(s.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── ATS OPTIMIZER TAB ── */}
+              {activeTab === 'ats' && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="font-bold text-slate-900">Resume ATS Optimizer</h2>
+                    <p className="text-sm text-slate-400 mt-0.5">Get specific line-by-line improvements to beat ATS filters</p>
+                  </div>
+
+                  {atsResumes.length === 0 ? (
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-10 text-center">
+                      <ShieldCheck className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                      <p className="font-semibold text-slate-700">No resumes uploaded</p>
+                      <p className="text-sm text-slate-400 mt-1">Upload a resume in the Jobs section first</p>
+                      <a href="/careers/resume/upload" className="mt-4 inline-block px-5 py-2.5 bg-[#0A6A47] text-white rounded-xl text-sm font-semibold hover:bg-[#085c3d] transition-colors">Upload Resume →</a>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Resume selector */}
+                      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                        <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Select Resume</label>
+                        <div className="flex gap-3">
+                          <select value={selectedResumeId} onChange={e => { setSelectedResumeId(e.target.value); setAtsResult(null) }}
+                            className="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#0A6A47] focus:border-transparent outline-none bg-white">
+                            {atsResumes.map(r => <option key={r.id} value={r.id}>{r.file_name || r.parsed_name || 'Resume'}</option>)}
+                          </select>
+                          <button onClick={handleAtsOptimize} disabled={atsLoading || !selectedResumeId}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-[#0A6A47] text-white rounded-xl text-sm font-semibold hover:bg-[#085c3d] transition-colors disabled:opacity-50">
+                            {atsLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</> : <><ShieldCheck className="w-4 h-4" /> Analyze</>}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* ATS Results */}
+                      {atsResult && (
+                        <div className="space-y-4">
+                          {/* Score header */}
+                          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex items-center gap-5">
+                            <div className={`w-20 h-20 rounded-2xl border-4 flex flex-col items-center justify-center flex-shrink-0 font-black ${
+                              atsResult.ats_score >= 80 ? 'border-green-500 text-green-600 bg-green-50' :
+                              atsResult.ats_score >= 60 ? 'border-blue-500 text-blue-600 bg-blue-50' :
+                              atsResult.ats_score >= 40 ? 'border-yellow-500 text-yellow-600 bg-yellow-50' :
+                              'border-red-500 text-red-600 bg-red-50'
+                            }`}>
+                              <span className="text-2xl">{atsResult.ats_score}</span>
+                              <span className="text-[10px] font-bold">{atsResult.grade}</span>
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-900 text-lg">ATS Score: {atsResult.ats_score}/100</p>
+                              <p className="text-sm text-slate-500 mt-1">{atsResult.summary}</p>
+                            </div>
+                          </div>
+
+                          {/* Score breakdown */}
+                          {atsResult.score_breakdown && (
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                              <h3 className="font-bold text-slate-900 mb-4">Score Breakdown</h3>
+                              <div className="space-y-2.5">
+                                {Object.entries(atsResult.score_breakdown).map(([key, val]: [string, any]) => (
+                                  <div key={key}>
+                                    <div className="flex justify-between text-sm mb-1">
+                                      <span className="text-slate-600 capitalize">{key.replace(/_/g, ' ')}</span>
+                                      <span className="font-bold text-slate-900">{val}/100</span>
+                                    </div>
+                                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                      <motion.div initial={{ width: 0 }} animate={{ width: `${val}%` }} transition={{ duration: 0.6 }}
+                                        className={`h-full rounded-full ${val >= 80 ? 'bg-green-500' : val >= 60 ? 'bg-blue-500' : val >= 40 ? 'bg-yellow-500' : 'bg-red-400'}`} />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Critical fixes */}
+                          {atsResult.critical_fixes?.length > 0 && (
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                              <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><AlertCircle className="w-4 h-4 text-orange-500" /> Critical Fixes</h3>
+                              <div className="space-y-4">
+                                {atsResult.critical_fixes.map((fix: any, i: number) => (
+                                  <div key={i} className="p-4 bg-orange-50 rounded-xl border border-orange-100">
+                                    <p className="text-[11px] font-bold text-orange-600 uppercase tracking-wide mb-2">{fix.type?.replace(/_/g, ' ')}</p>
+                                    <div className="space-y-2">
+                                      <div className="flex items-start gap-2">
+                                        <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">BEFORE</span>
+                                        <p className="text-sm text-slate-700 line-through opacity-70">{fix.original}</p>
+                                      </div>
+                                      <div className="flex items-start gap-2">
+                                        <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">AFTER</span>
+                                        <p className="text-sm text-slate-900 font-medium">{fix.improved}</p>
+                                      </div>
+                                    </div>
+                                    <p className="text-[11px] text-slate-500 mt-2 italic">{fix.reason}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Quick wins */}
+                          {atsResult.quick_wins?.length > 0 && (
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                              <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2"><Zap className="w-4 h-4 text-[#0A6A47]" /> Quick Wins</h3>
+                              <ul className="space-y-2">
+                                {atsResult.quick_wins.map((w: string, i: number) => (
+                                  <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                                    <CheckCircle className="w-4 h-4 text-[#0A6A47] flex-shrink-0 mt-0.5" />
+                                    {w}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* ── PRACTICE TAB (existing setup screen) ── */}
+              {activeTab === 'practice' && (
                   {sessions.length > 0 && <span className="bg-[#0A6A47] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{sessions.length}</span>}
                 </button>
               </div>
@@ -761,6 +1166,8 @@ export default function CoachPage() {
                 </div>
               </div>
 
+            )} {/* end activeTab === 'practice' */}
+
             </div>
           </div>
 
@@ -868,6 +1275,71 @@ export default function CoachPage() {
           </div>
         )}
       </main>
+
+      {/* ── Session Replay Modal ── */}
+      <AnimatePresence>
+        {replaySession && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setReplaySession(null)}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                <div>
+                  <h3 className="font-bold text-slate-900">{replaySession.company} — {replaySession.role}</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">{new Date(replaySession.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} · {replaySession.session_type}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {replaySession.avg_score && (
+                    <span className={`text-sm font-black px-3 py-1 rounded-full ${replaySession.avg_score >= 80 ? 'bg-green-100 text-green-700' : replaySession.avg_score >= 60 ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                      {Math.round(replaySession.avg_score)}%
+                    </span>
+                  )}
+                  <button onClick={() => setReplaySession(null)} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-colors"><X className="w-4 h-4" /></button>
+                </div>
+              </div>
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {/* Report summary if available */}
+                {replaySession.report_json && (
+                  <div className="bg-[#0A6A47]/5 rounded-xl p-4 border border-[#0A6A47]/10">
+                    <p className="text-sm font-semibold text-[#0A6A47] mb-2">Performance Summary</p>
+                    <p className="text-sm text-slate-700">{replaySession.report_json.summary}</p>
+                    {replaySession.report_json.scores && (
+                      <div className="grid grid-cols-3 gap-2 mt-3">
+                        {Object.entries(replaySession.report_json.scores).map(([k, v]: [string, any]) => (
+                          <div key={k} className="text-center">
+                            <p className="text-lg font-black text-slate-900">{v}</p>
+                            <p className="text-[10px] text-slate-400 capitalize">{k.replace(/_/g, ' ')}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {/* Transcript */}
+                {replaySession.transcript_json && replaySession.transcript_json.length > 0 ? (
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Transcript</p>
+                    {replaySession.transcript_json.map((msg: any, i: number) => (
+                      <div key={i} className={`flex ${msg.role === 'You' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${msg.role === 'You' ? 'bg-[#0A6A47] text-white' : 'bg-slate-100 text-slate-800'}`}>
+                          <span className="block text-[9px] opacity-60 mb-1 uppercase font-bold">{msg.role}</span>
+                          {msg.text}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-slate-400 text-sm">No transcript available for this session</div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
