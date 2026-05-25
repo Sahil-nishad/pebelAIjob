@@ -975,7 +975,20 @@ export default function CoachPage() {
               )}
 
               {/* ── PRACTICE TAB (existing setup screen) ── */}
-              {activeTab === 'practice' && (
+              {activeTab === 'practice' && (<>
+
+              {/* Header */}
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h1 className="text-2xl font-black text-slate-900 tracking-tight">AI Interview Coach</h1>
+                  <p className="text-slate-500 text-sm mt-0.5">Practice with AI tailored to your target role</p>
+                </div>
+                <button
+                  onClick={() => setHistoryOpen(true)}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 text-sm font-semibold hover:border-[#0A6A47]/40 hover:text-[#0A6A47] transition-all"
+                >
+                  <History className="w-4 h-4" />
+                  <span className="hidden sm:inline">History</span>
                   {sessions.length > 0 && <span className="bg-[#0A6A47] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{sessions.length}</span>}
                 </button>
               </div>
@@ -1166,7 +1179,7 @@ export default function CoachPage() {
                 </div>
               </div>
 
-            )} {/* end activeTab === 'practice' */}
+            </>)} {/* end activeTab === 'practice' */}
 
             </div>
           </div>
